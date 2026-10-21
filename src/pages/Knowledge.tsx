@@ -1,10 +1,12 @@
+import { Choice } from '../components/Choice';
+import { usePageDirty } from '../hooks/usePageDirty';
+import { confirmAction } from '../lib/confirmation';
 import { useEffect, useRef, useState } from 'react';
 import { Archive, ArrowDownToLine, ArrowRight, BookOpen, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, FileText, FolderOpen, Layers3, LoaderCircle, LockKeyhole, Plus, Search, ShieldCheck, Sparkles, Upload, X } from 'lucide-react';
 import { api } from '../api';
 import { Dialog } from '../components/Dialog';
 import type { KnowledgeDocument as Doc, KnowledgeList, KnowledgeStatus, SearchResult } from '../knowledge-types';
 import { errorMessage, period, statusLabels, today } from '../knowledge-types';
-import '../knowledge.css';
 
 type Metadata = { title: string; version: string; authority: string; doc_number: string; category: string; source: string; series_key: string; published_on: string; effective_from: string; effective_to: string };
 const emptyMetadata: Metadata = { title: '', version: '', authority: '', doc_number: '', category: '法律法规', source: '', series_key: '', published_on: '', effective_from: '', effective_to: '' };
@@ -14,7 +16,7 @@ function MetadataFields({ value, change, disabled }: { value: Metadata; change: 
   return <div className="kb-form-grid">
     {input('title', '资料名称', { required: true, wide: true, placeholder: '填写完整的法规或规范性文件名称' })}
     {input('version', '版本标识', { required: true, placeholder: '例如：2026 年修订版' })}
-    <label className="field"><span>资料分类</span><select className="select" value={value.category} onChange={e => change({ ...value, category: e.target.value })} disabled={disabled}>{['法律法规', '部门规章', '规范性文件', '裁量标准', '业务指引', '其他资料'].map(c => <option key={c}>{c}</option>)}</select></label>
+    <label className="field"><span>资料分类</span><Choice className="select" value={value.category} onChange={e => change({ ...value, category: e.target.value })} disabled={disabled}>{['法律法规', '部门规章', '规范性文件', '裁量标准', '业务指引', '其他资料'].map(c => <option key={c}>{c}</option>)}</Choice></label>
     {input('authority', '发布机关', { placeholder: '以原文件记载为准' })}{input('doc_number', '文号', { placeholder: '无文号可留空' })}
     {input('source', '资料来源', { wide: true, placeholder: '记录官方网站地址或材料提供单位；系统不访问此地址' })}
     {input('published_on', '公布日期', { type: 'date' })}{input('series_key', '版本关联标识', { placeholder: '同一法规使用相同标识；留空按名称关联' })}
@@ -36,15 +38,9 @@ export function DocumentViewer({ id, onClose, onChanged, highlight }: { id: stri
   const load = async () => { setError(''); try { const d = await api<Doc>(`/knowledge/${id}`); setDoc(d); setMetadata(metadataOf(d)); setAllowExternal(d.allow_external); } catch (e) { setError(errorMessage(e)); } };
   useEffect(() => { void load(); }, [id]);
   const dirty = !!doc && (JSON.stringify(metadata) !== JSON.stringify(metadataOf(doc)) || allowExternal !== doc.allow_external);
-  useEffect(() => {
-    const changed = Boolean(dirty || busy);
-    window.dispatchEvent(new CustomEvent('settings-dirty-change', { detail: { dirty: changed } }));
-    const beforeUnload = (event: BeforeUnloadEvent) => { if (changed) { event.preventDefault(); event.returnValue = ''; } };
-    window.addEventListener('beforeunload', beforeUnload);
-    return () => { window.removeEventListener('beforeunload', beforeUnload); window.dispatchEvent(new CustomEvent('settings-dirty-change', { detail: { dirty: false } })); };
-  }, [dirty, busy]);
+  usePageDirty(dirty || busy);
   useEffect(() => { if (doc && highlight && !editing) document.getElementById(`kb-chunk-${highlight}`)?.scrollIntoView({ block: 'center' }); }, [doc, highlight, editing]);
-  const close = () => { if (busy) return; if (dirty && !window.confirm('资料信息尚未保存，确定关闭吗？')) return; onClose(); };
+  const close = async () => { if (busy) return; if (dirty && !(await confirmAction('资料信息尚未保存，确定关闭吗？', {"title":"保留这次修改？","confirmLabel":"放弃修改","cancelLabel":"继续编辑","tone":"warning"}))) return; onClose(); };
   async function save(status?: KnowledgeStatus) {
     if (!doc) return;
     setBusy(true); setError(''); setNotice('');
@@ -60,7 +56,7 @@ export function DocumentViewer({ id, onClose, onChanged, highlight }: { id: stri
     {!doc && !error && <div className="kb-empty"><LoaderCircle className="spinning"/><p>正在读取本地原文…</p></div>}
     {doc && <><div className="kb-document-heading"><div className="kb-document-icon"><BookOpen size={26}/></div><div><div className="kb-inline"><span className={`kb-status ${doc.status}`}>{statusLabels[doc.status]}</span><span className="muted">{doc.category} · {doc.version}</span></div><h3>{doc.title}</h3><p>{doc.authority || '发布机关未填写'}{doc.doc_number ? ` · ${doc.doc_number}` : ''}</p></div></div>
       {notice && <div className="kb-success" role="status"><CheckCircle2 size={17}/>{notice}</div>}
-      <div className="kb-document-actions"><button className="btn btn-secondary" onClick={() => setEditing(!editing)} disabled={busy}>{editing ? '查看原文' : '编辑资料信息'}</button><a className="btn btn-secondary" href={`/api/knowledge/${id}/file`} download><ArrowDownToLine size={15}/>原始文件</a><span className="kb-action-spacer"/>{doc.status !== 'published' ? <button className="btn btn-primary" disabled={busy} onClick={() => { setReview(true); setEditing(true); }}>审核并发布<ArrowRight size={15}/></button> : <button className="btn btn-secondary" disabled={busy} onClick={() => { if (window.confirm('归档后，该版本将不再参与检索与问答，仍可查看原文。确定归档吗？')) void save('archived'); }}><Archive size={15}/>归档版本</button>}</div>
+      <div className="kb-document-actions"><button className="btn btn-secondary" onClick={() => setEditing(!editing)} disabled={busy}>{editing ? '查看原文' : '编辑资料信息'}</button><a className="btn btn-secondary" href={`/api/knowledge/${id}/file`} download><ArrowDownToLine size={15}/>原始文件</a><span className="kb-action-spacer"/>{doc.status !== 'published' ? <button className="btn btn-primary" disabled={busy} onClick={() => { setReview(true); setEditing(true); }}>审核并发布<ArrowRight size={15}/></button> : <button className="btn btn-secondary" disabled={busy} onClick={async () => { if ((await confirmAction('归档后，该版本将不再参与检索与问答，仍可查看原文。确定归档吗？', {"title":"将此记录归档？","confirmLabel":"确认归档","cancelLabel":"暂不归档","tone":"info"}))) void save('archived'); }}><Archive size={15}/>归档版本</button>}</div>
       {editing ? <form onSubmit={e => { e.preventDefault(); void save(review ? 'published' : undefined); }} className="kb-edit-form"><MetadataFields value={metadata} change={setMetadata} disabled={busy}/><label className="kb-consent"><input type="checkbox" checked={allowExternal} onChange={e => setAllowExternal(e.target.checked)} disabled={busy}/><span><strong>这是可公开使用的法规资料，允许用于 AI 问答</strong><small>仅在主动发起问答时，将相关片段发送至配置的硅基流动或 DeepSeek。未勾选时仅供本地检索。</small></span></label>{review && <div className="kb-review-box"><ShieldCheck size={20}/><div><strong>发布前核对原文、来源与适用日期</strong><p>发布表示完成本地人工审核，不代表系统已核验文件的法律效力。相同法规版本的有效日期不能重叠。</p><label className="kb-checkbox"><input type="checkbox" checked={reviewConfirmed} onChange={e => setReviewConfirmed(e.target.checked)}/>我已核对以上资料及有效日期</label></div></div>}<div className="kb-form-footer"><button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { setMetadata(metadataOf(doc)); setAllowExternal(doc.allow_external); setEditing(false); setReview(false); }}>取消修改</button><button className="btn btn-primary" disabled={busy || (review && !reviewConfirmed)}>{busy ? <LoaderCircle className="spinning" size={16}/> : <Check size={16}/>} {review ? '确认审核并发布' : '保存资料信息'}</button></div></form> : <><dl className="kb-metadata"><div><dt>适用日期</dt><dd>{period(doc.effective_from, doc.effective_to)}</dd></div><div><dt>资料来源</dt><dd>{doc.source || '尚未登记'}</dd></div><div><dt>本地原件</dt><dd>{doc.filename} · {(doc.size_bytes / 1024).toFixed(1)} KB</dd></div><div><dt>AI 使用范围</dt><dd>{doc.allow_external ? '允许相关片段参与 AI 问答' : '仅供本地检索'}</dd></div></dl><div className="kb-text-toolbar"><h4>条款原文 <span>{doc.chunk_count}</span></h4><label className="kb-search-inline"><Search size={15}/><input value={filter} onChange={e => setFilter(e.target.value)} placeholder="在此文件中查找" aria-label="在此文件中查找"/></label></div><div className="kb-chunks">{chunks.map(c => <article className={`kb-chunk ${highlight === c.id ? 'highlighted' : ''}`} key={c.id} id={`kb-chunk-${c.id}`}><div><strong>{c.article || `片段 ${c.ordinal}`}</strong>{c.page && <span>第 {c.page} 页</span>}</div><p>{c.text}</p></article>)}{!chunks.length && <div className="kb-empty"><Search/><p>未找到对应片段</p></div>}</div></>}
     </>}
   </Dialog>;
@@ -81,14 +77,8 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
     setFile(selected); setMetadata(m => ({ ...m, title: m.title || selected.name.replace(/\.[^.]+$/, '') }));
   }
   const dirty = !!file || JSON.stringify(metadata) !== JSON.stringify(emptyMetadata);
-  useEffect(() => {
-    const changed = dirty || busy;
-    window.dispatchEvent(new CustomEvent('settings-dirty-change', { detail: { dirty: changed } }));
-    const beforeUnload = (event: BeforeUnloadEvent) => { if (changed) { event.preventDefault(); event.returnValue = ''; } };
-    window.addEventListener('beforeunload', beforeUnload);
-    return () => { window.removeEventListener('beforeunload', beforeUnload); window.dispatchEvent(new CustomEvent('settings-dirty-change', { detail: { dirty: false } })); };
-  }, [dirty, busy]);
-  const close = () => { if (!busy && (!dirty || window.confirm('尚未导入，确定关闭并放弃本次填写吗？'))) onClose(); };
+  usePageDirty(dirty || busy);
+  const close = async () => { if (!busy && (!dirty || (await confirmAction('尚未导入，确定关闭并放弃本次填写吗？', {"title":"保留这次修改？","confirmLabel":"放弃修改","cancelLabel":"继续编辑","tone":"warning"})))) onClose(); };
   async function submit() {
     if (!file) { setError('请先选择本地文件。'); return; }
     setBusy(true); setError('');

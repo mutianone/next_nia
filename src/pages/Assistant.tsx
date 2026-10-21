@@ -1,11 +1,10 @@
+import { confirmAction } from '../lib/confirmation';
 import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen, Check, ChevronRight, CircleAlert, Copy, FileSearch, Layers3, LoaderCircle, LockKeyhole, MessageSquareText, Search, Send, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 import { api } from '../api';
 import type { Answer, Citation, SearchResult } from '../knowledge-types';
 import { errorMessage, today } from '../knowledge-types';
 import { DocumentViewer } from './Knowledge';
-import '../knowledge.css';
-import '../assistant.css';
 
 type ProviderConfig = { enabled: boolean; chat_model: string; api_key_configured: boolean };
 type AISettings = { enabled: boolean; default_provider: 'siliconflow' | 'deepseek'; providers: Record<'siliconflow' | 'deepseek', ProviderConfig> };
@@ -64,7 +63,7 @@ export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void
         <textarea id="qa-question" aria-label="法规问题" placeholder={mode === 'search' ? '输入关键词或业务问题，查找本地法规依据…' : '描述法规问题，请勿填入姓名、证件号等个人信息…'} value={question} maxLength={1000} onChange={e => { setQuestion(e.target.value); setConsent(false); }} disabled={busy} required rows={3} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); void submit(); } }}/>
         {mode === 'ai' && <label className="qa-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} disabled={busy || !ready}/><span>允许将本次问题及已获准使用的公开法规片段发送至 <strong>{providerName}</strong></span></label>}
         <div className="qa-composer-footer"><span><LockKeyhole size={12}/>{mode === 'search' ? '全程本地 · 不调用 AI' : '人员档案不会自动加入问答'}<small>{question.length}/1000</small></span><button type="submit" className="btn btn-primary" disabled={busy || !question.trim() || (mode === 'ai' && (!ready || !consent))}>{busy ? <LoaderCircle className="spinning" size={16}/> : <Send size={15}/>} {mode === 'search' ? '检索依据' : '生成回答'}</button></div>
-      </form>{notice && <p role="status" className="qa-notice">{notice}</p>}<div className="qa-session-note"><span>会话仅保留在当前页面，离开后清空。</span>{turns.length > 0 && <button disabled={busy} onClick={() => { if (window.confirm('清空当前页面的问答结果？法规原文不受影响。')) setTurns([]); }}>清空本页会话</button>}</div>
+      </form>{notice && <p role="status" className="qa-notice">{notice}</p>}<div className="qa-session-note"><span>会话仅保留在当前页面，离开后清空。</span>{turns.length > 0 && <button disabled={busy} onClick={async () => { if ((await confirmAction('清空当前页面的问答结果？法规原文不受影响。', {"title":"清空当前会话？","confirmLabel":"清空会话","tone":"danger"}))) setTurns([]); }}>清空本页会话</button>}</div>
     </section><aside className="qa-sidebar"><section className="panel qa-side-card"><span className="qa-side-number">01</span><h3>回答从哪里来？</h3><p>来自知识库中已发布、在所选日期内有效的法规原文。</p><div className="qa-mini-pipeline"><span>你的问题</span><i/><span>本地检索</span><i/><span>原文与引用</span></div><button className="text-button" onClick={onKnowledge}>查看知识库<ArrowRight size={14}/></button></section><section className="panel qa-side-card"><span className="qa-side-number">02</span><h3>没有依据，就不补写。</h3><p>资料不足时会明确提示。AI 引用编号由系统核对，点击即可查看对应原文。</p><span className="qa-side-mark"><ShieldCheck size={17}/>每条结论都需要核对</span></section><section className="qa-side-tips"><LockKeyhole size={20}/><h3>你的资料，留在本地。</h3><p>查找依据无需网络。AI 问答只使用标记允许外发的法规片段，不自动读取人员档案。</p></section></aside></div>
     {selected && <DocumentViewer id={selected.document_id} highlight={selected.id} onClose={() => setSelected(null)}/>}<footer className="page-footer"><span>NIA KNOWLEDGE COPILOT</span><p>有据可循 · 审慎辅助</p><span>PHASE 02 / 05</span></footer>
   </div>;

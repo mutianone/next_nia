@@ -1,3 +1,10 @@
+import { confirmAction } from '../lib/confirmation';
+import { Switch as Toggle } from '../components/ui/switch';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { motion } from 'motion/react';
+import { Choice } from '../components/Choice';
+import { usePageDirty } from '../hooks/usePageDirty';
 import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight, Check, CheckCircle2, ChevronRight, CircleAlert, Database,
@@ -5,7 +12,6 @@ import {
   RefreshCw, Save, Server, Settings2, ShieldCheck, SlidersHorizontal,
   Sparkles, Unplug, X,
 } from 'lucide-react'
-import '../settings.css'
 
 type ProviderId = 'siliconflow' | 'deepseek'
 type Section = 'general' | 'environment' | 'ai'
@@ -58,7 +64,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 function Switch({ checked, onChange, label, disabled = false }: { checked: boolean; onChange: (value: boolean) => void; label: string; disabled?: boolean }) {
-  return <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} className={`settings-switch ${checked ? 'is-on' : ''}`} onClick={() => onChange(!checked)}><span /></button>
+  return <Toggle checked={checked} onCheckedChange={onChange} aria-label={label} disabled={disabled}/>
 }
 
 function TestFeedback({ state, fingerprint }: { state?: TestState; fingerprint: string }) {
@@ -78,6 +84,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   const [reload, setReload] = useState(0)
   const [saving, setSaving] = useState(false)
   const [section, setSection] = useState<Section>('general')
+  const mobile = useMediaQuery('(max-width: 700px)')
   const [notice, setNotice] = useState<Notice | null>(null)
   const [keys, setKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
   const [clearKeys, setClearKeys] = useState<Record<ProviderId, boolean>>({ siliconflow: false, deepseek: false })
@@ -106,14 +113,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
 
   const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || password || clearPassword || keys.siliconflow || keys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
 
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('settings-dirty-change', { detail: { dirty } }))
-    const beforeUnload = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = '' } }
-    window.addEventListener('beforeunload', beforeUnload)
-    return () => window.removeEventListener('beforeunload', beforeUnload)
-  }, [dirty])
-
-  useEffect(() => () => { window.dispatchEvent(new CustomEvent('settings-dirty-change', { detail: { dirty: false } })) }, [])
+  usePageDirty(dirty || saving)
 
   const showNotice = (next: Notice) => { setNotice(next); window.setTimeout(() => noticeRef.current?.focus(), 0) }
 
@@ -165,8 +165,8 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     setPassword(''); setClearPassword(false); setVisiblePassword(false)
   }
 
-  function discard() {
-    if (!saved) return
+  async function discard() {
+    if (!saved || !await confirmAction('恢复到上次保存的配置？本次未保存的设置和新填写的凭证会被清除，已保存配置不变。', { title: '放弃本次配置修改？', confirmLabel: '放弃修改', cancelLabel: '继续编辑' })) return
     setDraft(structuredClone(saved)); resetSecrets(); setDatabaseTest(undefined); setAiTests({}); setNotice(null)
   }
 
@@ -220,29 +220,34 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
 
     {notice && <div ref={noticeRef} tabIndex={-1} className={`settings-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.kind === 'success' ? <CheckCircle2 size={19} /> : <CircleAlert size={19} />}<span>{notice.text}</span><button type="button" aria-label="关闭提示" onClick={() => setNotice(null)}><X size={17} /></button></div>}
 
-    <div className="settings-layout">
+    <div className="nia-settings-overview" aria-label="已保存配置概览">
+      <div><Database size={20}/><span><small>活动数据库</small><strong>{runtime.database_engine}</strong></span></div>
+      <div><Sparkles size={20}/><span><small>已保存 AI 开关</small><strong>{saved?.ai.enabled ? '已启用' : '暂未启用'}</strong></span></div>
+      <div><ShieldCheck size={20}/><span><small>保存状态</small><strong>{dirty ? '修改待保存' : '已同步'}</strong></span></div>
+    </div>
+    <Tabs value={section} onValueChange={value => setSection(value as Section)} orientation={mobile ? 'horizontal' : 'vertical'} asChild><div className="settings-layout">
       <aside className="settings-nav-column">
-        <nav className="settings-section-nav" aria-label="设置分类" role="tablist">
+        <TabsList asChild><nav className="settings-section-nav" aria-label="设置分类">
           {([
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与组织信息', number: '01' },
             { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: '数据库与环境隔离', number: '02' },
             { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: '模型与连接管理', number: '03' },
-          ]).map(item => <button type="button" role="tab" aria-selected={section === item.id} aria-controls={`settings-panel-${item.id}`} id={`settings-tab-${item.id}`} key={item.id} className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button>)}
-        </nav>
+          ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
+        </nav></TabsList>
         <div className="settings-local-note"><ShieldCheck size={23} /><h3>数据留在本地</h3><p>业务数据与配置保存在本地服务器。AI 调用仅通过已配置的服务商。</p><div><span />支持 macOS · Linux</div></div>
       </aside>
 
-      <div className="settings-main">
-        {section === 'general' && <section role="tabpanel" id="settings-panel-general" aria-labelledby="settings-tab-general" className="panel settings-card">
+      <motion.div className="settings-main" key={section} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        {section === 'general' && <TabsContent value="general" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div className="settings-section-symbol"><SlidersHorizontal size={22} /></div><div><h2>基础信息</h2><p>为工作空间设置统一的名称与组织标识。</p></div><span className="settings-section-number">01</span></div>
           <div className="settings-card-body"><div className="settings-field-grid">
             <label className="field settings-field"><span>系统名称 <b>*</b></span><input className="input" value={draft.general.system_name} maxLength={80} disabled={saving} placeholder="请输入系统名称" onChange={event => { setDraft({ ...draft, general: { ...draft.general, system_name: event.target.value } }); setNotice(null) }} /><small>显示在侧边导航与工作空间标题中。</small></label>
             <label className="field settings-field"><span>所属组织 <b>*</b></span><input className="input" value={draft.general.organization} maxLength={100} disabled={saving} placeholder="例如：出入境业务中心" onChange={event => { setDraft({ ...draft, general: { ...draft.general, organization: event.target.value } }); setNotice(null) }} /><small>用于标识当前部署单位。</small></label>
           </div><div className="settings-preview"><span className="settings-preview-label">工作空间预览</span><div className="settings-preview-mark"><ShieldCheck size={26} /></div><div><strong>{draft.general.system_name.trim() || '系统名称'}</strong><span>{draft.general.organization.trim() || '所属组织'}</span></div><span className="settings-preview-badge">本地部署</span></div>
           <div className="settings-inline-note"><LockKeyhole size={17} /><p>当前阶段直接进入工作台。账户、角色与登录接口将在后续阶段接入。</p></div></div>
-        </section>}
+        </section></TabsContent>}
 
-        {section === 'environment' && <section role="tabpanel" id="settings-panel-environment" aria-labelledby="settings-tab-environment" className="panel settings-card">
+        {section === 'environment' && <TabsContent value="environment" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div className="settings-section-symbol"><Database size={22} /></div><div><h2>运行环境</h2><p>测试与正式数据独立管理，按部署阶段选择数据库。</p></div><span className="settings-section-number">02</span></div>
           <div className="settings-card-body">
             <div className="settings-label-line"><span>目标运行环境</span><span className="settings-caption">保存配置后，重启后端生效</span></div>
@@ -264,12 +269,12 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
               <TestFeedback state={databaseTest} fingerprint={databaseFingerprint} />
             </>}
           </div>
-        </section>}
+        </section></TabsContent>}
 
-        {section === 'ai' && <section role="tabpanel" id="settings-panel-ai" aria-labelledby="settings-tab-ai" className="settings-ai-section">
+        {section === 'ai' && <TabsContent value="ai" asChild><section className="settings-ai-section">
           <div className="panel settings-card"><div className="settings-card-heading"><div className="settings-section-symbol"><Sparkles size={22} /></div><div><h2>AI 服务配置</h2><p>统一管理智能服务、默认模型与连接凭证。</p></div><span className="settings-section-number">03</span></div>
             <div className="settings-card-body"><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div className="settings-ai-master-icon"><Sparkles size={22} /></div><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '允许后续业务模块使用已配置的 AI 服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
-              <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写固定使用硅基流动。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><select className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></select></label></div>
+              <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写固定使用硅基流动。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><Choice className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></Choice></label></div>
               {!draft.ai.providers[draft.ai.default_provider].enabled && <div className="settings-inline-warning"><CircleAlert size={16} /><span>默认服务商当前未启用。开启 AI 前，请先启用下方对应服务商。</span></div>}
             </div>
           </div>
@@ -283,7 +288,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
               <div className="settings-provider-header"><div className={`settings-provider-logo ${provider.id}`}>{provider.monogram}</div><div><h3>{provider.name}{draft.ai.default_provider === provider.id && <span className="settings-default-tag">默认</span>}</h3><p>{provider.description}</p></div><Switch checked={config.enabled} disabled={saving} label={`启用${provider.name}`} onChange={enabled => updateProvider(provider.id, { enabled })} /></div>
               <div className="settings-provider-fields">
                 <label className="field settings-field"><span>服务地址 <LockKeyhole size={12} /></span><input className="input settings-readonly" value={provider.url} readOnly aria-label={`${provider.name}固定服务地址`} /><small>固定官方端点，由后端统一访问。</small></label>
-                <label className="field settings-field"><span>对话模型</span><input className="input" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} list={`models-${provider.id}`} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <datalist id={`models-${provider.id}`}>{test.models.map(model => <option key={model} value={model} />)}</datalist>}</label>
+                <label className="field settings-field"><span>对话模型</span><input className="input" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <details className="nia-model-options"><summary>选择已检测模型 · {test.models.length}</summary><div>{test.models.map(model => <button type="button" key={model} disabled={saving} onClick={() => updateProvider(provider.id, { chat_model: model })}>{model}</button>)}</div></details>}</label>
                 {provider.id === 'siliconflow' && <label className="field settings-field"><span>中文语音转写模型</span><input className="input" value={config.asr_model || ''} disabled={saving} maxLength={200} placeholder="FunAudioLLM/SenseVoiceSmall" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { asr_model: event.target.value })} /><small>录音转写独立使用此模型；对话模型用于摘要与法规问答。模型列表测试不代表音频转写已实测。</small></label>}
                 {provider.id === 'deepseek' && <p className="settings-caption">用于文字摘要与要素整理。录音转写使用硅基流动的语音接口。</p>}
                 <div className="field settings-field"><div className="settings-label-line"><label htmlFor={`key-${provider.id}`}>API Key</label><span className={`settings-secret-state ${config.api_key_configured && !clearKeys[provider.id] ? 'configured' : ''}`}><KeyRound size={12} />{clearKeys[provider.id] ? '保存后清空' : config.api_key_configured ? '已配置 · 不回显' : '未配置'}</span></div><div className="settings-secret-input"><input className="input" id={`key-${provider.id}`} type={visibleKeys[provider.id] ? 'text' : 'password'} value={keys[provider.id]} disabled={saving || clearKeys[provider.id]} autoComplete="new-password" spellCheck={false} placeholder={config.api_key_configured ? '留空保留，输入以更换密钥' : '粘贴此服务商的 API Key'} onChange={event => { setKeys({ ...keys, [provider.id]: event.target.value }); setNotice(null) }} /><button type="button" disabled={saving || clearKeys[provider.id] || !keys[provider.id]} aria-label={visibleKeys[provider.id] ? `隐藏${provider.name}新密钥` : `显示${provider.name}新密钥`} onClick={() => setVisibleKeys({ ...visibleKeys, [provider.id]: !visibleKeys[provider.id] })}>{visibleKeys[provider.id] ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{config.api_key_configured && <label className="settings-checkbox"><input type="checkbox" checked={clearKeys[provider.id]} disabled={saving} onChange={event => { setClearKeys({ ...clearKeys, [provider.id]: event.target.checked }); setKeys({ ...keys, [provider.id]: '' }); setNotice(null) }} />保存时清空此密钥</label>}</div>
@@ -293,9 +298,9 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
             </article>
           })}</div>
           <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>连接测试仅验证凭证与模型列表</strong><p>测试不会发送业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>密钥不回显、不写入浏览器存储，保存后立即清除本页输入。</p></div></div>
-        </section>}
-      </div>
-    </div>
+        </section></TabsContent>}
+      </motion.div>
+    </div></Tabs>
 
     <div className="settings-action-bar"><div className="settings-action-message">{saving ? <LoaderCircle size={17} className="settings-spin" /> : dirty ? <span className="settings-unsaved-dot" /> : <CheckCircle2 size={17} />}<span>{saving ? '正在保存配置…' : dirty ? needsDatabaseTest ? '正式库配置已修改，请先验证连接' : '修改仅在保存后生效' : '所有配置已同步'}</span></div><div><button type="button" className="btn btn-ghost" disabled={!dirty || saving} onClick={discard}>撤销修改</button><button type="button" className="btn btn-primary settings-save-button" disabled={!dirty || saving} onClick={save}>{saving ? <LoaderCircle size={16} className="settings-spin" /> : <Save size={16} />}保存配置{!saving && <ArrowRight size={15} />}</button></div></div>
   </div>

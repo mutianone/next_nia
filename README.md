@@ -2,6 +2,8 @@
 
 当前版本为 **0.4.0，第四阶段：录音与智能笔录**。系统支持 macOS 和 Linux，提供本机可运行的前后端、五套主题及明暗模式、响应式布局、环境与 AI 配置、人员与法规管理、期限核查、模板文书和询问笔录工作室。
 
+界面已升级为统一的 Nova 组件风格：本地组件源码、Lucide 图标、Motion 过渡、自定义弹框与下拉菜单，笔录工作室支持调整面板宽度。五套主题及明暗模式共用设计变量，运行时不访问组件网站或 CDN。详见 [界面升级说明](docs/ui-upgrade.md)。
+
 ## 当前能力
 
 | 模块 | 已实现范围 |
@@ -62,6 +64,8 @@ bash scripts/dev.sh
 
 人员与知识库操作见 [第二阶段历史说明](docs/phase-2.md)，预警、规则与文书操作见 [第三阶段说明](docs/phase-3.md)。
 
+站内切换页面、关闭编辑窗或放弃录音时，未保存内容通过自定义弹框确认。为了不出现浏览器原生离开提示，刷新、关闭标签页及离开本站不会弹出拦截提示；请先保存修改和录音。文件选择、麦克风授权等浏览器或操作系统界面由其自身控制。
+
 ## 环境与数据
 
 默认数据存放于 `backend/data/`：`settings.json` 保存服务端配置，`test.sqlite3` 保存测试环境业务表和审计表。知识库原件、解析文本、预警规则与历史、补充事实、模板、文书快照，以及笔录音频、转写、修订版本和摘要均保存在当前数据库中。音频会增加数据库及备份体积。
@@ -105,10 +109,12 @@ scripts/                   macOS/Linux 环境检查和启动脚本
 docs/phase-2.md             第二阶段功能与使用说明
 docs/phase-3.md             第三阶段预警与文书说明
 docs/phase-4.md             第四阶段录音、修订与 AI 整理说明
+docs/ui-upgrade.md          Nova 组件、弹框与界面验收说明
 ```
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 backend/.venv/bin/python -m pytest backend/tests
 bash -n scripts/common.sh scripts/setup.sh scripts/dev.sh

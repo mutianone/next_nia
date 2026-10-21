@@ -182,6 +182,8 @@ TXT/DOCX 完全本地生成，无新增外部转换依赖。draft 导出保留�
 
 前端错误直接展示中文 `detail`；网络失败显示真实错误，不伪造成功。全局主题变量包括 `--bg`、`--surface`、`--text`、`--muted`、`--border`、`--primary`、`--accent`、`--danger`、`--success`、`--warning` 等；新增页面同时适配明暗模式与移动布局。
 
-表单接入 `settings-dirty-change` 的统一路由保护及 beforeunload，关闭时确认未保存修改。预警至文书的人员/停留/预警上下文只在当前前端状态传递，不写入 localStorage 或 sessionStorage。数据库错误、冲突和请求失败须显示真实反馈。
+表单通过 `usePageDirty` 和带来源 ID 的 `settings-dirty-change` 事件接入统一站内路由保护。关闭编辑窗、切换站内页面、后退或更改 hash 时，使用本地 Nova/Radix 确认弹框，取消保留当前表单和地址；并发确认不会排队执行陈旧操作。已移除全部 `window.confirm/alert/prompt` 与 `beforeunload`：刷新、关闭标签页或离开本站不再拦截，使用者须先保存。HTML 原生约束仍阻止不合法提交，校验消息由自定义弹框展示。文件选择和麦克风等系统授权界面不属于应用可替换组件。
+
+前端 `src/components/ui/` 保留 shadcn/ui radix-nova 组件源码及 MIT 声明，Radix 提供焦点管理与键盘行为。全局设计变量适配五套主题及明暗模式；Motion 用于轻量过渡，并尊重减少动效设置；笔录工作台在桌面使用 react-resizable-panels，窄屏改为堆叠布局。页面脚本按需加载，页面样式统一装载以保持层叠顺序。没有引入尚无使用场景的拖拽库。此次升级不更改后端接口、数据结构及第五阶段范围，详见 `docs/ui-upgrade.md`。
 
 完整用户说明见 `README.md`、`docs/phase-4.md`；`docs/phase-2.md` 与 `docs/phase-3.md` 保留相应阶段的历史范围。检查命令见 README，验证结论以本次实际运行结果为准，不记录未执行的通过状态。
