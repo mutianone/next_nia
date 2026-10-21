@@ -1,0 +1,5 @@
+# Optional local semantic retrieval. Install this only on a prepared machine.
+# Pre-provision a compatible local SentenceTransformer model directory and set:
+# NEXT_NIA_EMBEDDING_MODEL_DIR=/absolute/path/to/model
+# Runtime uses local_files_only=True and trust_remote_code=False; it never downloads.
+sentence-transformers>=3.4.1,<6

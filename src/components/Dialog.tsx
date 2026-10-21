@@ -14,7 +14,7 @@ export function Dialog({ title, onClose, children, className = '' }: { title: st
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeRef.current();
       if (event.key !== 'Tab') return;
-      const nodes = container.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input, select, a[href], [tabindex="0"]');
+      const nodes = Array.from(container.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex="0"]') || []).filter(node => node.getClientRects().length > 0);
       if (!nodes?.length) return;
       const first = nodes[0], last = nodes[nodes.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }

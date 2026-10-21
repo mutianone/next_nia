@@ -11,7 +11,7 @@ check_venv
 cd "$PROJECT_ROOT"
 
 [ -f node_modules/vite/bin/vite.js ] || fail '未找到 Vite，请先运行 bash scripts/setup.sh。'
-backend/.venv/bin/python -c 'import fastapi, uvicorn, sqlalchemy, psycopg, httpx' \
+backend/.venv/bin/python -c 'import fastapi, uvicorn, sqlalchemy, psycopg, httpx, pypdf, python_multipart' \
   || fail '后端依赖不完整，请重新运行 bash scripts/setup.sh。'
 
 # Check before launching either service. Never stop an existing process.
@@ -22,6 +22,7 @@ import errno
 
 for port in (8000, 5173):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             sock.bind(("127.0.0.1", port))
         except OSError as error:

@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 import logging
 import os
 from pathlib import Path
@@ -7,48 +8,43 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
 from .ai import AIConnectionError, test_ai_connection
 from .config import ConfigurationError, SettingsStore
-from .database import Base, application_engine, probe_postgres, write_audit
+from .database import AuditEvent, Base, application_engine, probe_postgres, write_audit
+from .people import Person, PersonStay, router as people_router
+from .knowledge import KnowledgeDocument, router as knowledge_router
 from .schemas import AITestRequest, PostgresUpdate, SettingsUpdate, database_identity, merge_postgres, merge_settings, public_settings
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 logger = logging.getLogger("next_nia")
 
 
-def dashboard_data(mode: str) -> dict:
-    result = {
-        "demo": mode == "test",
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "stats": {"people": 0, "active_permits": 0, "pending_alerts": 0, "draft_records": 0},
-        "trend": [], "activities": [], "alerts": [],
-    }
-    if mode == "production":
-        return result
-    result.update({
-        "stats": {"people": 128, "active_permits": 116, "pending_alerts": 8, "draft_records": 4},
-        "trend": [
-            {"label": "周一", "entries": 18, "exits": 12},
-            {"label": "周二", "entries": 24, "exits": 18},
-            {"label": "周三", "entries": 20, "exits": 16},
-            {"label": "周四", "entries": 32, "exits": 23},
-            {"label": "周五", "entries": 27, "exits": 20},
-            {"label": "周六", "entries": 38, "exits": 28},
-            {"label": "周日", "entries": 31, "exits": 25},
-        ],
-        "activities": [
-            {"id": "a1", "title": "演示人员档案已整理", "description": "虚构样本 · 仅用于第一阶段界面展示", "time": "09:30", "type": "person"},
-            {"id": "a2", "title": "法规知识库建设待启动", "description": "第二阶段规划 · 暂未导入法规", "time": "09:15", "type": "knowledge"},
-            {"id": "a3", "title": "笔录工作台方案已规划", "description": "第四阶段规划 · 暂未接入语音识别", "time": "08:50", "type": "record"},
-        ],
-        "alerts": [
-            {"id": "e1", "name": "示例人员 A", "code": "DEMO-001", "category": "停留期限待核查", "days": 3, "status": "待核查"},
-            {"id": "e2", "name": "示例人员 B", "code": "DEMO-002", "category": "许可信息待补全", "days": 7, "status": "待补全"},
-            {"id": "e3", "name": "示例人员 C", "code": "DEMO-003", "category": "材料有效期待复核", "days": 12, "status": "待复核"},
-        ],
-    })
+def dashboard_data(engine) -> dict:
+    now = datetime.now(ZoneInfo("Asia/Shanghai"))
+    today = now.date()
+    result = {"demo": False, "updated_at": now.isoformat(), "stats": {}, "trend": [], "activities": [], "alerts": []}
+    actions = {"person.created": "新增人员档案", "person.updated": "更新人员资料", "person.archived": "归档人员档案", "person.restored": "恢复人员档案", "person.stay_created": "登记停留记录", "person.stay_updated": "更新停留记录", "people.imported": "批量导入人员资料", "knowledge.imported": "导入法规资料", "knowledge.updated": "更新法规版本信息", "knowledge.asked": "完成法规问答"}
+    with Session(engine) as session:
+        result["stats"] = {
+            "people": session.scalar(select(func.count()).select_from(Person).where(Person.archived.is_(False))) or 0,
+            "registered_stays": session.scalar(select(func.count()).select_from(PersonStay).join(Person).where(Person.archived.is_(False))) or 0,
+            "knowledge_documents": session.scalar(select(func.count()).select_from(KnowledgeDocument).where(KnowledgeDocument.status == "published")) or 0,
+            "pending_reviews": session.scalar(select(func.count()).select_from(KnowledgeDocument).where(KnowledgeDocument.status == "draft")) or 0,
+            "active_permits": 0, "pending_alerts": 0, "draft_records": 0,
+        }
+        if result["stats"]["registered_stays"]:
+            for offset in range(6, -1, -1):
+                day = today - timedelta(days=offset)
+                base = select(func.count()).select_from(PersonStay).join(Person).where(Person.archived.is_(False))
+                result["trend"].append({"label": day.strftime("%m/%d"), "entries": session.scalar(base.where(PersonStay.entry_date == day)) or 0, "exits": session.scalar(base.where(PersonStay.exit_date == day)) or 0})
+        events = session.scalars(select(AuditEvent).where(AuditEvent.action.in_(actions)).order_by(AuditEvent.created_at.desc(), AuditEvent.id.desc()).limit(4)).all()
+        for event in events:
+            created = event.created_at.replace(tzinfo=timezone.utc) if event.created_at.tzinfo is None else event.created_at
+            result["activities"].append({"id": str(event.id), "title": actions[event.action], "description": "本地操作记录 · " + ("人员档案" if event.action.startswith(("person.", "people.")) else "法规知识库"), "time": created.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%m/%d %H:%M"), "type": "person" if event.action.startswith(("person.", "people.")) else "knowledge"})
     return result
 
 
@@ -123,7 +119,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
     @application.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError):
         # FastAPI's normal validation payload includes input values. Never echo it.
-        return JSONResponse(status_code=422, content={"detail": "配置格式或参数不正确，请检查环境、端口、模型名称及固定的服务商地址。"})
+        return JSONResponse(status_code=422, content={"detail": "请求字段格式不正确，请检查必填内容、日期、字段长度及选项。"})
 
     @application.exception_handler(ConfigurationError)
     async def configuration_error(request: Request, error: ConfigurationError):
@@ -131,7 +127,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.get("/api/health")
     def health():
-        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 1, **runtime()}
+        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 2, **runtime()}
 
     @application.get("/api/settings")
     def get_settings():
@@ -182,8 +178,10 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.get("/api/dashboard")
     def get_dashboard():
-        return dashboard_data(application.state.active_settings.environment.mode)
+        return dashboard_data(application.state.engine)
 
+    application.include_router(people_router)
+    application.include_router(knowledge_router)
     return application
 
 
