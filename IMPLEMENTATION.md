@@ -186,4 +186,6 @@ TXT/DOCX 完全本地生成，无新增外部转换依赖。draft 导出保留�
 
 前端 `src/components/ui/` 保留 shadcn/ui radix-nova 组件源码及 MIT 声明，Radix 提供焦点管理与键盘行为。全局设计变量适配五套主题及明暗模式；Motion 用于轻量过渡，并尊重减少动效设置；笔录工作台在桌面使用 react-resizable-panels，窄屏改为堆叠布局。页面脚本按需加载，页面样式统一装载以保持层叠顺序。没有引入尚无使用场景的拖拽库。此次升级不更改后端接口、数据结构及第五阶段范围，详见 `docs/ui-upgrade.md`。
 
+`SpatialHero` 和 `src/components/spatial/` 提供所有导航页的 Three.js 本地生成场景。渲染模块动态导入，资源在路由卸载时释放；可见性和后台状态控制渲染循环，动画限制 30 fps、像素比不超过 1.5。系统及应用减少动效设置同时生效。WebGL 不可用或上下文丢失时保留静态展示与业务操作。三维主视觉只展示抽象图形，不读取人员、录音或预警数据；不是新增业务分析功能。交互与验证说明见 `docs/spatial-ui.md`。
+
 完整用户说明见 `README.md`、`docs/phase-4.md`；`docs/phase-2.md` 与 `docs/phase-3.md` 保留相应阶段的历史范围。检查命令见 README，验证结论以本次实际运行结果为准，不记录未执行的通过状态。

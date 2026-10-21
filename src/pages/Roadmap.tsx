@@ -1,4 +1,5 @@
-import { ArrowRight, CircleCheck, Clock3, Layers3, FileCheck2, LockKeyhole } from 'lucide-react';
+import { SpatialHero } from '../components/SpatialHero';
+import { ArrowRight, CircleCheck, Clock3, FileCheck2, LockKeyhole } from 'lucide-react';
 import { navigation, stages } from '../navigation';
 import type { PageId } from '../navigation';
 
@@ -18,7 +19,7 @@ export function Roadmap({ page, onNavigate }: { page: PageId; onNavigate: (page:
   const detail = details[page];
   if (!detail) return null;
   return <div className="page-content roadmap-page"><div className="page-heading"><div><div className="eyebrow">BUILDING WITH PURPOSE</div><h1 className="page-title">{item.label}<span className="title-dot">.</span></h1><p className="page-description">{detail.text}</p></div><span className="badge roadmap-badge"><Clock3 size={14} /> 第 {item.stage} 阶段 · 待开发</span></div>
-    <section className="roadmap-hero panel"><div className="roadmap-orbit"><div className="orbit-ring orbit-one" /><div className="orbit-ring orbit-two" /><div className="orbit-core"><item.icon size={40} strokeWidth={1.3} /></div><span className="orbit-satellite"><Layers3 size={18} /></span></div><div><span className="eyebrow">COMING NEXT</span><h2>这部分能力，即将逐步构建</h2><p>目前已开放人员档案、法规知识库、预警、文书与智能笔录工作室。<br />此页面用于展示已确认的功能范围，业务操作将在对应阶段开放。</p><button className="btn btn-primary" onClick={() => onNavigate('settings')}>先配置运行环境 <ArrowRight size={16} /></button></div></section>
+    <SpatialHero variant={page === 'profiles' ? 'profiles' : 'analytics'} action={<button className="hero-button" onClick={() => onNavigate('settings')}>先配置运行环境 <ArrowRight size={16}/></button>}/>
     <div className="roadmap-details"><section className="panel"><div className="section-title"><h2><FileCheck2 size={18} /> 计划实现</h2></div><div className="feature-plan">{detail.features.map((feature, i) => <div key={feature}><span>0{i + 1}</span><p>{feature}</p><Clock3 size={15} /></div>)}</div><div className="dependency-note"><LockKeyhole size={17} /><p>{detail.dependency}</p></div></section><section className="panel"><div className="section-title"><h2>开发路线</h2><span className="badge">分阶段交付</span></div><div className="phase-timeline">{stages.map(s => <div key={s.number} className={`phase-row ${s.number === 4 ? 'current' : ''} ${s.number === item.stage ? 'highlight' : ''}`}><span className="phase-marker">{s.number === 1 ? <CircleCheck size={18} /> : `0${s.number}`}</span><div><strong>{s.title}</strong><p>{s.detail}</p></div><small>{s.state}</small></div>)}</div></section></div>
   </div>;
 }

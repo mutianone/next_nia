@@ -1,20 +1,9 @@
+import { SpatialHero } from '../components/SpatialHero';
 import { useEffect, useState } from 'react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, AudioLines, BookOpen, CalendarDays, Check, ChevronRight, Database, FileText, Layers3, Radio, RefreshCw, Shield, Sparkles, UsersRound, WifiOff } from 'lucide-react';
 import { api } from '../api';
 import type { DashboardData, Health } from '../api';
 import type { PageId } from '../navigation';
-
-function CityIllustration() {
-  return <svg className="city-illustration" viewBox="0 0 440 240" fill="none" aria-hidden="true">
-    <defs><linearGradient id="building" x1="210" y1="20" x2="210" y2="240" gradientUnits="userSpaceOnUse"><stop stopColor="#accfcf" stopOpacity=".24"/><stop offset="1" stopColor="#accfcf" stopOpacity=".02"/></linearGradient><linearGradient id="path" x1="20" y1="200" x2="420" y2="110"><stop stopColor="#9ce2cd" stopOpacity="0"/><stop offset=".6" stopColor="#9ce2cd"/><stop offset="1" stopColor="#9ce2cd" stopOpacity=".1"/></linearGradient></defs>
-    <g stroke="#a4cbca" strokeOpacity=".16"><path d="m5 204 180-70 242 50-155 53L5 204Z"/><path d="m54 219 176-71M120 231l177-67M191 239l176-65M78 176l272 47M135 154l274 50"/></g>
-    <g stroke="#b3d7d4" strokeWidth=".8" strokeOpacity=".4" fill="url(#building)"><path d="m73 169 31-13V87L73 98v71Zm31-82 25 9v68l-25-8M73 98l25 8 31-10M98 106v70"/><path d="m153 168 38-16V48l-38 14v106Zm38-120 36 13v106l-36-15M153 62l36 13 38-14M189 75v108"/><path d="m245 182 31-12V96l-31 11v75Zm31-86 27 9v75l-27-10M245 107l26 9 32-11M271 116v78"/><path d="m319 167 25-10v-38l-25 9v39Zm25-48 25 9v39l-25-10M319 128l25 9 25-9M344 137v39"/><path d="m192 50 10-15 12 21M202 35V20"/></g>
-    <g stroke="#c0e6dc" strokeOpacity=".28"><path d="M162 77v65m9-68v63m29-50v62m10-66v64M82 112v35m28-39v39M254 122v38m31-33v34"/></g>
-    <path d="M16 192c60 12 94 5 141-24 42-25 42-59 83-72 47-16 101 9 166-35" stroke="url(#path)" strokeWidth="2" strokeDasharray="4 6"/>
-    <circle cx="241" cy="96" r="7" fill="#91d4bd" fillOpacity=".15"/><circle cx="241" cy="96" r="3" fill="#a8e0cb"/>
-    <g transform="translate(362 47) rotate(-24)"><path d="m0 10 32-10-11 29-5-13L0 10Z" fill="#b8e4d9"/><path d="M16 16 32 0" stroke="#2b666a"/></g><circle cx="342" cy="40" r="2" fill="#b8e4d9" opacity=".5"/><circle cx="122" cy="42" r="1.5" fill="#b8e4d9" opacity=".5"/>
-  </svg>;
-}
 
 function TrendChart({ data, mode }: { data: DashboardData['trend']; mode: 'all' | 'entries' | 'exits' }) {
   if (!data.length) return <div className="chart-empty"><Layers3 size={30} /><p>尚无业务趋势数据</p><small>在人员档案中登记入境和离境日期后，这里会展示趋势</small></div>;
@@ -47,7 +36,7 @@ export function Dashboard({ health, onNavigate, onHelp }: { health: Health | nul
   return <div className="page-content dashboard-page">
     <div className="page-heading"><div><div className="eyebrow"><span className="small-line"/> YOUR DAILY WORKSPACE</div><h1 className="page-title">每一次服务，都井然有序<span className="title-dot">.</span></h1><p className="page-description">从一份清晰的总览，开始今天的工作。</p></div><div className="dashboard-date"><CalendarDays size={16}/><span>{date}</span><button className="icon-button" aria-label="刷新工作台" onClick={refresh} disabled={loading}><RefreshCw size={15} className={loading ? 'spinning' : ''}/></button></div></div>
     {error && <div className="error-notice" role="alert"><WifiOff size={18}/><span>工作台暂时无法连接：{error}。请检查本地后端服务。</span><button onClick={refresh}>重试</button></div>}
-    <section className="welcome-banner"><div className="welcome-copy"><div className="welcome-tag"><span/> 境智 · 智慧出入境</div><h2>连接业务与知识<br/>让专业，更进一步。</h2><p>本地工作空间，承载有据可循的每一步。</p><button className="hero-button" onClick={() => onNavigate('settings')}>配置我的工作空间 <ArrowUpRight size={16}/></button></div><CityIllustration/><div className="hero-coordinate"><span>CONNECTED WORKSPACE</span><i/> LOCAL FIRST</div><span className="hero-corner">04 — VOICE & RECORDS</span></section>
+    <SpatialHero variant="dashboard" action={<button className="hero-button" onClick={() => onNavigate('settings')}>配置我的工作空间 <ArrowUpRight size={16}/></button>}/>
     <div className="data-caption"><span><i className={`status-dot ${data?.demo ? 'amber' : ''}`}/>{data ? '当前环境真实记录 · 预警按最近扫描结果显示，仍需人工核查' : '正在读取本地数据源'}</span><button onClick={onHelp}>当前阶段说明 <ArrowUpRight size={13}/></button></div>
     <div className="stats-grid">{stats.map(s => <button className={`stat-card ${s.color}`} key={s.label} onClick={() => onNavigate(s.route)}><div className="stat-top"><span>{s.label}</span><span className="stat-icon"><s.icon size={19} strokeWidth={1.6}/></span></div><div className="stat-value">{s.number === undefined ? '—' : s.number.toLocaleString()}<small>{s.unit}</small></div><div className="stat-footer"><span>{s.caption}</span><ChevronRight size={14}/></div></button>)}</div>
     <div className="dashboard-middle"><section className="panel trend-panel"><div className="section-title"><div><h2>出入境动态 <span className="micro-badge">已登记</span></h2><p className="muted">人员档案中的日期记录 · 不代表外部业务系统总量</p></div><div className="segmented chart-segments">{([{ id: 'all', label: '全部' }, { id: 'entries', label: '入境' }, { id: 'exits', label: '出境' }] as const).map(s => <button key={s.id} className={series === s.id ? 'active' : ''} onClick={() => setSeries(s.id)} aria-pressed={series === s.id}>{s.label}</button>)}</div></div><div className="chart-summary"><div><span className="chart-legend"/><span>入境</span><strong>{data?.trend.reduce((sum, d) => sum + d.entries, 0) ?? '—'}</strong><small>人次</small></div><div><span className="chart-legend secondary"/><span>出境</span><strong>{data?.trend.reduce((sum, d) => sum + d.exits, 0) ?? '—'}</strong><small>人次</small></div><span className="chart-period">最近 7 天 · 已登记记录</span></div><TrendChart data={data?.trend || []} mode={series}/></section>

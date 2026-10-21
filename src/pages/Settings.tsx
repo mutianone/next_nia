@@ -1,3 +1,4 @@
+import { SpatialHero } from '../components/SpatialHero';
 import { confirmAction } from '../lib/confirmation';
 import { Switch as Toggle } from '../components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
@@ -212,6 +213,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '与服务端配置同步'}</div>
     </div>
 
+    <SpatialHero variant="settings" compact/>
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
       <div><span className="settings-runtime-label">当前运行</span><strong>{runtime.active_environment === 'production' ? '正式环境' : '测试环境'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
