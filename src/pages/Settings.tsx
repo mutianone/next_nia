@@ -205,12 +205,12 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     finally { setSaving(false) }
   }
 
-  if (loading) return <div className="settings-page"><div className="eyebrow">SYSTEM SETTINGS</div><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel" role="status"><LoaderCircle size={28} className="settings-spin" /><h2>正在读取本地配置</h2><p className="muted">连接服务后，将显示实际运行环境和 AI 配置。</p></div></div>
-  if (loadError || !draft || !runtime) return <div className="settings-page"><div className="eyebrow">SYSTEM SETTINGS</div><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel settings-load-error" role="alert"><Unplug size={30} /><h2>暂时无法读取配置</h2><p>{loadError || '服务没有返回完整配置。'}</p><button className="btn btn-primary" onClick={() => setReload(value => value + 1)}><RefreshCw size={16} />重新连接</button></div></div>
+  if (loading) return <div className="settings-page"><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel" role="status"><LoaderCircle size={28} className="settings-spin" /><h2>正在读取本地配置</h2><p className="muted">连接服务后，将显示实际运行环境和 AI 配置。</p></div></div>
+  if (loadError || !draft || !runtime) return <div className="settings-page"><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel settings-load-error" role="alert"><Unplug size={30} /><h2>暂时无法读取配置</h2><p>{loadError || '服务没有返回完整配置。'}</p><button className="btn btn-primary" onClick={() => setReload(value => value + 1)}><RefreshCw size={16} />重新连接</button></div></div>
 
   return <div className="settings-page">
     <div className="settings-heading">
-      <div><div className="eyebrow">CONFIGURE YOUR WORKSPACE</div><h1 className="page-title">系统设置<span className="settings-title-dot" /></h1><p className="page-description">让环境、数据与智能服务，按你的方式运行。</p></div>
+      <div><h1 className="page-title">系统设置<span className="settings-title-dot" /></h1><p className="page-description">让环境、数据与智能服务，按你的方式运行。</p></div>
       <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '与服务端配置同步'}</div>
     </div>
 
@@ -235,7 +235,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与组织信息', number: '01' },
             { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: '数据库与环境隔离', number: '02' },
             { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: '模型与连接管理', number: '03' },
-            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: '迁移、备份与恢复', number: '04' },
+            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: '演示资料、迁移与备份', number: '04' },
           ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
         </nav></TabsList>
         <div className="settings-local-note"><ShieldCheck size={23} /><h3>数据留在本地</h3><p>业务数据与配置保存在本地服务器。AI 调用仅通过已配置的服务商。</p><div><span />支持 macOS · Linux</div></div>
@@ -307,6 +307,6 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       </motion.div>
     </div></Tabs>
 
-    <div className="settings-action-bar"><div className="settings-action-message">{saving ? <LoaderCircle size={17} className="settings-spin" /> : dirty ? <span className="settings-unsaved-dot" /> : <CheckCircle2 size={17} />}<span>{saving ? '正在保存配置…' : dirty ? needsDatabaseTest ? '正式库配置已修改，请先验证连接' : '修改仅在保存后生效' : '所有配置已同步'}</span></div><div><button type="button" className="btn btn-ghost" disabled={!dirty || saving} onClick={discard}>撤销修改</button><button type="button" className="btn btn-primary settings-save-button" disabled={!dirty || saving} onClick={save}>{saving ? <LoaderCircle size={16} className="settings-spin" /> : <Save size={16} />}保存配置{!saving && <ArrowRight size={15} />}</button></div></div>
+    {(section !== 'data' || dirty) && <div className="settings-action-bar"><div className="settings-action-message">{saving ? <LoaderCircle size={17} className="settings-spin" /> : dirty ? <span className="settings-unsaved-dot" /> : <CheckCircle2 size={17} />}<span>{saving ? '正在保存配置…' : dirty ? needsDatabaseTest ? '正式库配置已修改，请先验证连接' : '修改仅在保存后生效' : '所有配置已同步'}</span></div><div><button type="button" className="btn btn-ghost" disabled={!dirty || saving} onClick={discard}>撤销修改</button><button type="button" className="btn btn-primary settings-save-button" disabled={!dirty || saving} onClick={save}>{saving ? <LoaderCircle size={16} className="settings-spin" /> : <Save size={16} />}保存配置{!saving && <ArrowRight size={15} />}</button></div></div>}
   </div>
 }

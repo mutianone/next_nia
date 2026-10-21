@@ -56,7 +56,7 @@ export function Profiles() {
   const activeFacts = profile?.facts.filter(f => !f.archived) || [];
   const verifiedRelations = profile?.relations.filter(r => r.verified && !r.archived && !r.other.archived) || [];
   return <div className="page-content p5-page">
-    <div className="page-heading"><div><div className="eyebrow">FACTS IN CONTEXT</div><h1 className="page-title">让事实，彼此连接<span className="title-dot">.</span></h1><p className="page-description">来源、核验与业务时间线，构成一份可回溯的人员画像。</p></div><button className="btn btn-secondary" onClick={() => setReload(v => v+1)}><RefreshCw size={15}/>刷新</button></div>
+    <div className="page-heading"><div><h1 className="page-title">让事实，彼此连接<span className="title-dot">.</span></h1><p className="page-description">来源、核验与业务时间线，构成一份可回溯的人员画像。</p></div><button className="btn btn-secondary" onClick={() => setReload(v => v+1)}><RefreshCw size={15}/>刷新</button></div>
     <SpatialHero variant="profiles" compact/>
     {error && <div className="p5-notice error" role="alert">{error}</div>}
     <div className="p5-workspace"><aside className="panel p5-directory"><div className="section-title"><h2><UsersRound size={17}/>选择档案</h2><span className="badge">{list?.total ?? '—'}</span></div><label className="p5-search"><Search size={16}/><input aria-label="搜索画像人员" value={query} placeholder="姓名、证件或档案编号" onChange={e => { setQuery(e.target.value); setPage(1); }}/></label><label className="p5-check"><input type="checkbox" checked={archived} onChange={e => { setArchived(e.target.checked); setPage(1); }}/>查看归档人员</label>

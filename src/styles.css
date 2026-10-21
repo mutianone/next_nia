@@ -4,12 +4,12 @@
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   color: var(--text); background: var(--bg); font-synthesis: none; text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-  --bg: #f5f7f8; --surface: #fff; --surface-2: #f4f7f8; --surface-3: #eaf0f3;
-  --text: #243b49; --muted: #7a8a95; --border: #e6ecef; --primary: #245d78;
-  --primary-soft: #eaf2f6; --accent: #72b7aa; --danger: #bf4f4d; --success: #408572;
+  --bg: #f2f6fd; --surface: #fff; --surface-2: #f4f7f8; --surface-3: #eaf0f3;
+  --text: #243b49; --muted: #7a8a95; --border: #e6ecef; --primary: #1e5bd6;
+  --primary-soft: #e8efff; --accent: #4d98f5; --danger: #bf4f4d; --success: #408572;
   --warning: #aa7b3c; --radius: 14px; --shadow: 0 3px 18px #233f4a04;
-  --sidebar-bg: #fff; --hero-start: #173d50; --hero-end: #275c62;
-  --hero-glow: #82bcb2; --sidebar-width: 238px;
+  --sidebar-bg: #fff; --hero-start: #102d74; --hero-end: #1c5cbe;
+  --hero-glow: #71adff; --sidebar-width: 238px;
   color-scheme: light;
 }
 :root[data-theme="jade"] { --bg: #f5f6f2; --surface-2: #f4f5ef; --surface-3: #eaf0e7; --text: #314b3e; --muted: #7c897b; --border: #e5eae0; --primary: #42725d; --primary-soft: #eaf1e6; --accent: #a4b38c; --hero-start: #304b3d; --hero-end: #5a7052; --hero-glow: #c0cca6; }
@@ -380,3 +380,9 @@ main:focus { outline: none; }
 
 .phase-bars i:nth-child(2), .phase-bars i:nth-child(3), .phase-bars i:nth-child(4) { background:var(--primary); }
 .settings-page .settings-card { padding:0; }
+
+/* Government blue has a distinct royal-blue spectrum in both modes. */
+:root[data-theme="government"]:not([data-mode="dark"]) { --sidebar-bg: #f8faff; }
+:root[data-theme="government"][data-mode="dark"] { --bg: #0b152b; --surface: #142340; --surface-2: #1a2c4d; --surface-3: #20385f; --text: #e3edff; --muted: #9aafd0; --border: #29436d; --primary: #83b0ff; --primary-soft: #203c6a; --accent: #65a3ff; --sidebar-bg: #0e1b34; --hero-start: #112d65; --hero-end: #1b4e9d; --hero-glow: #78b4ff; }
+.page-content .page-heading .page-title, .settings-page .settings-heading .page-title { font-size: clamp(21px, 1.75vw, 25px); margin-top: 0; line-height: 1.4; font-weight: 620; }
+@media (max-width: 700px) { .page-content .page-heading .page-title, .settings-page .settings-heading .page-title { font-size: 20px; } }

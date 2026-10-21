@@ -212,5 +212,5 @@ def test_static_build_serve_mode_and_health_version(tmp_path,monkeypatch):
     monkeypatch.setenv('NEXT_NIA_SERVE_DIST','1')
     with TestClient(create_app(tmp_path)) as client:
         assert client.get('/').status_code==200
-        assert client.get('/api/health').json()['version']=='0.5.0'
+        assert client.get('/api/health').json()['version']=='0.5.1'
         assert client.get('/api/missing').status_code==404

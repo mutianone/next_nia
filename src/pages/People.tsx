@@ -167,7 +167,7 @@ export function People() {
   ];
 
   return <div className="page-content people-page">
-    <header className="page-heading people-heading"><div><div className="eyebrow"><span className="small-line" />PERSONNEL ARCHIVES</div><h1 className="page-title">人员档案<span className="title-dot">.</span></h1><p className="page-description">归集身份与停留事实，让每一条信息都有来源。</p></div><button className="btn btn-primary people-create" onClick={() => openEditor()}><Plus size={17} />新建人员档案</button></header>
+    <header className="page-heading people-heading"><div><h1 className="page-title">人员档案<span className="title-dot">.</span></h1><p className="page-description">归集身份与停留事实，让每一条信息都有来源。</p></div><button className="btn btn-primary people-create" onClick={() => openEditor()}><Plus size={17} />新建人员档案</button></header>
     <SpatialHero variant="people" compact/>
     {notice && <div className="people-notice" role="status"><CheckCircle2 size={17} /><span>{notice}</span><button aria-label="关闭提示" onClick={() => setNotice('')}><X size={16} /></button></div>}
     <div className="people-stats">{stats.map(stat => <div className={`people-stat ${stat.tone}`} key={stat.label}><div><span>{stat.label}</span><stat.icon size={17} /></div><strong>{stat.value === undefined ? '—' : stat.value.toLocaleString()}</strong><small>{stat.detail}</small></div>)}</div>

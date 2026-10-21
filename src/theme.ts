@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export const themes = [
-  { id: 'government', name: '政务蓝', description: '秩序与专业，清晰的每一天', color: '#245c78', second: '#79c5bb', background: '#eaf1f4', tag: '经典政企' },
+  { id: 'government', name: '政务蓝', description: '秩序与专业，清晰的每一天', color: '#1e5bd6', second: '#4d98f5', background: '#f2f6fd', tag: '经典政企' },
   { id: 'jade', name: '青玉雅致', description: '温润青绿，让工作舒展有序', color: '#38735f', second: '#b3be91', background: '#edf1e9', tag: '自然雅致' },
   { id: 'space', name: '星舰指挥', description: '冰青光线，探索数字边界', color: '#147d9d', second: '#40c9e8', background: '#e8f4fa', tag: '科幻未来' },
   { id: 'aurora', name: '极光科技', description: '蓝紫流光，与灵感同行', color: '#7060b3', second: '#c1a1df', background: '#f0ecf8', tag: '渐变科技' },

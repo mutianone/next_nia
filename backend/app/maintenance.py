@@ -61,11 +61,14 @@ def verify_archive(source):
     with zipfile.ZipFile(source) as archive:
         names = archive.namelist()
         expected = {table.name+'.jsonl' for table in Base.metadata.sorted_tables} | {'manifest.json'}
+        # 0.5.0 archives predate the optional presentation-data ledger.
+        if 'demo_datasets.jsonl' not in names: expected.discard('demo_datasets.jsonl')
         if len(names) != len(set(names)) or set(names) != expected: raise ValueError('备份文件条目或表版本不匹配')
         if archive.getinfo('manifest.json').file_size > 128*1024: raise ValueError('备份清单过大')
         manifest = json.loads(archive.read('manifest.json'))
-        if manifest.get('format') != FORMAT or set(manifest.get('tables', {})) != set(Base.metadata.tables): raise ValueError('备份格式或表结构不匹配')
+        if manifest.get('format') != FORMAT or {name+'.jsonl' for name in manifest.get('tables', {})} != expected-{'manifest.json'}: raise ValueError('备份格式或表结构不匹配')
         for table in Base.metadata.sorted_tables:
+            if table.name not in manifest['tables']: continue
             metadata = manifest['tables'][table.name]
             if metadata.get('columns') != list(table.columns.keys()): raise ValueError('备份列结构不匹配')
             digest = hashlib.sha256(); count = 0
@@ -91,6 +94,7 @@ def restore_empty(engine, source):
             if connection.scalar(select(func.count()).select_from(table)): raise ValueError('目标数据库非空，拒绝覆盖；请选择全新恢复目录/数据库')
         with zipfile.ZipFile(source) as archive:
             for table in Base.metadata.sorted_tables:
+                if table.name not in manifest['tables']: continue
                 with archive.open(table.name+'.jsonl') as stream:
                     for line in archive_lines(stream):
                         row = json.loads(line)
