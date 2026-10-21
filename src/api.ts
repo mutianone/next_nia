@@ -6,7 +6,8 @@ export type DashboardData = {
   stats: { registered_stays: number; knowledge_documents: number; pending_reviews: number; people: number; active_permits: number; pending_alerts: number; draft_records: number };
   trend: { label: string; entries: number; exits: number }[];
   activities: { id: string; title: string; description: string; time: string; type: string }[];
-  alerts: { id: string; name: string; code: string; category: string; days: number; status: string }[];
+  alerts_last_scan_at: string | null;
+  alerts: { id: string; name: string; code: string; category: string; days: number | null; status: string }[];
 };
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {

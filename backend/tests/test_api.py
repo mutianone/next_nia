@@ -153,7 +153,7 @@ def test_environment_switch_validates_then_waits_for_restart(tmp_path, monkeypat
         assert client.put("/api/settings", json=body).json()["runtime"]["pending_restart"] is True
         assert client.get("/api/dashboard").json()["demo"] is False
     with sqlite3.connect(production_file) as connection:
-        assert {row[0] for row in connection.execute("select name from sqlite_master where type='table'")} == {"audit_events", "people", "person_stays", "knowledge_documents", "knowledge_sections", "knowledge_chunks"}
+        assert {row[0] for row in connection.execute("select name from sqlite_master where type='table'")} == {"audit_events", "people", "person_stays", "knowledge_documents", "knowledge_sections", "knowledge_chunks", "alert_rules", "stay_alert_facts", "alerts", "alert_history", "document_templates", "document_drafts", "document_history"}
 
 
 def test_database_test_uses_unsaved_fields_preserves_password_and_does_not_save(client, tmp_path, monkeypatch):

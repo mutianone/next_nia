@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 import logging
@@ -17,25 +18,36 @@ from .config import ConfigurationError, SettingsStore
 from .database import AuditEvent, Base, application_engine, probe_postgres, write_audit
 from .people import Person, PersonStay, router as people_router
 from .knowledge import KnowledgeDocument, router as knowledge_router
+from .alerts import Alert, AlertRule, scan_alerts, scheduler_loop, router as alerts_router
+from .documents import DocumentDraft, seed_templates, router as documents_router
 from .schemas import AITestRequest, PostgresUpdate, SettingsUpdate, database_identity, merge_postgres, merge_settings, public_settings
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 logger = logging.getLogger("next_nia")
 
 
 def dashboard_data(engine) -> dict:
     now = datetime.now(ZoneInfo("Asia/Shanghai"))
     today = now.date()
-    result = {"demo": False, "updated_at": now.isoformat(), "stats": {}, "trend": [], "activities": [], "alerts": []}
+    result = {"demo": False, "updated_at": now.isoformat(), "stats": {}, "trend": [], "activities": [], "alerts": [], "alerts_last_scan_at": None}
     actions = {"person.created": "新增人员档案", "person.updated": "更新人员资料", "person.archived": "归档人员档案", "person.restored": "恢复人员档案", "person.stay_created": "登记停留记录", "person.stay_updated": "更新停留记录", "people.imported": "批量导入人员资料", "knowledge.imported": "导入法规资料", "knowledge.updated": "更新法规版本信息", "knowledge.asked": "完成法规问答"}
+    actions.update({"alerts.action_start": "开始预警核查", "alerts.action_close": "完成预警核查", "alerts.action_reopen": "重新开启核查", "document.created": "创建文书草稿", "document.updated": "更新文书草稿", "document.reviewed": "完成人工文书核对", "document.archived": "归档文书"})
     with Session(engine) as session:
         result["stats"] = {
             "people": session.scalar(select(func.count()).select_from(Person).where(Person.archived.is_(False))) or 0,
             "registered_stays": session.scalar(select(func.count()).select_from(PersonStay).join(Person).where(Person.archived.is_(False))) or 0,
             "knowledge_documents": session.scalar(select(func.count()).select_from(KnowledgeDocument).where(KnowledgeDocument.status == "published")) or 0,
             "pending_reviews": session.scalar(select(func.count()).select_from(KnowledgeDocument).where(KnowledgeDocument.status == "draft")) or 0,
-            "active_permits": 0, "pending_alerts": 0, "draft_records": 0,
+            "active_permits": 0,
+            "pending_alerts": session.scalar(select(func.count()).select_from(Alert).join(Person).where(Person.archived.is_(False), Alert.status.in_(["open", "in_progress"]))) or 0,
+            "draft_records": session.scalar(select(func.count()).select_from(DocumentDraft).where(DocumentDraft.status == "draft")) or 0,
         }
+        categories = {"due_soon": "期限临近", "due_today": "今日到期", "past_due": "登记期限已过", "needs_review": "资料待核实"}
+        alert_rows = session.execute(select(Alert, Person).join(Person).where(Person.archived.is_(False), Alert.status.in_(["open", "in_progress"])).order_by(Alert.updated_at.desc()).limit(5)).all()
+        result["alerts"] = [{"id": item.id, "name": person.name, "code": person.code, "category": categories[item.category], "days": item.days_remaining, "status": "核查中" if item.status == "in_progress" else "待核查"} for item, person in alert_rows]
+        rule = session.get(AlertRule, 1)
+        if rule and rule.last_scan_at:
+            result["alerts_last_scan_at"] = (rule.last_scan_at.replace(tzinfo=timezone.utc) if rule.last_scan_at.tzinfo is None else rule.last_scan_at).isoformat()
         if result["stats"]["registered_stays"]:
             for offset in range(6, -1, -1):
                 day = today - timedelta(days=offset)
@@ -44,7 +56,8 @@ def dashboard_data(engine) -> dict:
         events = session.scalars(select(AuditEvent).where(AuditEvent.action.in_(actions)).order_by(AuditEvent.created_at.desc(), AuditEvent.id.desc()).limit(4)).all()
         for event in events:
             created = event.created_at.replace(tzinfo=timezone.utc) if event.created_at.tzinfo is None else event.created_at
-            result["activities"].append({"id": str(event.id), "title": actions[event.action], "description": "本地操作记录 · " + ("人员档案" if event.action.startswith(("person.", "people.")) else "法规知识库"), "time": created.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%m/%d %H:%M"), "type": "person" if event.action.startswith(("person.", "people.")) else "knowledge"})
+            area = "人员档案" if event.action.startswith(("person.", "people.")) else "期限核查" if event.action.startswith("alerts.") else "文书中心" if event.action.startswith("document.") else "法规知识库"
+            result["activities"].append({"id": str(event.id), "title": actions[event.action], "description": "本地操作记录 · " + area, "time": created.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%m/%d %H:%M"), "type": "person" if area == "人员档案" else "document" if area == "文书中心" else "knowledge"})
     return result
 
 
@@ -59,6 +72,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
         engine = application_engine(settings, directory)
         try:
             Base.metadata.create_all(engine)
+            seed_templates(engine)
             application.state.engine = engine
             application.state.active_settings = settings.model_copy(deep=True)
             application.state.audit_available = True
@@ -70,8 +84,16 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
             engine.dispose()
             raise ConfigurationError("数据库初始化失败，请检查已保存的环境配置、数据库可用性及权限；未切换到测试环境。") from None
         try:
+            await asyncio.to_thread(scan_alerts, engine, automatic=True)
+        except SQLAlchemyError:
+            logger.error("启动时期限扫描未完成，后台任务将重试。")
+        stop_scanner = asyncio.Event()
+        scanner = asyncio.create_task(scheduler_loop(application, stop_scanner))
+        try:
             yield
         finally:
+            stop_scanner.set()
+            await scanner
             engine.dispose()
 
     application = FastAPI(title="境智 · 本地业务服务", version=VERSION, lifespan=lifespan, docs_url="/api/docs", redoc_url=None, openapi_url="/api/openapi.json")
@@ -127,7 +149,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.get("/api/health")
     def health():
-        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 2, **runtime()}
+        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 3, **runtime()}
 
     @application.get("/api/settings")
     def get_settings():
@@ -182,6 +204,8 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     application.include_router(people_router)
     application.include_router(knowledge_router)
+    application.include_router(alerts_router)
+    application.include_router(documents_router)
     return application
 
 

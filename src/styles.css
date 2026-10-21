@@ -378,5 +378,5 @@ main:focus { outline: none; }
 .environment-label div span { font-size: 10px; }
 @media(max-width:700px){.page-description{font-size:11px}.data-caption,.data-caption button{font-size:9px}.stat-footer{font-size:9px}.quick-item p,.quick-stage{font-size:10px}.environment-label div span{font-size:8px}.environment-label strong{font-size:10px}}
 
-.phase-bars i:nth-child(2) { background:var(--primary); }
+.phase-bars i:nth-child(2), .phase-bars i:nth-child(3) { background:var(--primary); }
 .settings-page .settings-card { padding:0; }
