@@ -1,3 +1,4 @@
+import { Maintenance } from '../components/Maintenance';
 import { SpatialHero } from '../components/SpatialHero';
 import { confirmAction } from '../lib/confirmation';
 import { Switch as Toggle } from '../components/ui/switch';
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react'
 
 type ProviderId = 'siliconflow' | 'deepseek'
-type Section = 'general' | 'environment' | 'ai'
+type Section = 'general' | 'environment' | 'ai' | 'data'
 type ProviderSettings = {
   enabled: boolean
   base_url: string
@@ -234,12 +235,13 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与组织信息', number: '01' },
             { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: '数据库与环境隔离', number: '02' },
             { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: '模型与连接管理', number: '03' },
+            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: '迁移、备份与恢复', number: '04' },
           ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
         </nav></TabsList>
         <div className="settings-local-note"><ShieldCheck size={23} /><h3>数据留在本地</h3><p>业务数据与配置保存在本地服务器。AI 调用仅通过已配置的服务商。</p><div><span />支持 macOS · Linux</div></div>
       </aside>
 
-      <motion.div className="settings-main" key={section} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <motion.div className="settings-main" key="settings-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         {section === 'general' && <TabsContent value="general" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div className="settings-section-symbol"><SlidersHorizontal size={22} /></div><div><h2>基础信息</h2><p>为工作空间设置统一的名称与组织标识。</p></div><span className="settings-section-number">01</span></div>
           <div className="settings-card-body"><div className="settings-field-grid">
@@ -301,6 +303,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           })}</div>
           <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>连接测试仅验证凭证与模型列表</strong><p>测试不会发送业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>密钥不回显、不写入浏览器存储，保存后立即清除本页输入。</p></div></div>
         </section></TabsContent>}
+        <TabsContent value="data" forceMount asChild><div hidden={section !== 'data'}><Maintenance/></div></TabsContent>
       </motion.div>
     </div></Tabs>
 

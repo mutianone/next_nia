@@ -15,7 +15,7 @@ export function SpatialExperience({ theme, reducedMotion, page, children }: { th
   useEffect(() => {
     if (reduced || !finePointer) return;
     let active: HTMLElement | null = null, frame = 0;
-    const selector = '.stat-card, .quick-item, .theme-card, .rec-record-card, .people-stat, .kb-stat, .al-stat, .doc-stats > div, .rec-stats, .nia-settings-overview > div, .feature-plan > div';
+    const selector = '.p5-metric, .p5-fact, .stat-card, .quick-item, .theme-card, .rec-record-card, .people-stat, .kb-stat, .al-stat, .doc-stats > div, .rec-stats, .nia-settings-overview > div, .feature-plan > div';
     const reset = () => { if (frame) cancelAnimationFrame(frame); frame = 0; if (active) { active.removeAttribute('data-spatial-hover'); ['--card-x', '--card-y', '--spot-x', '--spot-y'].forEach(name => active?.style.removeProperty(name)); active = null; } };
     const move = (event: PointerEvent) => {
       const target = event.target instanceof Element ? event.target.closest<HTMLElement>(selector) : null;

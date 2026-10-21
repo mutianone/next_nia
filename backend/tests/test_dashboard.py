@@ -11,7 +11,7 @@ from backend.app.main import create_app
 
 def test_dashboard_uses_actual_records_and_excludes_archived_people(tmp_path):
     with TestClient(create_app(tmp_path)) as client:
-        assert client.get('/api/health').json()['stage'] == 4
+        assert client.get('/api/health').json()['stage'] == 5
         empty = client.get('/api/dashboard').json()
         assert empty['demo'] is False
         assert all(value == 0 for value in empty['stats'].values())

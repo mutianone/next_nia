@@ -45,7 +45,7 @@
 .spatial-fallback i:nth-child(1) { transform: translateZ(-35px) translate(-23px,-20px); }.spatial-fallback i:nth-child(2) { transform: translateZ(-15px) translate(-10px,-8px); }.spatial-fallback i:nth-child(3) { transform: translateZ(10px); }.spatial-fallback svg { transform: translateZ(35px); }
 .spatial-fallback > span { font-size: 8px; letter-spacing: 2px; color: #b5d1de; }
 /* A restrained second level of depth, only for summary cards and shortcuts. */
-:is(.stat-card,.quick-item,.theme-card,.rec-record-card,.people-stat,.kb-stat,.al-stat,.doc-stats > div,.rec-stats,.nia-settings-overview > div,.feature-plan > div) { position: relative; transition: transform .22s ease,box-shadow .22s ease,border-color .22s ease; }
+:is(.p5-metric,.p5-fact,.stat-card,.quick-item,.theme-card,.rec-record-card,.people-stat,.kb-stat,.al-stat,.doc-stats > div,.rec-stats,.nia-settings-overview > div,.feature-plan > div) { position: relative; transition: transform .22s ease,box-shadow .22s ease,border-color .22s ease; }
 [data-spatial-hover="true"] { transform: perspective(900px) rotateX(var(--card-x,0deg)) rotateY(var(--card-y,0deg)) translateY(-4px)!important; box-shadow: 0 13px 32px color-mix(in srgb,var(--primary) 12%,transparent),inset 0 1px 0 color-mix(in srgb,var(--surface) 70%,transparent)!important; border-color: color-mix(in srgb,var(--primary) 35%,var(--border))!important; }
 [data-spatial-hover="true"]::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(240px circle at var(--spot-x,50%) var(--spot-y,50%),color-mix(in srgb,var(--accent) 9%,transparent),transparent 75%); }
 .stat-card .stat-icon,.quick-item .quick-icon { transition: transform .25s cubic-bezier(.22,1,.36,1); }
@@ -70,3 +70,21 @@
 }
 @media(prefers-reduced-motion:reduce) { .spatial-atmosphere i { animation: none!important; } [data-spatial-hover="true"] { transform: none!important; }.stat-card:hover .stat-icon,.quick-item:hover .quick-icon,.btn:hover svg.lucide-arrow-right,.hero-button:hover svg { transform: none; } }
 :root[data-reduced-motion="true"] [data-spatial-hover="true"],:root[data-reduced-motion="true"] .stat-card:hover .stat-icon,:root[data-reduced-motion="true"] .quick-item:hover .quick-icon { transform: none!important; }
+
+/* Phase 5: a lower, more detailed animated header, leaving room for actual work. */
+.spatial-hero,.spatial-compact { min-height: 258px; padding: 21px 30px 28px; margin-bottom: 22px; }
+.spatial-stage,.spatial-compact .spatial-stage { height: 192px; }
+.spatial-copy h2,.spatial-compact .spatial-copy h2 { font-size: clamp(23px,2.1vw,30px); line-height: 1.45; margin: 12px 0 9px; }
+.spatial-points,.spatial-compact .spatial-points { margin-top: 13px; }
+.spatial-action { margin-top: 13px; }.spatial-copy { padding-bottom: 4px; }
+.spatial-scene-heading,.spatial-compact .spatial-scene-heading { top: -5px; }
+.spatial-footer { bottom: 9px; }.spatial-hint { margin-top: 7px; }
+@media(min-width:1600px) { .spatial-hero,.spatial-compact { min-height: 280px; }.spatial-stage,.spatial-compact .spatial-stage { height: 210px; } }
+@media(max-width:700px) {
+  .spatial-hero,.spatial-compact { padding: 21px 21px 20px; gap: 6px; }
+  .spatial-copy h2,.spatial-compact .spatial-copy h2 { font-size: 23px; margin: 10px 0 7px; }
+  .spatial-points { display: none; }.spatial-copy > p { font-size: 11px; }
+  .spatial-stage,.spatial-compact .spatial-stage { height: 166px; }
+  .spatial-scene-heading,.spatial-compact .spatial-scene-heading { top: 10px; }
+  .spatial-visual { margin-top: 5px; padding-top: 16px; }
+}

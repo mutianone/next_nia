@@ -12,8 +12,8 @@ const content: Record<SpatialVariant, { tag: string; title: ReactNode; descripti
   alerts: { tag: '期限核查工作台', title: <>关注时间，<br/>也关注事实。</>, description: '临近期限定期提醒，信息缺口交由人工核查。预警不代表违法认定。', details: ['本地规则', '处置留痕', '事实补充'], code: 'OBSERVE · VERIFY · RECORD' },
   records: { tag: '询问笔录工作室', title: <>每一句原话，<br/>都值得被认真保留。</>, description: '原音留存，转写分离，人工校对，有据成文。', details: ['本地音频', '修订留痕', '按需 AI'], code: 'CAPTURE · REVIEW · PRESERVE' },
   documents: { tag: '文书制作中心', title: <>规范在模板中，<br/>事实在记录里。</>, description: '保留每次制作依据，让填写、核对与留存自然衔接。', details: ['选择模板', '人工核对', '本地导出'], code: 'EVERY DETAIL MATTERS' },
-  profiles: { tag: '人员画像 · 后续阶段', title: <>连接事实，<br/>看见完整的脉络。</>, description: '当前展示已确认的建设方向；事实画像功能将在后续阶段开放。', details: ['事实来源', '关联记录', '待开发'], code: 'CONTEXT & CONNECTIONS' },
-  analytics: { tag: '统计分析 · 后续阶段', title: <>让有据的数据，<br/>呈现清晰的变化。</>, description: '当前展示已确认的建设方向；完整统计分析将在后续阶段开放。', details: ['已登记数据', '可追溯口径', '待开发'], code: 'PATTERNS & PERSPECTIVES' },
+  profiles: { tag: '人员事实画像', title: <>连接事实，<br/>看见完整的脉络。</>, description: '汇集有来源的事实与已核验的关系，让每一条关联都可回溯。', details: ['事实来源', '人工核验', '关系脉络'], code: 'CONTEXT & CONNECTIONS' },
+  analytics: { tag: '本地业务统计', title: <>让有据的数据，<br/>呈现清晰的变化。</>, description: '从当前登记资料出发，按清晰口径观察数量、变化与办理进度。', details: ['已登记数据', '可追溯口径', '本地报表'], code: 'PATTERNS & PERSPECTIVES' },
   appearance: { tag: '工作空间外观', title: <>五种气质，<br/>同一份专注。</>, description: '让色彩、光线与空间，随你的工作节奏自然变化。', details: ['五套主题', '明暗模式', '动效偏好'], code: 'YOUR SPACE, YOUR STYLE' },
   settings: { tag: '工作空间控制中心', title: <>让每一项配置，<br/>恰好适合你的工作。</>, description: '环境、数据与智能服务，在一个本地工作空间中有序运行。', details: ['环境隔离', '服务配置', '本地优先'], code: 'CONFIGURE YOUR WORKSPACE' },
 };
@@ -69,7 +69,7 @@ export function SpatialHero({ variant, action, compact = false }: { variant: Spa
         {state !== 'ready' && <div className="spatial-fallback" aria-hidden="true"><div><i/><i/><i/><Layers3 size={54} strokeWidth={1}/></div><span>{info.code}</span></div>}
       </div>
       <div className="spatial-toolbar"><div className="spatial-view-switch" role="group" aria-label="场景结构"><button type="button" aria-pressed={!expanded} disabled={state !== 'ready'} onClick={() => setExpanded(false)}><Box size={13}/>聚合</button><button type="button" aria-pressed={expanded} disabled={state !== 'ready'} onClick={() => setExpanded(true)}><Expand size={13}/>展开</button></div><div className="spatial-tool-actions"><button type="button" aria-label="重置三维视角" title="重置视角" disabled={state !== 'ready'} onClick={() => { controller.current?.reset(); setExpanded(false); }}><RotateCcw size={14}/></button><button type="button" aria-label={paused ? '播放场景动效' : '暂停场景动效'} title={preferences.reduced ? '已启用减少动态效果' : paused ? '播放场景动效' : '暂停场景动效'} aria-pressed={paused || preferences.reduced} disabled={state !== 'ready' || preferences.reduced} onClick={() => setPaused(value => !value)}>{paused || preferences.reduced ? <Play size={14}/> : <Pause size={14}/>}</button></div></div>
-      <p className="spatial-hint" id={descriptionId}><Hand size={12}/>{state === 'ready' ? preferences.reduced ? '静态展示 · 可拖动或用方向键调整视角' : '拖动旋转 · 方向键调整 · Home 复位' : state === 'loading' ? '正在展开空间…' : '静态展示 · 业务功能正常可用'}</p>
+      <p className="spatial-hint" id={descriptionId}><Hand size={12}/>{state === 'ready' ? preferences.reduced ? '静态展示 · 可拖动或用方向键调整视角' : paused ? '已暂停 · 拖动旋转 · Home 复位' : '自动旋转 · 拖动探索 · Home 复位' : state === 'loading' ? '正在展开空间…' : '静态展示 · 业务功能正常可用'}</p>
     </div>
     <span className="spatial-footer" aria-hidden="true">{info.code}<i/>LOCAL FIRST</span>
   </section>;

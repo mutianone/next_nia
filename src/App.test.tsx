@@ -15,7 +15,7 @@ const settings = {
 beforeEach(() => {
   window.history.replaceState(null, '', '#/settings');
   vi.spyOn(window, 'confirm').mockImplementation(() => { throw new Error('Native confirm forbidden'); });
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/health') ? { status: 'ok', version: '0.4.0', stage: 4, active_environment: 'test', database_engine: 'SQLite' } : { settings, runtime: { active_environment: 'test', database_engine: 'SQLite', pending_restart: false } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/maintenance') ? { counts: {}, events: [], environment: 'test' } : url.endsWith('/health') ? { status: 'ok', version: '0.5.0', stage: 5, active_environment: 'test', database_engine: 'SQLite' } : { settings, runtime: { active_environment: 'test', database_engine: 'SQLite', pending_restart: false } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -43,4 +43,16 @@ it('rolls back hash navigation while a custom confirmation is pending', async ()
   await userEvent.keyboard('{Escape}');
   expect(screen.getByDisplayValue('合成验收平台修改')).toBeInTheDocument();
   expect(window.location.hash).toBe('#/settings');
+});
+
+it('preserves migration text when switching settings tabs and hides the inactive panel', async () => {
+  render(<><App/><ConfirmationHost/></>);
+  await screen.findByDisplayValue('合成验收平台');
+  await userEvent.click(screen.getByRole('tab', { name: /数据与维护/ }));
+  const draft = screen.getByRole('textbox', { name: '迁移 JSON' });
+  await userEvent.type(draft, 'pending draft');
+  await userEvent.click(screen.getByRole('tab', { name: /基础信息/ }));
+  expect(screen.queryByRole('textbox', { name: '迁移 JSON' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('tab', { name: /数据与维护/ }));
+  expect(screen.getByRole('textbox', { name: '迁移 JSON' })).toHaveValue('pending draft');
 });

@@ -21,9 +21,13 @@ from .knowledge import KnowledgeDocument, router as knowledge_router
 from .alerts import Alert, AlertRule, scan_alerts, scheduler_loop, router as alerts_router
 from .documents import DocumentDraft, seed_templates, router as documents_router
 from .records import RecordSession, recover_interrupted_attempts, router as records_router
+from .profiles import router as profiles_router
+from .analytics import router as analytics_router
+from .migration import router as migration_router
+from .maintenance import router as maintenance_router
 from .schemas import AITestRequest, PostgresUpdate, SettingsUpdate, database_identity, merge_postgres, merge_settings, public_settings
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 logger = logging.getLogger("next_nia")
 
 
@@ -153,7 +157,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.get("/api/health")
     def health():
-        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 4, **runtime()}
+        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 5, **runtime()}
 
     @application.get("/api/settings")
     def get_settings():
@@ -211,6 +215,16 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
     application.include_router(alerts_router)
     application.include_router(documents_router)
     application.include_router(records_router)
+    application.include_router(profiles_router)
+    application.include_router(analytics_router)
+    application.include_router(migration_router)
+    application.include_router(maintenance_router)
+    if os.environ.get('NEXT_NIA_SERVE_DIST') == '1':
+        from fastapi.staticfiles import StaticFiles
+        dist = Path(__file__).resolve().parents[2] / 'dist'
+        if not (dist / 'index.html').is_file():
+            raise ConfigurationError('未找到前端构建，请先执行 npm run build。')
+        application.mount('/', StaticFiles(directory=dist, html=True), name='frontend')
     return application
 
 

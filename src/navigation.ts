@@ -18,6 +18,6 @@ export const stages = [
   { number: 1, title: '基础工作空间', detail: '主题系统 · 移动适配 · 环境与 AI 配置', state: '已完成' },
   { number: 2, title: '人员与法规知识', detail: '人员档案 · 文档导入 · 本地检索 · 引用问答', state: '已完成' },
   { number: 3, title: '预警与规范文书', detail: '期限核查 · 处理记录 · 模板与文书导出', state: '已完成' },
-  { number: 4, title: '智能笔录工作室', detail: '录音留存 · 中文转写 · 校对总结 · 成文', state: '当前阶段' },
-  { number: 5, title: '关联分析与交付', detail: '事实画像 · 业务统计 · 数据迁移 · 验收', state: '待开发' },
+  { number: 4, title: '智能笔录工作室', detail: '录音留存 · 中文转写 · 校对总结 · 成文', state: '已完成' },
+  { number: 5, title: '关联分析与交付', detail: '事实画像 · 业务统计 · 数据迁移 · 验收', state: '当前阶段' },
 ];
