@@ -20,9 +20,10 @@ from .people import Person, PersonStay, router as people_router
 from .knowledge import KnowledgeDocument, router as knowledge_router
 from .alerts import Alert, AlertRule, scan_alerts, scheduler_loop, router as alerts_router
 from .documents import DocumentDraft, seed_templates, router as documents_router
+from .records import RecordSession, recover_interrupted_attempts, router as records_router
 from .schemas import AITestRequest, PostgresUpdate, SettingsUpdate, database_identity, merge_postgres, merge_settings, public_settings
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 logger = logging.getLogger("next_nia")
 
 
@@ -32,6 +33,7 @@ def dashboard_data(engine) -> dict:
     result = {"demo": False, "updated_at": now.isoformat(), "stats": {}, "trend": [], "activities": [], "alerts": [], "alerts_last_scan_at": None}
     actions = {"person.created": "新增人员档案", "person.updated": "更新人员资料", "person.archived": "归档人员档案", "person.restored": "恢复人员档案", "person.stay_created": "登记停留记录", "person.stay_updated": "更新停留记录", "people.imported": "批量导入人员资料", "knowledge.imported": "导入法规资料", "knowledge.updated": "更新法规版本信息", "knowledge.asked": "完成法规问答"}
     actions.update({"alerts.action_start": "开始预警核查", "alerts.action_close": "完成预警核查", "alerts.action_reopen": "重新开启核查", "document.created": "创建文书草稿", "document.updated": "更新文书草稿", "document.reviewed": "完成人工文书核对", "document.archived": "归档文书"})
+    actions.update({"records.created": "新建询问笔录", "records.segments_updated": "保存笔录校对", "records.audio_added": "留存原始录音", "records.transcribed": "完成语音转写", "records.analyzed": "整理笔录摘要", "records.reviewed": "完成人工笔录核对"})
     with Session(engine) as session:
         result["stats"] = {
             "people": session.scalar(select(func.count()).select_from(Person).where(Person.archived.is_(False))) or 0,
@@ -40,6 +42,7 @@ def dashboard_data(engine) -> dict:
             "pending_reviews": session.scalar(select(func.count()).select_from(KnowledgeDocument).where(KnowledgeDocument.status == "draft")) or 0,
             "active_permits": 0,
             "pending_alerts": session.scalar(select(func.count()).select_from(Alert).join(Person).where(Person.archived.is_(False), Alert.status.in_(["open", "in_progress"]))) or 0,
+            "transcript_drafts": session.scalar(select(func.count()).select_from(RecordSession).where(RecordSession.status == "draft")) or 0,
             "draft_records": session.scalar(select(func.count()).select_from(DocumentDraft).where(DocumentDraft.status == "draft")) or 0,
         }
         categories = {"due_soon": "期限临近", "due_today": "今日到期", "past_due": "登记期限已过", "needs_review": "资料待核实"}
@@ -56,7 +59,7 @@ def dashboard_data(engine) -> dict:
         events = session.scalars(select(AuditEvent).where(AuditEvent.action.in_(actions)).order_by(AuditEvent.created_at.desc(), AuditEvent.id.desc()).limit(4)).all()
         for event in events:
             created = event.created_at.replace(tzinfo=timezone.utc) if event.created_at.tzinfo is None else event.created_at
-            area = "人员档案" if event.action.startswith(("person.", "people.")) else "期限核查" if event.action.startswith("alerts.") else "文书中心" if event.action.startswith("document.") else "法规知识库"
+            area = "人员档案" if event.action.startswith(("person.", "people.")) else "期限核查" if event.action.startswith("alerts.") else "文书中心" if event.action.startswith("document.") else "智能笔录" if event.action.startswith("records.") else "法规知识库"
             result["activities"].append({"id": str(event.id), "title": actions[event.action], "description": "本地操作记录 · " + area, "time": created.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%m/%d %H:%M"), "type": "person" if area == "人员档案" else "document" if area == "文书中心" else "knowledge"})
     return result
 
@@ -73,6 +76,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
         try:
             Base.metadata.create_all(engine)
             seed_templates(engine)
+            recover_interrupted_attempts(engine)
             application.state.engine = engine
             application.state.active_settings = settings.model_copy(deep=True)
             application.state.audit_available = True
@@ -149,7 +153,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.get("/api/health")
     def health():
-        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 3, **runtime()}
+        return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 4, **runtime()}
 
     @application.get("/api/settings")
     def get_settings():
@@ -206,6 +210,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
     application.include_router(knowledge_router)
     application.include_router(alerts_router)
     application.include_router(documents_router)
+    application.include_router(records_router)
     return application
 
 

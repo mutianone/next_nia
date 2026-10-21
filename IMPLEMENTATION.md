@@ -2,9 +2,9 @@
 
 ## 当前版本和范围
 
-当前为 **0.3.0 / stage 3**，仅支持 macOS 和 Linux。已实现基础框架、主题与明暗模式、移动布局、环境与 AI 配置、人员事实档案、停留记录、CSV 交换、法规导入、版本审核、时效检索、受限 AI 法规问答、期限核查预警及本地模板文书。
+当前为 **0.4.0 / stage 4**，仅支持 macOS 和 Linux。已实现基础框架、主题与明暗模式、移动布局、环境与 AI 配置、人员事实档案、停留记录、CSV 交换、法规导入、版本审核、时效检索、受限 AI 法规问答、期限核查预警、本地模板文书及询问笔录工作室。
 
-第三阶段包含本地规则扫描、补充事实、处置历史、模板版本与审核、文书快照、人工复核、复制归档和 TXT/DOCX 导出。第四阶段语音及笔录、第五阶段事实画像与完整迁移交付未启动。正式文书标准文案仍等待业务方审定；内置模板仅为内部核查工作单。手机安装包未启动；当前无登录，仅用于本机验收。
+第四阶段包含原音本地保存、浏览器录音与上传、受控云端转写、人工分段修订、版本留存、独立 AI 摘要及要素、场景整理模板、人工核对锁定与本地导出。第五阶段事实画像与完整迁移交付未启动。正式文书标准文案仍等待业务方审定；文书内置模板仅为内部核查工作单，笔录场景模板也不代表法定制式。手机安装包未启动；当前无登录，仅用于本机验收。
 
 ## 架构与数据
 
@@ -14,7 +14,7 @@
 - 服务端独立配置：默认 `backend/data/settings.json`，原子保存、权限 `0600`。密钥为本地明文，公开接口只返回是否配置。
 - `NEXT_NIA_DATA_DIR` 指定绝对数据目录；不自动读取 `.env`。
 - 启动时 `Base.metadata.create_all` 创建不存在的表；不自动迁移已有表结构或跨数据库搬迁资料。
-- 人员、停留、法规原件、条款、版本元信息、预警规则/补充事实/历史、文书模板/快照/历史和审计保存在活动数据库中。运行数据、密钥、依赖和模型权重不提交版本库。
+- 人员、停留、法规原件、条款、版本元信息、预警规则/补充事实/历史、文书模板/快照/历史、笔录原音/转写/修订版本/分析和审计保存在活动数据库中。运行数据、密钥、依赖和模型权重不提交版本库。
 - 业务写入与对应审计同事务；通用审计仅记录对象标识、数量等允许的元信息，不写个人详情和密钥。处置备注和复核意见存放在各自业务历史表中。
 
 ## 配置 API
@@ -25,7 +25,9 @@
 
 `POST /api/settings/test-ai` 接受 `{provider, api_key?, chat_model?}`，只通过固定服务商的模型列表接口检查凭据和模型名，不发送业务资料。
 
-`POST /api/settings/test-database` 接受 PostgreSQL 配置，空密码可保留原值；只执行 `SELECT 1`，不建表。`GET /api/health` 返回状态、`version: "0.3.0"`、`stage: 3` 及活动环境信息。
+硅基流动另含 `asr_model`，默认 `FunAudioLLM/SenseVoiceSmall`，由专用音频接口使用；聊天模型和 ASR 模型分别保存。缺失此新字段的历史配置兼容默认值，保存旧格式请求不得意外重置已保存的 ASR 模型。连接测试不执行语音识别，也不保证 ASR 模型权限与格式兼容。
+
+`POST /api/settings/test-database` 接受 PostgreSQL 配置，空密码可保留原值；只执行 `SELECT 1`，不建表。`GET /api/health` 返回状态、`version: "0.4.0"`、`stage: 4` 及活动环境信息。
 
 服务商地址固定：硅基流动 `https://api.siliconflow.cn/v1`，DeepSeek `https://api.deepseek.com`。密钥不得出现在响应、错误或日志中。错误 `detail` 使用可直接展示的中文文本，不暴露底层 SQL 或原始请求内容。
 
@@ -135,12 +137,51 @@ AI 调用前检查总开关、默认服务商、凭据、有效已发布材料�
 
 TXT/DOCX 完全本地生成，无新增外部转换依赖。draft 导出保留“草稿·待人工审核，不得作为正式文书使用”，reviewed 保留“人工核对稿·未签发”；DOCX 正文与页眉均保留标识。当前无正式签发、电子签章、送达和 PDF 导出，不把通用排版当作业务确认的法定制式。
 
+## 录音与询问笔录 API
+
+路由前缀 `/api/records`，关联表为 `record_sessions`、`record_audio`、`record_segments`、`record_versions`、`record_transcription_attempts`、`record_analyses`。所有表使用活动数据库；无演示笔录种子、后台自动外发或跨库缓存。
+
+| 方法和路径 | 行为 |
+| --- | --- |
+| `GET /capabilities` | `{limits,templates,local_conversion_available,ai}`；返回本地限制、五种场景模板、FFmpeg 可执行文件可用性及 AI 配置就绪状态，不执行云端验证 |
+| `GET /` | `q,status:all\|draft\|reviewed\|archived,page,page_size`；标题/人员快照姓名搜索，返回 `{items,total,page,page_size,stats:{total,draft,reviewed,archived}}`，统计独立于筛选 |
+| `POST /` | `{title,scenario?,template_id?,person_id?,location?,interviewers?,occurred_at?}`；创建 draft，固定人员和模板快照，返回详情及 201 |
+| `GET /{id}` | 完整笔录属性、快照、音频元信息、当前片段、转写请求、分析结果、历史索引及成文预览 |
+| `PATCH /{id}` | `expected_revision` + 可编辑元信息/状态/核对意见；修改受状态锁与版本冲突保护 |
+| `PATCH /{id}/segments` | `{expected_revision,segments:[...]}`，按数组顺序整体替换当前修订片段；省略的旧片段从当前稿移除，历史仍保留 |
+| `POST /{id}/audio` | multipart `file,expected_revision,duration_ms?`，保存原音及 SHA-256，返回完整详情及 201 |
+| `GET /{id}/audio/{audio_id}/file` | 当前笔录归属检查后回听；`download=true` 为附件下载，支持单一 HTTP byte range |
+| `GET /{id}/revisions/{revision}` | `{revision,action,created_at,snapshot}`，只读查看当时快照，不回滚当前版本 |
+| `POST /{id}/audio/{audio_id}/transcribe` | `{expected_revision,confirmed:true}`，转写所选音频；成功保留原文并追加人工修订段 |
+| `POST /{id}/analyze` | `{expected_revision,confirmed:true}`，摘要当前已保存的修订文字；成功返回包含独立分析结果的完整详情 |
+| `GET /{id}/export.txt` / `GET /{id}/export.docx` | 本地导出，`include_ai=false` 默认为不含 AI 附录；选入时要求存在未过期的成功分析 |
+
+标题必填且最多 200 字；地点/询问人最多 500 字，核对意见最多 4000 字。`occurred_at` 允许空，非空须为含时区的时间；界面按北京时间录入和显示，不用系统创建时间代替真实询问时间。关联人员须存在且未归档，仅在创建时指定；更新原档案不会改写已保存快照。
+
+`scenario` / `template_id` 的范围为 `study,marriage,residence,violation,other`；仅修改场景时默认同步对应模板，显式指定的 `template_id` 优先。模板是本地整理结构，不代表业务审定的法定版式。笔录状态为 `draft,reviewed,archived`。draft 可编辑、上传、转写、分析；reviewed 须有非空正文、核对意见、`confirmed=true`，核对时固定成文文本。reviewed 只能归档，不能直接恢复为草稿。归档后只允许以单独状态操作恢复到 `archived_from`，原先已核对的稿件恢复后仍锁定。归档不删除资料，归档期间停止正文导出，仍可回听及查看历史。
+
+片段字段为 `id?,audio_id?,start_ms?,end_ms?,speaker,text`。`speaker` 为 `interviewer,interviewee,interpreter,unknown`；角色由人工填写。起止毫秒需同时有值或同时为空，结束晚于开始；有时间必须关联本笔录音频，不能超过已有声明时长。`source:manual|asr` 与 `transcription_id` 由服务器保留，`timestamp_source:manual|none` 不冒充模型时间对齐。新增 ASR 片段无自动角色或时间。
+
+最多 500 段，每段 20,000 字、合计 100,000 字；摘要最多 30,000 字，超限拒绝而非截断。单原音最多 20 MiB，每份笔录最多 30 段 / 500 MiB。支持格式签名为 WAV、MP3、WebM、Ogg、M4A、FLAC，不接受远端 URL 或无头独立录音块。保存阶段不完整解码音频；`duration_ms` 为 1–86,400,000 的可选声明值，`duration_source:declared|unknown`，不声称服务器测量。声明超过一小时的音频不能发起转写。
+
+转写固定调用硅基流动 `/v1/audio/transcriptions`，multipart 仅传 `model` 和音频 `file`，不用原始文件名、人员属性或其他录音补充请求。MP3 原件直传；其他格式经本地 FFmpeg 转成单声道 16 kHz / 48 kbit/s MP3，原件不变。`NEXT_NIA_FFMPEG_BIN` 可指定执行路径，否则查找 `PATH` 中的 `ffmpeg`，不自动安装。转换超时 90 秒、达到一小时或接近输出 20 MiB 时拒绝，不发送截断内容；直接 MP3 不重新测量时长。没有 FFmpeg 不影响本地保存及手工整理。
+
+分析只发送按顺序排列的 `{segment_id,text}`，不加入角色、手工时间、原音、关联人员或其他笔录。模型输出为 `{summary,key_facts:[{label,value,segment_ids}],issues}`；本地校验结构、长度、纯文本和实际输入片段 ID。JSON 成功与 ID 合法不代表内容已获得语义或法律验证。片段 ID、文字、角色、音频关联、时间位置或顺序发生实质修改时，通过本地内容哈希标记过期，旧结果保留输入快照；角色和时间只参与本地失效判断，不在模型输入中。
+
+外部 AI 采用分段事务：请求状态先记录，网络调用不占用业务写锁，结果返回后再次核对版本和状态；并发变化会保留结果历史，但不覆盖当前正文。错误、超时、空结果或异常协议不得伪造成功。请求状态为 `processing,succeeded,failed,stale`；当前 `analysis` 指向最新成功分析，是否可用于当前稿须同时检查其 `stale` 值。全局审计使用 `records.*`，只记录 ID、版本或计数；原音、原文、修订快照和核对意见留在各自业务表。
+
+启动调用 `recover_interrupted_attempts(engine)` 将本库遗留 `processing` 转写及分析记录标为 `failed` 并留审计，不自动重发。中断前远端可能已收到请求，本地失败不代表远端未执行；重试属于新一次明确确认后的调用。
+
+已有笔录的内容/状态变更、音频上传和 AI 请求传递当前 `expected_revision`，SQLite 写事务使用 `BEGIN IMMEDIATE`，PostgreSQL 对笔录行加锁，同时使用 SQLAlchemy 版本列；409 冲突不覆盖已有新版本。这不表示多人生产压测已完成。文件下载设置 `nosniff`、`no-store` 与固定附件名；TXT/DOCX 沿用草稿/未签发标识，AI 附录单独标明辅助整理。
+
+浏览器录音使用 MediaRecorder，运行时检测 MIME，停止后合并全部数据块为完整音频再上传；每段以 5 分钟停止为目标。麦克风需要安全上下文及权限，移动端普通 HTTP 局域网地址不可替代 HTTPS；后台计时与锁屏连续性未验收。未调用浏览器 `SpeechRecognition`，没有自动说话人识别、逐字时间戳、本地 ASR 或流式转写。真实云模型及目标华为手机尚未验收。
+
 ## 工作台与界面
 
-`GET /api/dashboard` 从当前数据库汇总人员、停留、法规、预警和文书，读取最近登记事实与本地操作记录。返回 `demo:false`；只读汇总本身不触发扫描或生成业务记录。历史兼容字段 `draft_records` 当前承载文书草稿数量，不表示智能笔录已经实现。
+`GET /api/dashboard` 从当前数据库汇总人员、停留、法规、预警、文书和笔录，读取最近登记事实与本地操作记录。返回 `demo:false`；只读汇总本身不触发扫描或生成业务记录。历史兼容字段 `draft_records` 继续承载文书草稿数量；`transcript_drafts` 为整理中的询问笔录数量，两者分别统计。
 
 前端错误直接展示中文 `detail`；网络失败显示真实错误，不伪造成功。全局主题变量包括 `--bg`、`--surface`、`--text`、`--muted`、`--border`、`--primary`、`--accent`、`--danger`、`--success`、`--warning` 等；新增页面同时适配明暗模式与移动布局。
 
 表单接入 `settings-dirty-change` 的统一路由保护及 beforeunload，关闭时确认未保存修改。预警至文书的人员/停留/预警上下文只在当前前端状态传递，不写入 localStorage 或 sessionStorage。数据库错误、冲突和请求失败须显示真实反馈。
 
-完整用户说明见 `README.md`、`docs/phase-3.md`；`docs/phase-2.md` 保留第二阶段历史范围。检查命令见 README，验证结论以本次实际运行结果为准，不记录未执行的通过状态。
+完整用户说明见 `README.md`、`docs/phase-4.md`；`docs/phase-2.md` 与 `docs/phase-3.md` 保留相应阶段的历史范围。检查命令见 README，验证结论以本次实际运行结果为准，不记录未执行的通过状态。

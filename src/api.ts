@@ -3,7 +3,7 @@ export type Health = Runtime & { status: string; version: string; stage: number 
 export type DashboardData = {
   demo: boolean;
   updated_at: string;
-  stats: { registered_stays: number; knowledge_documents: number; pending_reviews: number; people: number; active_permits: number; pending_alerts: number; draft_records: number };
+  stats: { registered_stays: number; knowledge_documents: number; pending_reviews: number; people: number; active_permits: number; pending_alerts: number; draft_records: number; transcript_drafts: number };
   trend: { label: string; entries: number; exits: number }[];
   activities: { id: string; title: string; description: string; time: string; type: string }[];
   alerts_last_scan_at: string | null;

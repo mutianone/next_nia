@@ -83,6 +83,12 @@ class SiliconFlowSettings(ProviderSettings):
     enabled: bool = True
     base_url: Literal["https://api.siliconflow.cn/v1"] = "https://api.siliconflow.cn/v1"
     chat_model: str = "Qwen/Qwen3-8B"
+    asr_model: str = Field(default="FunAudioLLM/SenseVoiceSmall", min_length=1, max_length=200)
+
+    @field_validator("asr_model")
+    @classmethod
+    def valid_asr_model(cls, value: str) -> str:
+        return cls.valid_model(value)
 
 
 class DeepSeekSettings(ProviderSettings):
@@ -180,6 +186,8 @@ def merge_settings(update: SettingsUpdate, current: Settings) -> Settings:
         existing = getattr(current.ai.providers, name)
         provider = data["ai"]["providers"][name]
         provider.pop("clear_api_key")
+        if name == "siliconflow" and "asr_model" not in incoming.model_fields_set:
+            provider["asr_model"] = existing.asr_model
         if incoming.clear_api_key:
             provider["api_key"] = ""
         elif not reveal(incoming.api_key):

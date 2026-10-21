@@ -11,7 +11,7 @@ from backend.app.main import create_app
 
 def test_dashboard_uses_actual_records_and_excludes_archived_people(tmp_path):
     with TestClient(create_app(tmp_path)) as client:
-        assert client.get('/api/health').json()['stage'] == 3
+        assert client.get('/api/health').json()['stage'] == 4
         empty = client.get('/api/dashboard').json()
         assert empty['demo'] is False
         assert all(value == 0 for value in empty['stats'].values())
@@ -147,3 +147,26 @@ def test_restarting_app_scans_due_persisted_stays_before_serving_dashboard(tmp_p
             assert session.scalar(select(func.count()).select_from(Alert)) == 1
             scans_after = session.scalar(select(func.count()).select_from(AuditEvent).where(AuditEvent.action == 'alerts.scanned'))
             assert scans_after == scans_before + 1
+
+
+def test_dashboard_counts_real_transcript_drafts_separately_from_documents(tmp_path):
+    with TestClient(create_app(tmp_path)) as client:
+        assert client.get('/api/dashboard').json()['stats']['transcript_drafts'] == 0
+        response = client.post('/api/records', json={
+            'title': '合成测试笔录标题不得进入动态', 'scenario': 'residence',
+            'location': '仅供测试的地点', 'interviewers': '合成询问人',
+        })
+        assert response.status_code == 201, response.text
+        record = response.json()
+        data = client.get('/api/dashboard').json()
+        assert data['stats']['transcript_drafts'] == 1
+        assert data['stats']['draft_records'] == 0
+        assert any(item['title'] == '新建询问笔录' for item in data['activities'])
+        assert '合成测试笔录标题' not in str(data['activities'])
+        assert '合成询问人' not in str(data['activities'])
+        archived = client.patch(f"/api/records/{record['id']}", json={'expected_revision': record['revision'], 'status': 'archived'})
+        assert archived.status_code == 200, archived.text
+        assert client.get('/api/dashboard').json()['stats']['transcript_drafts'] == 0
+        restored = client.patch(f"/api/records/{record['id']}", json={'expected_revision': archived.json()['revision'], 'status': 'draft'})
+        assert restored.status_code == 200, restored.text
+        assert client.get('/api/dashboard').json()['stats']['transcript_drafts'] == 1

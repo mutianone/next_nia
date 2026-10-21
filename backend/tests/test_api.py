@@ -153,7 +153,7 @@ def test_environment_switch_validates_then_waits_for_restart(tmp_path, monkeypat
         assert client.put("/api/settings", json=body).json()["runtime"]["pending_restart"] is True
         assert client.get("/api/dashboard").json()["demo"] is False
     with sqlite3.connect(production_file) as connection:
-        assert {row[0] for row in connection.execute("select name from sqlite_master where type='table'")} == {"audit_events", "people", "person_stays", "knowledge_documents", "knowledge_sections", "knowledge_chunks", "alert_rules", "stay_alert_facts", "alerts", "alert_history", "document_templates", "document_drafts", "document_history"}
+        assert {row[0] for row in connection.execute("select name from sqlite_master where type='table'")} == {"audit_events", "people", "person_stays", "knowledge_documents", "knowledge_sections", "knowledge_chunks", "alert_rules", "stay_alert_facts", "alerts", "alert_history", "document_templates", "document_drafts", "document_history", "record_sessions", "record_audio", "record_segments", "record_versions", "record_transcription_attempts", "record_analyses"}
 
 
 def test_database_test_uses_unsaved_fields_preserves_password_and_does_not_save(client, tmp_path, monkeypatch):
@@ -316,3 +316,26 @@ def test_production_start_failure_does_not_fallback_to_demo(tmp_path, monkeypatc
     assert "private-db-password" not in str(error.value)
     assert not (tmp_path / "test.sqlite3").exists()
     assert store.load().environment.mode == "production"
+
+
+def test_asr_model_is_public_configurable_and_preserved_for_older_clients(client):
+    body = payload(client)
+    assert body["ai"]["providers"]["siliconflow"]["asr_model"] == "FunAudioLLM/SenseVoiceSmall"
+    body["ai"]["providers"]["siliconflow"]["asr_model"] = "  custom/speech-model  "
+    response = client.put("/api/settings", json=body)
+    assert response.status_code == 200
+    assert response.json()["settings"]["ai"]["providers"]["siliconflow"]["asr_model"] == "custom/speech-model"
+    body = payload(client)
+    body["ai"]["providers"]["siliconflow"].pop("asr_model")
+    response = client.put("/api/settings", json=body)
+    assert response.status_code == 200
+    assert response.json()["settings"]["ai"]["providers"]["siliconflow"]["asr_model"] == "custom/speech-model"
+    assert "asr_model" not in response.json()["settings"]["ai"]["providers"]["deepseek"]
+
+
+@pytest.mark.parametrize("value", ["", "  ", "speech\nmodel", "x" * 201])
+def test_invalid_asr_model_never_replaces_saved_settings(client, value):
+    body = payload(client)
+    body["ai"]["providers"]["siliconflow"]["asr_model"] = value
+    assert client.put("/api/settings", json=body).status_code == 422
+    assert client.get("/api/settings").json()["settings"]["ai"]["providers"]["siliconflow"]["asr_model"] == "FunAudioLLM/SenseVoiceSmall"
