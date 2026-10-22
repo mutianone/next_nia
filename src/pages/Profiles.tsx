@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowRight, CheckCheck, ChevronLeft, ChevronRight, Clock3, FileSearch, GitBranch, Network, Pencil, Plus, RefreshCw, Search, ShieldCheck, UsersRound } from 'lucide-react';
 import { api } from '../api';
-import { SpatialHero } from '../components/SpatialHero';
+import { PageHeading } from '../components/PageHeading';
 import { Dialog } from '../components/Dialog';
 import { Choice } from '../components/Choice';
 import { confirmAction } from '../lib/confirmation';
@@ -56,14 +56,13 @@ export function Profiles() {
   const activeFacts = profile?.facts.filter(f => !f.archived) || [];
   const verifiedRelations = profile?.relations.filter(r => r.verified && !r.archived && !r.other.archived) || [];
   return <div className="page-content p5-page">
-    <div className="page-heading"><div><h1 className="page-title">让事实，彼此连接<span className="title-dot">.</span></h1><p className="page-description">来源、核验与业务时间线，构成一份可回溯的人员画像。</p></div><button className="btn btn-secondary" onClick={() => setReload(v => v+1)}><RefreshCw size={15}/>刷新</button></div>
-    <SpatialHero variant="profiles" compact/>
+    <PageHeading title="人员事实与关系" description="按人员查看已登记事实、关系及业务时间线。" scene="profiles"><button className="btn btn-secondary" onClick={() => setReload(v => v+1)}><RefreshCw size={15}/>刷新</button></PageHeading>
     {error && <div className="p5-notice error" role="alert">{error}</div>}
     <div className="p5-workspace"><aside className="panel p5-directory"><div className="section-title"><h2><UsersRound size={17}/>选择档案</h2><span className="badge">{list?.total ?? '—'}</span></div><label className="p5-search"><Search size={16}/><input aria-label="搜索画像人员" value={query} placeholder="姓名、证件或档案编号" onChange={e => { setQuery(e.target.value); setPage(1); }}/></label><label className="p5-check"><input type="checkbox" checked={archived} onChange={e => { setArchived(e.target.checked); setPage(1); }}/>查看归档人员</label>
       <div className="p5-person-list">{list?.items.map(person => <button aria-label={'查看画像 '+person.name} key={person.id} className={selected === person.id ? 'selected' : ''} onClick={() => { setSelected(person.id); setTab('facts'); }}><span className="p5-avatar">{person.name.slice(0,1)}</span><span><strong>{person.name}</strong><small>{person.code}</small></span><ChevronRight size={14}/></button>)}{list && !list.items.length && <div className="p5-empty"><UsersRound size={28}/><strong>暂无匹配档案</strong><p>先在人员档案中建档，或调整搜索条件。</p></div>}</div>
       <div className="p5-pager"><button className="icon-button" aria-label="上一页" disabled={page===1} onClick={() => setPage(v=>v-1)}><ChevronLeft size={16}/></button><span>{page} / {Math.max(1, Math.ceil((list?.total || 0)/12))}</span><button className="icon-button" aria-label="下一页" disabled={!list || page*12>=list.total} onClick={() => setPage(v=>v+1)}><ChevronRight size={16}/></button></div>
     </aside><div className="p5-detail">
-      {!profile ? <section className="panel p5-empty p5-start"><Network size={40}/><h2>{selected ? '正在展开事实脉络…' : '从一份档案开始'}</h2><p>选择人员后，查看来源标签、停留事实、询问笔录和已登记关系。</p><div className="p5-empty-steps"><span>01 选择档案</span><ArrowRight size={14}/><span>02 核对来源</span><ArrowRight size={14}/><span>03 连接事实</span></div></section> : <>
+      {!profile ? <section className="panel p5-empty p5-start"><Network size={40}/><h2>{selected ? '正在读取人员资料…' : '请选择人员档案'}</h2><p>选择人员后，查看来源标签、停留事实、询问笔录和已登记关系。</p><div className="p5-empty-steps"><span>01 选择档案</span><ArrowRight size={14}/><span>02 核对来源</span><ArrowRight size={14}/><span>03 连接事实</span></div></section> : <>
       <section className="panel p5-identity"><span className="p5-avatar large">{profile.person.name.slice(0,1)}</span><div><small>{profile.person.code}</small><h2>{profile.person.name}<span className="badge">{profile.person.archived ? '已归档 · 只读' : labels[profile.person.verification]}</span></h2><p>{profile.person.nationality} · {profile.person.purpose || '事由未填写'}</p><button className="p5-text-button" onClick={() => setEvidence({ title: '人员档案来源', text: profile.person.source })}><FileSearch size={13}/>查看档案来源</button></div></section>
       <div className="p5-metrics">{[[activeFacts.length,'已登记事实'],[activeFacts.filter(f=>f.verified).length,'已核验事实'],[profile.person.stays?.length||0,'停留记录'],[verifiedRelations.length,'已核验关系']].map(([value,label])=><div className="p5-metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
       <div className="p5-tabs" role="tablist" aria-label="画像视图">{([{id:'facts',label:'事实与来源',icon:ShieldCheck},{id:'timeline',label:'业务时间线',icon:Clock3},{id:'relations',label:'关系图谱',icon:GitBranch}] as const).map(item=><button role="tab" aria-selected={tab===item.id} key={item.id} className={tab===item.id?'active':''} onClick={()=>setTab(item.id)}><item.icon size={16}/>{item.label}</button>)}</div>

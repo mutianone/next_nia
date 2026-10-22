@@ -1,13 +1,12 @@
-import { SpatialHero } from '../components/SpatialHero';
-import { Check, Monitor, Moon, Sun, Palette, ArrowUpRight, Layers3, Zap } from 'lucide-react';
+import { PageHeading } from '../components/PageHeading';
+import { Check, Monitor, Moon, Sun, ArrowUpRight, Layers3, Zap } from 'lucide-react';
 import { themes } from '../theme';
 import type { ColorMode, ThemeId } from '../theme';
 
 type Props = { theme: ThemeId; setTheme: (value: ThemeId) => void; mode: ColorMode; setMode: (value: ColorMode) => void; reducedMotion: boolean; setReducedMotion: (value: boolean) => void };
 export function Appearance(props: Props) {
   return <div className="page-content appearance-page">
-    <div className="page-heading"><div><h1 className="page-title">让工作空间，更合心意<span className="title-dot">.</span></h1><p className="page-description">五种气质，同一份专注。外观偏好会保存在当前浏览器。</p></div><div className="heading-icon"><Palette /></div></div>
-    <SpatialHero variant="appearance" compact/>
+    <PageHeading title="外观与主题" description="选择主题、显示模式和动效偏好，设置即时生效。" scene="appearance"></PageHeading>
     <div className="section-title"><h2>选择你的主题</h2><span className="muted">每套主题均支持明暗模式</span></div>
     <div className="theme-grid">{themes.map(t => <button key={t.id} className={`theme-card ${props.theme === t.id ? 'selected' : ''}`} onClick={() => props.setTheme(t.id)} aria-pressed={props.theme === t.id}>
       <div className="theme-miniature" style={{ background: t.background, '--preview-primary': t.color, '--preview-secondary': t.second } as React.CSSProperties}>

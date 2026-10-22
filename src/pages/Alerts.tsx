@@ -1,4 +1,4 @@
-import { SpatialHero } from '../components/SpatialHero';
+import { PageHeading } from '../components/PageHeading';
 import { Choice } from '../components/Choice';
 import { usePageDirty } from '../hooks/usePageDirty';
 import { confirmAction } from '../lib/confirmation';
@@ -218,8 +218,7 @@ export function Alerts({ onNavigate, onCreateDocument }: { onNavigate: (page: Pa
     { label: '事实待核查', value: data?.stats.needs_review, icon: ClipboardCheck, category: 'needs_review', detail: '期限或材料仍待确认', tone: 'primary' },
   ] as const;
   return <div className="page-content alerts-page">
-    <header className="page-heading"><div><h1 className="page-title">期限核查工作台<span className="title-dot">.</span></h1><p className="page-description">从已登记事实出发，让每一次提醒都有记录、每一步核查都有依据。</p></div><div className="al-heading-actions"><button className="btn btn-secondary" disabled={scanning} onClick={() => openFacts()}><Plus size={16}/>补充核查事实</button><button className="btn btn-primary" disabled={scanning} onClick={scan}>{scanning ? <LoaderCircle size={16} className="spinning"/> : <Radar size={16}/>} {scanning ? '扫描中…' : '立即扫描'}</button></div></header>
-    <SpatialHero variant="alerts"/>
+    <PageHeading title="期限核查" description="查看待核查事项，补充事实并记录处理结果。" scene="alerts"><div className="al-heading-actions"><button className="btn btn-secondary" disabled={scanning} onClick={() => openFacts()}><Plus size={16}/>补充核查事实</button><button className="btn btn-primary" disabled={scanning} onClick={scan}>{scanning ? <LoaderCircle size={16} className="spinning"/> : <Radar size={16}/>} {scanning ? '扫描中…' : '立即扫描'}</button></div></PageHeading>
     <div className="al-scan-strip"><span><i className={rules?.enabled ? 'active' : ''}/>{rulesLoading ? '读取扫描规则…' : rules ? rules.enabled ? `自动扫描 · 每 ${rules.scan_interval_minutes} 分钟` : '自动扫描已关闭' : '扫描规则读取失败'}</span><div><span>上次 <strong>{timeText(rules?.last_scan_at || data?.last_scan_at)}</strong></span><span>下次 <strong>{rules?.enabled ? timeText(rules.next_scan_at) : '—'}</strong></span><button type="button" disabled={!rules || rulesLoading || scanning} onClick={() => setModal('rules')}><Settings2 size={14}/>配置规则</button></div></div>
     {rulesError && <ErrorBox retry={loadRules}>{rulesError}</ErrorBox>}{rules?.last_error && <ErrorBox>最近一次自动扫描未完成：{rules.last_error}</ErrorBox>}
     {scanning && <div className="al-scan-progress" role="status"><span className="al-progress-line"/><LoaderCircle className="spinning" size={18}/><div><strong>正在扫描本地停留记录</strong><p>核对登记期限与补充事实，并更新提醒状态。请等待本次扫描完成。</p></div></div>}
@@ -234,7 +233,7 @@ export function Alerts({ onNavigate, onCreateDocument }: { onNavigate: (page: Pa
     {modal === 'rules' && rules && <RulesDialog current={rules} onClose={() => setModal(null)} onDirty={reportDirty} onSaved={value => { setRules(value); setModal(null); setNotice('预警规则已保存。可立即扫描以按新规则更新提醒。'); }}/>}
     {modal === 'detail' && <DetailDialog key={selectedId} id={selectedId} onClose={() => setModal(null)} onChanged={refresh} onFacts={openFacts} onDocuments={item => onCreateDocument ? onCreateDocument({ person_id: item.person_id, stay_id: item.stay_id, alert_id: item.id }) : onNavigate('documents')} onDirty={reportDirty}/>}
     {modal === 'facts' && <FactsDialog initialPersonId={factsTarget?.personId} initialStayId={factsTarget?.stayId} onClose={closeFacts} onDirty={reportDirty} onPeople={() => onNavigate('people')} onSaved={() => { closeFacts(); setNotice('补充事实已保存。请运行扫描以更新相关提醒。'); refresh(); }}/>}
-    <footer className="page-footer"><span>NIA FACTS & REMINDERS</span><p>及时提醒 · 审慎核查</p><span>PHASE 03 / 05</span></footer>
+
   </div>;
 }
 

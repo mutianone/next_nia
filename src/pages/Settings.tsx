@@ -1,5 +1,5 @@
 import { Maintenance } from '../components/Maintenance';
-import { SpatialHero } from '../components/SpatialHero';
+import { PageHeading } from '../components/PageHeading';
 import { confirmAction } from '../lib/confirmation';
 import { Switch as Toggle } from '../components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
@@ -209,12 +209,9 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   if (loadError || !draft || !runtime) return <div className="settings-page"><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel settings-load-error" role="alert"><Unplug size={30} /><h2>暂时无法读取配置</h2><p>{loadError || '服务没有返回完整配置。'}</p><button className="btn btn-primary" onClick={() => setReload(value => value + 1)}><RefreshCw size={16} />重新连接</button></div></div>
 
   return <div className="settings-page">
-    <div className="settings-heading">
-      <div><h1 className="page-title">系统设置<span className="settings-title-dot" /></h1><p className="page-description">让环境、数据与智能服务，按你的方式运行。</p></div>
-      <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '与服务端配置同步'}</div>
-    </div>
-
-    <SpatialHero variant="settings" compact/>
+    <PageHeading title="系统设置" description="管理运行环境、AI 服务和本地数据。" scene="settings">
+      <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '配置已保存'}</div>
+    </PageHeading>
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
       <div><span className="settings-runtime-label">当前运行</span><strong>{runtime.active_environment === 'production' ? '正式环境' : '测试环境'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
@@ -223,11 +220,6 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
 
     {notice && <div ref={noticeRef} tabIndex={-1} className={`settings-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.kind === 'success' ? <CheckCircle2 size={19} /> : <CircleAlert size={19} />}<span>{notice.text}</span><button type="button" aria-label="关闭提示" onClick={() => setNotice(null)}><X size={17} /></button></div>}
 
-    <div className="nia-settings-overview" aria-label="已保存配置概览">
-      <div><Database size={20}/><span><small>活动数据库</small><strong>{runtime.database_engine}</strong></span></div>
-      <div><Sparkles size={20}/><span><small>已保存 AI 开关</small><strong>{saved?.ai.enabled ? '已启用' : '暂未启用'}</strong></span></div>
-      <div><ShieldCheck size={20}/><span><small>保存状态</small><strong>{dirty ? '修改待保存' : '已同步'}</strong></span></div>
-    </div>
     <Tabs value={section} onValueChange={value => setSection(value as Section)} orientation={mobile ? 'horizontal' : 'vertical'} asChild><div className="settings-layout">
       <aside className="settings-nav-column">
         <TabsList asChild><nav className="settings-section-nav" aria-label="设置分类">

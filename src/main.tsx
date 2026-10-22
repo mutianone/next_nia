@@ -13,6 +13,7 @@ import './ui-tokens.css';
 import './ui-upgrade.css';
 import './spatial.css';
 import './phase5.css';
+import './workspace.css';
 import { ConfirmationHost } from './components/ConfirmationHost';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /><ConfirmationHost /></React.StrictMode>);
