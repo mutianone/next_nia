@@ -56,3 +56,17 @@ it('preserves migration text when switching settings tabs and hides the inactive
   await userEvent.click(screen.getByRole('tab', { name: /数据与维护/ }));
   expect(screen.getByRole('textbox', { name: '迁移 JSON' })).toHaveValue('pending draft');
 });
+
+
+it('shows save actions only after a settings change and removes them after discard', async () => {
+  render(<><App/><ConfirmationHost/></>);
+  const name = await screen.findByDisplayValue('合成验收平台');
+  expect(screen.queryByRole('button', { name: '保存配置' })).not.toBeInTheDocument();
+  expect(screen.queryByText('工作空间预览')).not.toBeInTheDocument();
+  await userEvent.type(name, '修改');
+  expect(screen.getByRole('button', { name: '保存配置' })).toBeEnabled();
+  await userEvent.click(screen.getByRole('button', { name: '撤销修改' }));
+  await userEvent.click(screen.getByRole('button', { name: '放弃修改' }));
+  expect(screen.queryByRole('button', { name: '保存配置' })).not.toBeInTheDocument();
+  expect(screen.getByDisplayValue('合成验收平台')).toBeInTheDocument();
+});

@@ -170,3 +170,86 @@
   .al-stats .al-stat:nth-child(even) { padding-left: 0; padding-right: 16px; border-right: 1px solid var(--border); }
   .al-stats .al-stat:nth-child(odd):not(:first-child) { padding-left: 16px; padding-right: 0; border-right: 0; }
 }
+
+/* Editing has its own workspace. Lists retain the last viewed row and position. */
+.editor-workspace-heading { display: flex; align-items: center; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; padding-bottom: 20px; }
+.editor-workspace-heading h1 { font-size: 20px; line-height: 1.5; font-weight: 600; margin: 0; outline: none; }
+.editor-workspace-heading > button { font-size: 12px; flex-shrink: 0; }
+.editor-workspace .doc-editor-heading { margin-bottom: 24px; }
+.editor-workspace .doc-studio { grid-template-columns: minmax(290px,.85fr) minmax(360px,1.35fr); align-items: start; gap: 24px; }
+.editor-workspace .doc-field-panel, .editor-workspace .doc-preview-panel { min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 24px; background: var(--surface); }
+.editor-workspace .doc-preview-panel { position: sticky; top: 88px; }
+.editor-workspace .doc-paper { min-height: 550px; padding: 36px 32px; }
+.editor-workspace .doc-paper pre { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 2.15; }
+.editor-workspace .doc-dialog-footer { position: sticky; bottom: 0; z-index: 10; background: var(--surface); margin: 24px 0 0; padding: 16px 20px; border: 1px solid var(--border); border-radius: 8px; }
+.template-workspace > form { max-width: 1100px; margin-inline: auto; }
+.template-workspace .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.template-workspace .doc-template-body { min-height: 380px; line-height: 2; resize: vertical; }
+.template-workspace textarea { resize: vertical; }
+.knowledge-workspace .kb-document-heading, .knowledge-workspace .kb-document-actions { margin-bottom: 22px; }
+.knowledge-workspace .kb-edit-form { max-width: 980px; padding: 24px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.knowledge-workspace .kb-chunks { max-height: none; padding: 0; overflow: visible; }
+.knowledge-workspace .kb-chunk { background: var(--surface); padding: 24px 28px; }
+.knowledge-workspace .kb-form-footer { position: sticky; bottom: 0; padding: 16px 0; background: var(--surface); z-index: 2; }
+.work-next-step, .kb-doc-body .work-next-step, .rec-record-card .work-next-step { display: block; margin: 8px 0 0; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1.8; overflow-wrap: anywhere; }
+.work-next-step.pending { color: var(--warning); }
+.doc-register-main > svg { display: none; }
+.rec-record-card .work-next-step { padding: 0 0 16px; }
+.rec-card-counts { flex-wrap: wrap; row-gap: 6px; }
+.work-id, .people-table .people-person-cell small, .doc-register-date { font-variant-numeric: tabular-nums; letter-spacing: .15px; }
+[data-work-row][data-selected="true"] { background: var(--primary-soft); box-shadow: inset 3px 0 0 var(--primary); }
+[data-work-row]:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.doc-status, .kb-status, .rec-status { font-size: 11px; font-weight: 500; border-radius: 4px; padding: 4px 8px; line-height: 1.5; }
+/* Settings show real configuration and connection state, with save actions only for changes. */
+.settings-layout { grid-template-columns: 190px minmax(0,1fr); gap: 28px; }
+.settings-section-nav button { min-height: 60px; padding: 12px; border-radius: 7px; }
+.settings-section-nav button > svg:first-child { width: 16px; height: 16px; }
+.settings-section-nav small { font-size: 10px; }
+.settings-card-heading { padding: 21px 24px; min-height: auto; }
+.settings-card-heading h2 { font-size: 16px; }
+.settings-card-body { padding: 24px; }
+.settings-environment-grid { gap: 12px; }
+.settings-environment-option { position: relative; padding: 16px 40px 16px 18px; border-radius: 8px; min-height: auto; box-shadow: none; }
+.settings-environment-option:hover { transform: none; box-shadow: none; }
+.settings-environment-option .settings-environment-top { position: absolute; top: 19px; right: 15px; margin: 0; }
+.settings-environment-top > svg { display: none; }
+.settings-environment-option > strong { font-size: 13px; margin: 0; }
+.settings-environment-option > p { font-size: 11px; margin: 7px 0 0; }
+.settings-sqlite-detail { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--border); line-height: 1.9; }
+.settings-ai-master { border: 0; background: transparent; border-radius: 0; padding: 0 0 22px; }
+.settings-provider-grid { grid-template-columns: 1fr; }
+.settings-provider-header { padding: 20px 24px; }
+.settings-provider-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 24px; padding: 22px 24px; }
+.settings-provider-fields > .field:last-child, .settings-provider-fields > p { grid-column: 1/-1; }
+.settings-provider-footer { padding: 16px 24px; }
+.settings-service-note { border: 0; background: transparent; padding: 8px 0; }
+.settings-action-bar { box-shadow: 0 -4px 16px #00000006; }
+@media(max-width:1100px) {
+  .editor-workspace .doc-studio { grid-template-columns: minmax(260px,1fr) minmax(300px,1.15fr); gap: 16px; }
+  .editor-workspace .doc-field-panel, .editor-workspace .doc-preview-panel { padding: 18px; }
+  .editor-workspace .doc-paper { padding: 26px 20px; }
+  .settings-layout { grid-template-columns: 160px minmax(0,1fr); gap: 20px; }
+}
+@media(max-width:800px) {
+  .editor-workspace .doc-studio { grid-template-columns: minmax(0,1fr); }
+  .editor-workspace .doc-preview-panel { position: static; }
+  .settings-layout { grid-template-columns: minmax(0,1fr); }
+  .settings-provider-fields { grid-template-columns: minmax(0,1fr); }
+}
+@media(max-width:700px) {
+  .editor-workspace-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .editor-workspace-heading h1 { font-size: 19px; }
+  .editor-workspace .doc-dialog-footer, .knowledge-workspace .kb-form-footer { bottom: 70px; padding: 12px; }
+  .editor-workspace .doc-dialog-footer .btn { padding: 9px 12px; font-size: 11px; }
+  .template-workspace .doc-form-grid { grid-template-columns: minmax(0,1fr); }
+  .knowledge-workspace .kb-edit-form, .knowledge-workspace .kb-chunk { padding: 18px; }
+  .settings-layout { gap: 18px; }
+  .settings-section-nav button { padding: 10px 7px; min-height: 46px; }
+  .settings-card-body, .settings-card-heading, .settings-provider-fields, .settings-provider-header { padding: 20px 16px; }
+  .settings-environment-grid { grid-template-columns: minmax(0,1fr); }
+  .settings-action-bar { gap: 12px; }
+  .doc-register-row .work-next-step { font-size: 11px; }
+}
+.document-workspace .doc-secondary-actions { display: flex; gap: 10px; padding: 16px 0; border-top: 1px solid var(--border); margin-top: 20px; }
+.document-workspace .doc-primary-actions { justify-content: flex-end; }
+.settings-ai-master > div:first-child, .settings-provider-header > div:first-child { flex: 1; min-width: 0; }

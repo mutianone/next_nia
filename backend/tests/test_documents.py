@@ -318,3 +318,14 @@ def test_documents_are_isolated_between_active_databases_and_persist_on_restart(
         assert restored["template_snapshot"] == d["template_snapshot"]
         assert restored["person_snapshot"] == d["person_snapshot"]
         assert restored["rendered_text"] == d["rendered_text"]
+
+
+def test_register_missing_fields_match_saved_snapshot_and_update_after_save(client):
+    t = template(client, body="姓名：{{person_name}} 入境：{{entry_date}} 事实：{{facts}} 经办：{{officer}}")
+    d = draft(client, t, fields={"facts": "已经填写"})
+    row = client.get('/api/documents').json()['items'][0]
+    assert row['unresolved_fields'] == d['unresolved_fields'] == ['entry_date', 'officer']
+    assert 'rendered_text' not in row
+    updated = client.patch(f"/api/documents/{d['id']}", json={"expected_revision": d['revision'], "fields": {"facts": "已经填写", "officer": "经办人员"}})
+    assert updated.status_code == 200
+    assert client.get('/api/documents').json()['items'][0]['unresolved_fields'] == ['entry_date']

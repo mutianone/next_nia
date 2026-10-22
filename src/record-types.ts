@@ -1,8 +1,9 @@
+import { formatDateTime } from './lib/display';
 export type RecordScenario = 'study' | 'marriage' | 'residence' | 'violation' | 'other';
 export type RecordStatus = 'draft' | 'reviewed' | 'archived';
 export type Speaker = 'interviewer' | 'interviewee' | 'interpreter' | 'unknown';
 export type RecordMeta = { title: string; scenario: RecordScenario; location: string; interviewers: string; occurred_at: string | null };
-export type RecordItem = RecordMeta & { id: string; template_id: RecordScenario; person_id: string | null; person_name: string | null; person_code: string | null; status: RecordStatus; archived_from: 'draft' | 'reviewed' | null; revision: number; review_note: string; created_at: string; updated_at: string; audio_count: number; segment_count: number };
+export type RecordItem = RecordMeta & { id: string; template_id: RecordScenario; person_id: string | null; person_name: string | null; person_code: string | null; status: RecordStatus; archived_from: 'draft' | 'reviewed' | null; revision: number; review_note: string; created_at: string; updated_at: string; audio_count: number; audio_duration_ms: number | null; audio_unknown_duration_count: number; segment_count: number };
 export type AudioClip = { id: string; filename: string; format: string; mime_type: string; size_bytes: number; sha256: string; duration_ms: number | null; duration_source: 'declared' | 'unknown'; created_at: string; playback_url: string };
 export type SegmentInput = { id?: string; audio_id: string | null; start_ms: number | null; end_ms: number | null; speaker: Speaker; text: string };
 export type Segment = SegmentInput & { id: string; source: 'manual' | 'asr'; timestamp_source: 'manual' | 'none' };
@@ -14,5 +15,5 @@ export type RecordCapabilities = { limits: { max_audio_bytes: number; max_record
 export const scenarioLabels: Record<RecordScenario, string> = { study: '来华求学', marriage: '婚姻家庭', residence: '居留事由核查', violation: '出入境案件询问', other: '其他业务询问' };
 export const recordStatusLabels: Record<RecordStatus, string> = { draft: '整理中', reviewed: '已人工核对', archived: '已归档' };
 export const speakerLabels: Record<Speaker, string> = { interviewer: '询问人', interviewee: '被询问人', interpreter: '翻译人员', unknown: '待标注' };
-export const recordTime = (value: string) => new Date(value).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+export const recordTime = formatDateTime;
 export const recordError = (error: unknown) => error instanceof Error ? /fetch|network/i.test(error.message) ? '无法连接本地服务，请检查后端后重试。' : error.message : '操作未完成，请稍后重试。';

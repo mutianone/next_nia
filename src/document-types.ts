@@ -1,3 +1,4 @@
+import { formatDateTime } from './lib/display';
 export type DocumentContext = { person_id: string; stay_id: string; alert_id: string };
 export type Template = { id: string; name: string; version: string; kind: 'internal' | 'official'; status: 'draft' | 'approved' | 'archived'; source: string; body: string; review_note: string; revision: number; variables: string[]; created_at: string; updated_at: string };
 export type Variable = { name: string; label: string; source: 'person' | 'stay' | 'manual' };
@@ -7,4 +8,4 @@ export const documentStatus = { draft: '编辑中', reviewed: '已人工核对',
 export const templateStatus = { draft: '待审核', approved: '已审核', archived: '已归档' };
 export const fieldLabels: Record<string, string> = { organization: '制作单位', document_date: '制作日期', document_number_label: '文号', deadline: '人工确认的截止日期', facts: '核查事实', legal_basis: '人工核对的依据', decision: '人工填写的处理意见', officer: '经办人', review_note: '正文中的核对说明' };
 export const documentError = (error: unknown) => error instanceof Error ? error.message : '操作失败，请重试。';
-export const localTime = (value?: string | null) => value ? new Date(value).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : '尚未记录';
+export const localTime = formatDateTime;

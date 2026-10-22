@@ -296,12 +296,17 @@ def clip_json(row):
 
 
 def record_json(session, row):
+    audio_count, known_count, duration = session.execute(
+        select(func.count(AudioClip.id), func.count(AudioClip.duration_ms), func.sum(AudioClip.duration_ms))
+        .where(AudioClip.record_id == row.id)
+    ).one()
     return {**{key: getattr(row, key) for key in ("id", "title", "scenario", "template_id", "person_id", "location", "interviewers", "status", "archived_from", "revision", "review_note")},
             "person_name": (row.person_snapshot or {}).get("name"), "person_code": (row.person_snapshot or {}).get("code"),
             "occurred_at": timestamp(row.occurred_at) if row.occurred_at else None,
             "reviewed_at": timestamp(row.reviewed_at) if row.reviewed_at else None,
             "created_at": timestamp(row.created_at), "updated_at": timestamp(row.updated_at),
-            "audio_count": session.scalar(select(func.count()).select_from(AudioClip).where(AudioClip.record_id == row.id)) or 0,
+            "audio_count": audio_count, "audio_duration_ms": duration,
+            "audio_unknown_duration_count": audio_count - known_count,
             "segment_count": session.scalar(select(func.count()).select_from(RecordSegment).where(RecordSegment.record_id == row.id)) or 0}
 
 

@@ -1,3 +1,5 @@
+import { useListPosition, useViewState } from '../hooks/useWorkspaceView';
+import { formatDateTime } from '../lib/display';
 import { PageHeading } from '../components/PageHeading';
 import { Choice } from '../components/Choice';
 import { usePageDirty } from '../hooks/usePageDirty';
@@ -13,8 +15,8 @@ const emptyPerson = (): PersonInput => ({ name: '', english_name: '', nationalit
 const emptyStay = (): StayInput => ({ entry_date: '', permitted_until: null, exit_date: null, permit_type: '', permit_number: '', purpose: '', source: '', notes: '' });
 const personFields = (person: Person): PersonInput => Object.fromEntries(Object.keys(emptyPerson()).map(key => [key, person[key as keyof PersonInput] ?? emptyPerson()[key as keyof PersonInput]])) as PersonInput;
 const stayFields = (stay: Stay): StayInput => Object.fromEntries(Object.keys(emptyStay()).map(key => [key, stay[key as keyof StayInput] ?? emptyStay()[key as keyof StayInput]])) as StayInput;
-const dateLabel = (value: string | null | undefined) => value ? value.slice(0, 10).replaceAll('-', '.') : '未填写';
-const timeLabel = (value: string) => { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }); };
+const dateLabel = (value: string | null | undefined) => value ? value.slice(0, 10) : '未填写';
+const timeLabel = formatDateTime;
 const messageOf = (error: unknown) => error instanceof Error ? /fetch|network/i.test(error.message) ? '无法连接本地服务，请检查网络与后端运行状态后重试。' : error.message : '操作未完成，请重试。';
 const initials = (person: Pick<Person, 'name'>) => [...person.name.trim()].slice(0, 1).join('') || '人';
 
@@ -29,11 +31,11 @@ export function People() {
   const [data, setData] = useState<PeopleResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState('');
-  const [query, setQuery] = useState('');
-  const [search, setSearch] = useState('');
-  const [archived, setArchived] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [query, setQuery] = useViewState('people.query', '');
+  const [search, setSearch] = useViewState('people.search', '');
+  const [archived, setArchived] = useViewState('people.archived', false);
+  const [page, setPage] = useViewState('people.page', 1);
+  const [pageSize, setPageSize] = useViewState('people.pageSize', 20);
   const [reload, setReload] = useState(0);
   const [notice, setNotice] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -62,7 +64,9 @@ export function People() {
   const fileInput = useRef<HTMLInputElement>(null);
   const previewVersion = useRef(0);
 
-  useEffect(() => { const timer = window.setTimeout(() => { setSearch(query.trim()); setPage(1); }, 350); return () => window.clearTimeout(timer); }, [query]);
+  const listView = useListPosition(`people:${JSON.stringify([search,archived,page,pageSize])}`, !selectedId && !editor && !stayEditor && !archiveTarget && !importOpen, !loading);
+  const openPerson = (id: string) => { listView.remember(id); setSelectedId(id); };
+  useEffect(() => { if (query.trim() === search) return; const timer = window.setTimeout(() => { setSearch(query.trim()); setPage(1); }, 350); return () => window.clearTimeout(timer); }, [query, search, setSearch, setPage]);
   useEffect(() => {
     let cancelled = false;
     setLoading(true); setListError('');
@@ -176,8 +180,8 @@ export function People() {
       <div className="people-register-body" aria-busy={loading}>
         {listError ? <div className="people-list-error"><ErrorNotice message={listError} retry={refresh} /></div> : loading && !data ? <div className="people-state" role="status"><LoaderCircle size={26} className="people-spin" /><h3>正在读取人员档案</h3><p>从当前环境的本地数据库读取记录。</p></div> : data && data.items.length ? <>
           {loading && <div className="people-refreshing" role="status">正在更新列表…</div>}
-          <div className="people-table-wrap"><table className="people-table"><thead><tr><th>人员信息</th><th>国籍</th><th>证件信息</th><th>核实状态</th><th>信息来源</th><th>最后更新</th><th><span className="people-sr-only">操作</span></th></tr></thead><tbody>{data.items.map(person => <tr key={person.id} onClick={() => setSelectedId(person.id)}><td><div className="people-person-cell"><span className="people-avatar">{initials(person)}</span><div><button className="people-name-button" onClick={event => { event.stopPropagation(); setSelectedId(person.id); }}>{person.name}</button><small>{person.english_name || person.code}</small></div></div></td><td><span className="people-nationality"><Globe2 size={12} />{person.nationality}</span></td><td><span className="people-document-no">{person.document_number}</span><small className="people-cell-sub">{person.document_type === 'passport' ? '护照' : '其他证件'}</small></td><td><Verification value={person.verification} /></td><td><span className="people-source-cell" title={person.source}>{person.source}</span></td><td className="people-date-cell">{dateLabel(person.updated_at)}</td><td><button className="icon-button" aria-label={`查看${person.name}的档案`} onClick={event => { event.stopPropagation(); setSelectedId(person.id); }}><ChevronRight size={17} /></button></td></tr>)}</tbody></table></div>
-          <div className="people-mobile-list">{data.items.map(person => <article className="people-mobile-card" key={person.id}><div className="people-mobile-card-top"><span className="people-avatar">{initials(person)}</span><div><button className="people-name-button" onClick={() => setSelectedId(person.id)}>{person.name}</button><small>{person.english_name || person.code}</small></div><Verification value={person.verification} /></div><dl><div><dt>国籍</dt><dd>{person.nationality}</dd></div><div><dt>{person.document_type === 'passport' ? '护照号码' : '证件号码'}</dt><dd>{person.document_number}</dd></div></dl><div className="people-mobile-card-footer"><span>{person.source}</span><button onClick={() => setSelectedId(person.id)}>查看档案<ArrowRight size={14} /></button></div></article>)}</div>
+          <div className="people-table-wrap"><table className="people-table"><thead><tr><th>人员信息</th><th>国籍</th><th>证件信息</th><th>核实状态</th><th>信息来源</th><th>最后更新</th><th><span className="people-sr-only">操作</span></th></tr></thead><tbody>{data.items.map(person => <tr data-work-row={person.id} data-selected={listView.selectedRow===person.id} key={person.id} onClick={() => openPerson(person.id)}><td><div className="people-person-cell"><span className="people-avatar">{initials(person)}</span><div><button className="people-name-button" onClick={event => { event.stopPropagation(); openPerson(person.id); }}>{person.name}</button><small>{person.english_name || person.code}</small></div></div></td><td><span className="people-nationality"><Globe2 size={12} />{person.nationality}</span></td><td><span className="people-document-no">{person.document_number}</span><small className="people-cell-sub">{person.document_type === 'passport' ? '护照' : '其他证件'}</small></td><td><Verification value={person.verification} /></td><td><span className="people-source-cell" title={person.source}>{person.source}</span></td><td className="people-date-cell">{dateLabel(person.updated_at)}</td><td><button className="icon-button" aria-label={`查看${person.name}的档案`} onClick={event => { event.stopPropagation(); openPerson(person.id); }}><ChevronRight size={17} /></button></td></tr>)}</tbody></table></div>
+          <div className="people-mobile-list">{data.items.map(person => <article className="people-mobile-card" key={person.id} data-work-row={person.id} data-selected={listView.selectedRow===person.id}><div className="people-mobile-card-top"><span className="people-avatar">{initials(person)}</span><div><button className="people-name-button" onClick={() => openPerson(person.id)}>{person.name}</button><small>{person.english_name || person.code}</small></div><Verification value={person.verification} /></div><dl><div><dt>国籍</dt><dd>{person.nationality}</dd></div><div><dt>{person.document_type === 'passport' ? '护照号码' : '证件号码'}</dt><dd>{person.document_number}</dd></div></dl><div className="people-mobile-card-footer"><span>{person.source}</span><button onClick={() => openPerson(person.id)}>查看档案<ArrowRight size={14} /></button></div></article>)}</div>
         </> : !loading && <div className="people-state people-empty"><span className="people-empty-icon"><Users size={30} /></span><span className="people-empty-orbit" /><h3>{search ? '没有找到匹配的档案' : archived ? '暂无已归档人员' : '暂无人员档案'}</h3><p>{search ? '试试其他姓名、国籍或证件号码。' : archived ? '归档后的人员资料会保留在这里，并可随时恢复。' : '新建档案或导入 CSV，建立可追溯的人员信息登记册。'}</p>{search ? <button className="btn btn-secondary" onClick={() => setQuery('')}>清空搜索</button> : !archived && <div className="people-empty-actions"><button className="btn btn-primary" onClick={() => openEditor()}><Plus size={15} />新建档案</button><button className="btn btn-secondary" onClick={openImport}><ArrowUpFromLine size={15} />批量导入</button></div>}</div>}
       </div>
       <footer className="people-pagination"><span>{data ? `共 ${data.total} 条${archived ? '已归档' : '在用'}记录` : '等待数据连接'}{search && <small> · 已应用搜索筛选</small>}</span><div><label>每页<Choice value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }} aria-label="每页记录数"><option value={20}>20</option><option value={50}>50</option></Choice>条</label><div className="people-page-switch"><button className="icon-button" aria-label="上一页" disabled={page <= 1 || loading} onClick={() => setPage(value => value - 1)}><ChevronLeft size={16} /></button><span>{page}<i>/</i>{totalPages}</span><button className="icon-button" aria-label="下一页" disabled={page >= totalPages || loading} onClick={() => setPage(value => value + 1)}><ChevronRight size={16} /></button></div></div></footer>

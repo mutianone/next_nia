@@ -272,10 +272,13 @@ def template_json(row):
             "created_at": timestamp(row.created_at), "updated_at": timestamp(row.updated_at), "variables": template_variables(row.body)}
 
 
-def document_json(row):
+def document_json(row, unresolved=None):
+    if unresolved is None:
+        _, unresolved = render(row)
     return {**{key: getattr(row, key) for key in ("id", "template_id", "person_id", "stay_id", "alert_id", "copied_from", "title", "status", "revision", "review_note")},
             "template_name": row.template_snapshot["name"], "template_version": row.template_snapshot["version"], "template_kind": row.template_snapshot["kind"],
             "person_name": row.person_snapshot["name"], "person_code": row.person_snapshot["code"],
+            "unresolved_fields": unresolved,
             "reviewed_at": timestamp(row.reviewed_at) if row.reviewed_at else None,
             "created_at": timestamp(row.created_at), "updated_at": timestamp(row.updated_at)}
 
@@ -298,7 +301,7 @@ def render(row):
 def full_document(session, row):
     rendered, unresolved = render(row)
     history = session.scalars(select(DocumentHistory).where(DocumentHistory.document_id == row.id).order_by(DocumentHistory.created_at, DocumentHistory.id)).all()
-    return {**document_json(row), "template_snapshot": row.template_snapshot, "person_snapshot": row.person_snapshot, "fields": row.fields,
+    return {**document_json(row, unresolved), "template_snapshot": row.template_snapshot, "person_snapshot": row.person_snapshot, "fields": row.fields,
             "rendered_text": rendered, "unresolved_fields": unresolved, "export_label": REVIEWED_LABEL if row.status == "reviewed" else DRAFT_LABEL,
             "history": [{"id": item.id, "action": item.action, "note": item.note, "revision": item.revision, "status": item.status, "created_at": timestamp(item.created_at)} for item in history]}
 

@@ -1,3 +1,4 @@
+import { useListPosition, useViewState } from '../hooks/useWorkspaceView';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowRight, CheckCheck, ChevronLeft, ChevronRight, Clock3, FileSearch, GitBranch, Network, Pencil, Plus, RefreshCw, Search, ShieldCheck, UsersRound } from 'lucide-react';
@@ -19,12 +20,13 @@ type Form = typeof blank;
 export const errorMessage = (error: unknown) => error instanceof Error ? error.message : '操作未完成，请重试。';
 
 export function Profiles() {
-  const [query, setQuery] = useState(''), [page, setPage] = useState(1), [archived, setArchived] = useState(false);
-  const [list, setList] = useState<PeopleResponse | null>(null), [selected, setSelected] = useState('');
+  const [query, setQuery] = useViewState('profiles.query', ''), [page, setPage] = useViewState('profiles.page', 1), [archived, setArchived] = useViewState('profiles.archived', false);
+  const [list, setList] = useState<PeopleResponse | null>(null), [selected, setSelected] = useViewState('profiles.selected', '');
   const [profile, setProfile] = useState<Profile | null>(null), [reload, setReload] = useState(0), [error, setError] = useState('');
-  const [tab, setTab] = useState<'facts'|'timeline'|'relations'>('facts');
+  const [tab, setTab] = useViewState<'facts'|'timeline'|'relations'>('profiles.tab', 'facts');
   const [editor, setEditor] = useState<{ type: 'fact'|'relation'; fact?: Fact; relation?: Relation } | null>(null), [form, setForm] = useState<Form>(blank), [busy, setBusy] = useState(false), [formError, setFormError] = useState('');
   const [evidence, setEvidence] = useState<{ title: string; text: string } | null>(null), [targetQuery, setTargetQuery] = useState(''), [targets, setTargets] = useState<Person[]>([]);
+  useListPosition(`profiles:${JSON.stringify([query,page,archived,selected,tab])}`, !editor && !evidence, !!list && (!selected || !!profile));
   usePageDirty(Boolean(editor) || busy);
   useEffect(() => {
     const controller = new AbortController();

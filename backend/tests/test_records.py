@@ -539,3 +539,19 @@ def test_same_revision_concurrent_edit_is_rejected_without_losing_saved_text(cli
     current = client.get(f"/api/records/{row['id']}").json()
     assert current['segments'] == succeeded['segments']
     assert current['revision'] == row['revision'] + 1
+
+
+def test_register_audio_duration_preserves_unknowns_and_text_only_records(client):
+    row = create(client)
+    assert row['audio_count'] == 0 and row['audio_duration_ms'] is None
+    assert row['audio_unknown_duration_count'] == 0
+    row = upload(client, row, duration=None).json()
+    assert row['audio_count'] == 1 and row['audio_duration_ms'] is None
+    assert row['audio_unknown_duration_count'] == 1
+    row = upload(client, row, raw=MP3 + b'known', duration=65000).json()
+    item = client.get('/api/records').json()['items'][0]
+    assert item['audio_count'] == 2 and item['audio_duration_ms'] == 65000
+    assert item['audio_unknown_duration_count'] == 1
+    assert item['segment_count'] == 0
+    row = segments(client, row, [{'text': '核对文字', 'speaker': 'interviewee'}]).json()
+    assert row['segment_count'] == 1 and row['audio_duration_ms'] == 65000
