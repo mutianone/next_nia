@@ -152,8 +152,6 @@
   .work-hero-count { font-size: 42px; }.work-hero-tasks { gap: 12px; }
   .dashboard-page .spatial-visual { border-top: 0; }
 }
-.sidebar-bottom .phase-card { background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 16px 10px; }
-.sidebar-bottom .phase-card strong { font-size: 12px; font-weight: 500; }.sidebar-bottom .phase-card p { font-size: 10px; margin-top: 6px; }
 @media(max-width:700px) {
   .doc-stats, .rec-stats { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0; padding-bottom: 18px; margin-bottom: 20px; }
   .doc-stats > div, .doc-stats > div:nth-child(odd), .rec-stats > div, .rec-stats > div:nth-child(odd) { padding: 0 10px; }
