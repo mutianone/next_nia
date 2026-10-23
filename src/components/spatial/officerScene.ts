@@ -12,7 +12,7 @@ export function createOfficerScene(host: HTMLElement, initial: SceneOptions, onF
   const image = document.createElement('img');
   image.alt = '小依警务形象';
   image.draggable = false;
-  image.src = '/characters/xiaoyi-reference.png';
+  image.src = '/characters/xiaoyi-front.png';
   art.appendChild(image); portrait.appendChild(art);
   host.appendChild(scene);
 

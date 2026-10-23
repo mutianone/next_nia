@@ -17,7 +17,7 @@ it('uses the original asset, bounds manual parallax, and restores the front view
   const host = document.createElement('div');
   const scene = createOfficerScene(host, options, vi.fn());
   const root = host.querySelector<HTMLElement>('.officer-scene')!;
-  expect(host.querySelector('img')?.getAttribute('src')).toBe('/characters/xiaoyi-reference.png');
+  expect(host.querySelector('img')?.getAttribute('src')).toBe('/characters/xiaoyi-front.png');
   scene.turn(999, -999); step();
   expect(root.style.getPropertyValue('--portrait-x')).toBe('9px');
   expect(root.style.getPropertyValue('--portrait-y')).toBe('-4px');

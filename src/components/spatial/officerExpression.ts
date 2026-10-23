@@ -1,6 +1,6 @@
 /** Small image-space movements anchored to the supplied portrait, in source pixels. */
-export const FACE = { x: 286, y: 135, width: 128, height: 116 };
-const eyes = [{ x: 321, y: 165, rx: 24, ry: 17 }, { x: 384, y: 165, rx: 20, ry: 18 }];
+export const FACE = { x: 360, y: 183, width: 154, height: 145 };
+const eyes = [{ x: 395, y: 218, rx: 29, ry: 20 }, { x: 478, y: 218, rx: 29, ry: 20 }];
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 const smooth = (n: number) => { const t = clamp01(n); return t * t * (3 - 2 * t); };
 
@@ -26,8 +26,8 @@ export function portraitSourcePoint(x: number, y: number, blink: number, smile: 
     sourceY += Math.sign(dy) * (mapped - distance);
   }
   // Lift just the two corners of the existing smile, keeping nose and jaw fixed.
-  for (const corner of [329, 373]) {
-    const dx = (x - corner) / 15, dy = (y - 218) / 18;
+  for (const corner of [403, 465]) {
+    const dx = (x - corner) / 20, dy = (y - 285) / 23;
     const falloff = Math.max(0, 1 - dx * dx - dy * dy);
     sourceY += clamp01(smile) * 2.8 * falloff * falloff;
   }
@@ -39,10 +39,10 @@ export function createOfficerExpression(image: HTMLImageElement, parent: HTMLEle
   canvas.className = 'officer-expression';
   canvas.width = FACE.width; canvas.height = FACE.height;
   canvas.setAttribute('aria-hidden', 'true');
-  canvas.style.left = `${FACE.x / 657 * 100}%`;
-  canvas.style.top = `${FACE.y / 1396 * 100}%`;
-  canvas.style.width = `${FACE.width / 657 * 100}%`;
-  canvas.style.height = `${FACE.height / 1396 * 100}%`;
+  canvas.style.left = `${FACE.x / 860 * 100}%`;
+  canvas.style.top = `${FACE.y / 1828 * 100}%`;
+  canvas.style.width = `${FACE.width / 860 * 100}%`;
+  canvas.style.height = `${FACE.height / 1828 * 100}%`;
   const context = canvas.getContext('2d', { willReadFrequently: true });
   if (!context) return null;
   context.drawImage(image, FACE.x, FACE.y, FACE.width, FACE.height, 0, 0, FACE.width, FACE.height);
