@@ -10,7 +10,7 @@ export const navigation = [
   { id: 'documents', label: '文书中心', en: 'Documents', icon: Files, stage: 3, group: '核心业务' },
   { id: 'profiles', label: '人员画像', en: 'Profiles', icon: Network, stage: 5, group: '分析与管理' },
   { id: 'analytics', label: '统计分析', en: 'Analytics', icon: ChartNoAxesCombined, stage: 5, group: '分析与管理' },
-  { id: 'appearance', label: '外观与主题', en: 'Appearance', icon: Palette, stage: 1, group: '分析与管理' },
+  { id: 'appearance', label: '外观主题', en: 'Appearance', icon: Palette, stage: 1, group: '分析与管理' },
   { id: 'settings', label: '后台配置', en: 'Settings', icon: Settings2, stage: 1, group: '分析与管理' },
 ] as const;
 export type PageId = typeof navigation[number]['id'];

@@ -329,7 +329,6 @@ main:focus { outline: none; }
 .command-results > button > div { flex: 1; }
 .command-results strong { display: block; font-size: 12px; font-weight: 500; }
 .command-results small { display: block; font-size: 9px; margin-top: 4px; color: var(--muted); }
-.command-state { font-size: 9px; color: var(--muted); }
 .command-results > button > svg { color: var(--muted); }
 .command-footer { border-top: 1px solid var(--border); margin-top: 12px; padding: 13px 6px 0; display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 9px; }
 .command-footer span { margin-left: auto; }

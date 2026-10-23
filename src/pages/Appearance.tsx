@@ -6,7 +6,7 @@ import type { ColorMode, ThemeId } from '../theme';
 type Props = { theme: ThemeId; setTheme: (value: ThemeId) => void; mode: ColorMode; setMode: (value: ColorMode) => void; reducedMotion: boolean; setReducedMotion: (value: boolean) => void };
 export function Appearance(props: Props) {
   return <div className="page-content appearance-page">
-    <PageHeading title="外观与主题" description="选择主题、显示模式和动效偏好，设置即时生效。" scene="appearance"></PageHeading>
+    <PageHeading title="外观主题" description="选择主题、显示模式和动效偏好，设置即时生效。" scene="appearance"></PageHeading>
     <div className="section-title"><h2>选择你的主题</h2><span className="muted">每套主题均支持明暗模式</span></div>
     <div className="theme-grid">{themes.map(t => <button key={t.id} className={`theme-card ${props.theme === t.id ? 'selected' : ''}`} onClick={() => props.setTheme(t.id)} aria-pressed={props.theme === t.id}>
       <div className="theme-miniature" style={{ background: t.background, '--preview-primary': t.color, '--preview-secondary': t.second } as React.CSSProperties}>

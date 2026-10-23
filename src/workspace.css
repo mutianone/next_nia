@@ -262,7 +262,7 @@
 .search-dialog .command-results>button{padding:14px 12px;gap:15px}
 .search-dialog .command-icon{width:40px;height:40px;flex-shrink:0}
 .search-dialog .command-results strong{font-size:14px}
-.search-dialog .command-results small,.search-dialog .command-state{font-size:11px}
+.search-dialog .command-results small{font-size:11px}
 .settings-runtime-strip .environment-pill{display:inline-flex;padding:5px 10px;font-size:12px}
 @media(max-width:700px){[data-slot="dialog-content"].search-dialog{padding:20px 16px}.search-dialog .command-results{max-height:52dvh}.search-dialog .command-input{padding:13px}.search-dialog .command-input input{font-size:14px}.dashboard-page .spatial-hero{padding-top:14px;padding-bottom:12px}}
 

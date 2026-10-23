@@ -23,12 +23,12 @@ it('keeps the settings draft and URL on cancel, then navigates only after approv
   render(<><App/><ConfirmationHost/></>);
   const name = await screen.findByDisplayValue('合成验收平台');
   await userEvent.type(name, '修改');
-  await userEvent.click(screen.getByRole('button', { name: '外观与主题' }));
+  await userEvent.click(screen.getByRole('button', { name: '外观主题' }));
   expect(screen.getByRole('alertdialog')).toHaveAccessibleName('离开前，要保留修改吗？');
   expect(window.location.hash).toBe('#/settings');
   await userEvent.click(screen.getByRole('button', { name: '继续编辑' }));
   expect(screen.getByDisplayValue('合成验收平台修改')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: '外观与主题' }));
+  await userEvent.click(screen.getByRole('button', { name: '外观主题' }));
   await userEvent.click(screen.getByRole('button', { name: '放弃修改并离开' }));
   await waitFor(() => expect(window.location.hash).toBe('#/appearance'));
   expect(window.confirm).not.toHaveBeenCalled();
