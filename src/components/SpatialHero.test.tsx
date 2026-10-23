@@ -6,6 +6,7 @@ import { SpatialExperience } from './spatial/SpatialExperience';
 
 const mock = vi.hoisted(() => ({ update: vi.fn(), point: vi.fn(), turn: vi.fn(), reset: vi.fn(), dispose: vi.fn(), create: vi.fn() }));
 vi.mock('./spatial/scene', () => ({ createSpatialScene: mock.create }));
+vi.mock('./spatial/officerScene', () => ({ createOfficerScene: mock.create }));
 beforeEach(() => {
   vi.clearAllMocks();
   mock.create.mockImplementation(() => mock);
@@ -60,4 +61,15 @@ it('updates the local palette and falls back safely after a lost context', async
   expect(mock.update).toHaveBeenLastCalledWith(expect.objectContaining({ accent: '#c1a1df', primary: '#7060b3' }));
   act(() => mock.create.mock.calls[0][3]());
   expect(mock.dispose).toHaveBeenCalledOnce(); expect(screen.getByText('静态展示 · 业务功能正常可用')).toBeInTheDocument();
+});
+
+it('uses a portrait character view on the dashboard and keeps full-body framing explicit', async () => {
+  render(<SpatialHero variant="dashboard"/>);
+  await waitFor(() => expect(mock.create).toHaveBeenCalledOnce());
+  expect(mock.create.mock.calls[0][1]).toMatchObject({ expanded: true });
+  expect(screen.getByRole('button', { name: '半身' })).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(screen.getByRole('button', { name: '全身' }));
+  expect(mock.update).toHaveBeenLastCalledWith(expect.objectContaining({ expanded: false }));
+  await userEvent.click(screen.getByRole('button', { name: '重置三维视角' }));
+  expect(screen.getByRole('button', { name: '半身' })).toHaveAttribute('aria-pressed', 'true');
 });

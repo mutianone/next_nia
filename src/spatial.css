@@ -88,3 +88,12 @@
   .spatial-scene-heading,.spatial-compact .spatial-scene-heading { top: 10px; }
   .spatial-visual { margin-top: 5px; padding-top: 16px; }
 }
+
+/* Xiaoyi: portrait framing makes face and uniform details readable in the workbench. */
+.spatial-hero[data-scene="dashboard"] .spatial-stage{height:260px}
+.spatial-hero[data-scene="dashboard"] .spatial-visual:before{content:'';position:absolute;inset:20px 15% 40px;border-radius:50%;background:radial-gradient(ellipse,#c0d9ff18,transparent 65%);pointer-events:none}
+.officer-fallback{height:100%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.officer-fallback img{display:block;height:100%;width:auto;object-fit:contain}
+.officer-fallback span{position:absolute;bottom:2px;padding:4px 9px;background:#102030b0;border-radius:5px;font-size:10px;color:#dceaff}
+@media(min-width:1600px){.spatial-hero[data-scene="dashboard"] .spatial-stage{height:285px}}
+@media(max-width:700px){.spatial-hero[data-scene="dashboard"] .spatial-stage{height:250px}}

@@ -77,8 +77,8 @@ export function createSpatialScene(host: HTMLElement, variant: SpatialVariant, i
     for (let i = 0; i < 4; i++) box(group, width * (i === 3 ? .38 : .68), .035, .02, dark, i === 3 ? -width * .15 : 0, height * .1 - i * .18, .075);
     return group;
   };
-  if (variant === 'dashboard' || variant === 'analytics') {
-    const towers = variant === 'dashboard' ? [[-1.35, 1.25, .2], [0, 2.4, -.35], [1.35, 1.7, .4]] : [[-1.3, .8, 0], [-.45, 1.35, 0], [.45, 1.85, 0], [1.3, 2.4, 0]];
+  if (variant === 'analytics') {
+    const towers = [[-1.3, .8, 0], [-.45, 1.35, 0], [.45, 1.85, 0], [1.3, 2.4, 0]];
     towers.forEach(([x, height, z], index) => {
       const group = cluster(x, -.42 + height / 2, z);
       outline(box(group, .77, height, .78, index === 1 ? glass : dark));
