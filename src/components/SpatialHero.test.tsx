@@ -79,5 +79,6 @@ it('retains original-image interaction without WebGL support', async () => {
   render(<SpatialHero variant="dashboard"/>);
   const stage = screen.getByRole('group', { name: '境智 · 智慧出入境原图立体场景' });
   await waitFor(() => expect(stage).toHaveAttribute('data-scene-state', 'ready'));
-  expect(screen.getByText('小依 · 原图立体展示')).toBeInTheDocument();
+  expect(screen.queryByText('小依 · 原图立体展示')).not.toBeInTheDocument();
+  expect(screen.queryByText('轻微起伏 · 拖动感受景深 · Home 复位')).not.toBeInTheDocument();
 });

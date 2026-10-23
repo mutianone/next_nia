@@ -98,11 +98,14 @@
 @media(min-width:1600px){.spatial-hero[data-scene="dashboard"] .spatial-stage{height:285px}}
 @media(max-width:700px){.spatial-hero[data-scene="dashboard"] .spatial-stage{height:250px}}
 
-/* Original portrait, unfiltered and undeformed; separate layers provide the depth. */
+/* Original portrait with a local expression overlay; separate layers provide depth. */
 .officer-scene{position:absolute;inset:0;overflow:hidden;isolation:isolate;pointer-events:none;user-select:none;--portrait-x:0px;--portrait-y:0px;--depth-x:0px;--depth-y:0px;--orbit-angle:-18deg;--glow-opacity:.65}
 .officer-portrait{position:absolute;inset:0;transform:translate3d(var(--portrait-x),var(--portrait-y),0);will-change:transform}
-.officer-portrait img{position:absolute;display:block;left:50%;top:-9px;height:200%;width:auto;max-width:none;transform:translateX(-50%);object-fit:contain;pointer-events:none}
-.officer-scene[data-framing="full"] .officer-portrait img{height:94%;top:3px}
+.officer-art{position:absolute;left:50%;top:-2px;height:194%;aspect-ratio:657 / 1396;transform:translateX(-50%)}
+.officer-art img{display:block;width:100%;height:100%;max-width:none;pointer-events:none}
+.officer-expression{position:absolute;pointer-events:none}
+.officer-expression[hidden]{display:none}
+.officer-scene[data-framing="full"] .officer-art{height:89%;top:12px}
 .officer-depth{position:absolute;inset:0;transform:translate3d(var(--depth-x),var(--depth-y),0);will-change:transform}
 .officer-halo{position:absolute;width:280px;height:250px;left:50%;top:0;transform:translateX(-50%);background:radial-gradient(ellipse,color-mix(in srgb,var(--officer-accent) 26%,transparent),transparent 68%);opacity:var(--glow-opacity)}
 .officer-orbit{position:absolute;left:50%;top:50%;width:290px;height:210px;border:1px solid color-mix(in srgb,var(--officer-accent) 28%,transparent);border-radius:50%;transform:translate(-50%,-50%) rotate(var(--orbit-angle));box-shadow:0 0 28px #cbdcff05,inset 0 0 25px #cbdcff05}

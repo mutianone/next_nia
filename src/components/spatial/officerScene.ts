@@ -1,19 +1,29 @@
+import { createOfficerExpression } from './officerExpression';
 import type { SceneOptions, SpatialController } from './types';
 
-/** Preserve the supplied portrait pixels; depth comes only from surrounding layers. */
+/** Animate the supplied portrait locally, keeping its original resting appearance. */
 export function createOfficerScene(host: HTMLElement, initial: SceneOptions, onFailure: () => void): SpatialController {
   const scene = document.createElement('div');
   scene.className = 'officer-scene';
   scene.innerHTML = '<div class="officer-depth"><div class="officer-halo"></div><i class="officer-orbit"></i><i class="officer-orbit officer-orbit-secondary"></i><div class="officer-lights"><i></i><i></i><i></i></div></div><div class="officer-ground"></div><div class="officer-portrait"></div>';
   const portrait = scene.querySelector<HTMLDivElement>('.officer-portrait')!;
+  const art = document.createElement('div');
+  art.className = 'officer-art';
   const image = document.createElement('img');
-  image.alt = '小依：原图保留的面部与警服形象';
+  image.alt = '小依警务形象';
   image.draggable = false;
   image.src = '/characters/xiaoyi-reference.png';
-  portrait.appendChild(image);
+  art.appendChild(image); portrait.appendChild(art);
   host.appendChild(scene);
 
   let options = initial, disposed = false, visible = true, frame = 0, last = 0, time = 0;
+  let expression: ReturnType<typeof createOfficerExpression> = null;
+  const loaded = () => {
+    if (disposed || expression) return;
+    try { expression = createOfficerExpression(image, art); expression?.render(time, options.animated); } catch { /* Keep the original portrait if canvas is unavailable. */ }
+  };
+  image.addEventListener('load', loaded);
+  if (image.complete && image.naturalWidth) loaded();
   let targetX = 0, targetY = 0, hoverX = 0, hoverY = 0, x = 0, y = 0;
   const clamp = (value: number, limit: number) => Math.max(-limit, Math.min(limit, value));
   function stop() { if (frame) cancelAnimationFrame(frame); frame = 0; }
@@ -27,9 +37,10 @@ export function createOfficerScene(host: HTMLElement, initial: SceneOptions, onF
     const blend = options.animated ? 1 - Math.exp(-dt * 9) : 1;
     x += (clamp(targetX + hoverX, 1) - x) * blend;
     y += (clamp(targetY + hoverY, 1) - y) * blend;
-    // Translation only: no facial deformation, recoloring, invented blinking or side views.
-    const drift = options.animated ? Math.sin(time * .8) * 2 : 0;
-    const breath = options.animated ? Math.sin(time * 1.35) * 2.5 : 0;
+    // Larger breathing motion; expressions use only the original face pixels.
+    const drift = options.animated ? Math.sin(time * .8) * 4.5 : 0;
+    const breath = options.animated ? Math.sin(time * 1.35) * 9 : 0;
+    expression?.render(time, options.animated);
     scene.style.setProperty('--portrait-x', `${x * 9 + drift}px`);
     scene.style.setProperty('--portrait-y', `${y * 4 + breath}px`);
     scene.style.setProperty('--depth-x', `${-x * 15 - drift * 2}px`);
@@ -62,6 +73,6 @@ export function createOfficerScene(host: HTMLElement, initial: SceneOptions, onF
     point(px, py) { hoverX = options.animated ? clamp(px, .5) : 0; hoverY = options.animated ? clamp(py, .5) : 0; wake(); },
     turn(dx, dy) { hoverX = hoverY = 0; targetX = clamp(targetX + dx, 1); targetY = clamp(targetY + dy, 1); wake(); },
     reset() { targetX = targetY = hoverX = hoverY = x = y = time = 0; wake(); },
-    dispose() { disposed = true; stop(); observer.disconnect(); document.removeEventListener('visibilitychange', visibility); image.removeEventListener('error', fail); scene.remove(); },
+    dispose() { disposed = true; stop(); observer.disconnect(); document.removeEventListener('visibilitychange', visibility); image.removeEventListener('error', fail); image.removeEventListener('load', loaded); expression?.dispose(); scene.remove(); },
   };
 }
