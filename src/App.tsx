@@ -1,8 +1,7 @@
 import { SpatialExperience } from './components/spatial/SpatialExperience';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, ChevronRight, Command, Menu, Monitor, Moon, Palette, Search, Settings2, ShieldCheck, Sun, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Command, Menu, Monitor, Moon, Palette, Search, ShieldCheck, Sun, X } from 'lucide-react';
 import { api } from './api';
-import type { Health } from './api';
 import { navigation } from './navigation';
 import type { PageId } from './navigation';
 import { themes, useTheme } from './theme';
@@ -29,7 +28,6 @@ export function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [themeOpen, setThemeOpen] = useState(false);
-  const [health, setHealth] = useState<Health | null>(null);
   const [organization, setOrganization] = useState('出入境业务中心');
   const [systemName, setSystemName] = useState('境智 · 出入境业务平台');
   const [toast, setToast] = useState('');
@@ -41,9 +39,10 @@ export function App() {
   const theme = useTheme();
   const activeNav = navigation.find(n => n.id === page)!;
   const refreshStatus = useCallback(async () => {
-    const results = await Promise.allSettled([api<Health>('/health'), api<{settings:{general:{organization:string;system_name:string}}}>('/settings')]);
-    if (results[0].status === 'fulfilled') setHealth(results[0].value); else setHealth(null);
-    if (results[1].status === 'fulfilled') { setOrganization(results[1].value.settings.general.organization); setSystemName(results[1].value.settings.general.system_name); }
+    try {
+      const result = await api<{settings:{general:{organization:string;system_name:string}}}>('/settings');
+      setOrganization(result.settings.general.organization); setSystemName(result.settings.general.system_name);
+    } catch { /* Keep the last known workspace labels while the service is unavailable. */ }
   }, []);
   useEffect(() => { void refreshStatus(); const timer = window.setInterval(refreshStatus, 30000); return () => window.clearInterval(timer); }, [refreshStatus]);
   useEffect(() => { document.title = `${activeNav.label} · ${systemName}`; }, [activeNav.label, systemName]);
@@ -86,10 +85,9 @@ export function App() {
     <aside className={`sidebar ${sidebar ? 'open' : ''}`} aria-label="主导航"><button className="brand" onClick={() => navigate('dashboard')} aria-label="境智首页"><span className="brand-mark"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M8 10h24v6H14v12h18v6H8V10Z" fill="currentColor"/><path d="m23 4 13 13-13 13v-9h-8v-8h8V4Z" fill="#80cdb8"/></svg></span><span><strong>境智<span>NIA</span></strong><small>{systemName}</small></span></button>
       <div className="workspace-switch"><span className="workspace-icon"><ShieldCheck size={17}/></span><div><strong>{organization}</strong><small>本地工作空间</small></div><span className="workspace-dot"/></div>
       <nav className="nav-list">{navigation.map((item, i) => <div key={item.id}>{(i === 0 || item.group !== navigation[i - 1].group) && <div className="nav-group-label">{item.group}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} aria-current={page === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><item.icon size={18} strokeWidth={1.7}/><span>{item.label}</span>{page === item.id && <ChevronRight size={14} className="nav-arrow"/>}</button></div>)}</nav>
-      <div className="sidebar-bottom"><div className="local-profile"><span className="profile-icon">境</span><div><strong>本地使用模式</strong><small>当前无需登录</small></div><button className="icon-button" aria-label="打开后台配置" onClick={() => navigate('settings')}><Settings2 size={17}/></button></div></div>
     </aside>
-    <div className="main-shell"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" aria-label="打开导航菜单" aria-expanded={sidebar} onClick={() => setSidebar(v => !v)}><Menu size={21}/></button><span className="breadcrumb-root">工作空间</span><ChevronRight size={13} className="breadcrumb-chevron"/><strong>{activeNav.label}</strong></div><div className="topbar-actions"><button className="search-trigger" onClick={() => setSearchOpen(true)} aria-label="搜索功能"><Search size={16}/><span>搜索功能…</span><kbd>⌘ K</kbd></button><span className={`environment-pill ${health ? '' : 'offline'}`}><i/>{health ? health.active_environment === 'test' ? '测试版' : '正式版' : '未连接'}</span><span className="topbar-divider"/><button className="icon-button" aria-label="切换主题" onClick={() => setThemeOpen(true)}><Palette size={18}/></button><button className="icon-button mode-toggle" aria-label={theme.mode === 'dark' ? '切换为白天模式' : '切换为黑夜模式'} onClick={() => theme.setMode(theme.mode === 'dark' ? 'light' : 'dark')}>{theme.mode === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}</button></div></header>
-      <motion.main id="main-content" tabIndex={-1} key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .14 }}><Suspense fallback={<div className="page-content nia-page-loading" role="status"><span/><p>正在打开工作空间…</p></div>}>{page === 'dashboard' ? <Dashboard health={health} onNavigate={navigate}/> : page === 'settings' ? <div className="page-content settings-container"><Settings onSaved={() => { void refreshStatus(); setToast('配置已保存'); }}/></div>: page === 'alerts' ? <Alerts onNavigate={navigate} onCreateDocument={context => { void navigate('documents', context); }}/> : page === 'records' ? <Records onNavigate={navigate}/> : page === 'documents' ? <Documents initialContext={documentContext} onContextConsumed={() => setDocumentContext(null)}/> : page === 'people' ? <People/> : page === 'knowledge' ? <Knowledge onAsk={() => navigate('assistant')}/> : page === 'assistant' ? <Assistant onKnowledge={() => navigate('knowledge')} onSettings={() => navigate('settings')}/> : page === 'appearance' ? <Appearance {...theme}/> : page === 'profiles' ? <Profiles/> : <Analytics/>}</Suspense></motion.main>
+    <div className="main-shell"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" aria-label="打开导航菜单" aria-expanded={sidebar} onClick={() => setSidebar(v => !v)}><Menu size={21}/></button><span className="breadcrumb-root">工作空间</span><ChevronRight size={13} className="breadcrumb-chevron"/><strong>{activeNav.label}</strong></div><div className="topbar-actions"><button className="search-trigger" onClick={() => setSearchOpen(true)} aria-label="搜索功能"><Search size={16}/><span>搜索功能…</span><kbd>⌘ K</kbd></button><span className="topbar-divider"/><button className="icon-button" aria-label="切换主题" onClick={() => setThemeOpen(true)}><Palette size={18}/></button><button className="icon-button mode-toggle" aria-label={theme.mode === 'dark' ? '切换为白天模式' : '切换为黑夜模式'} onClick={() => theme.setMode(theme.mode === 'dark' ? 'light' : 'dark')}>{theme.mode === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}</button></div></header>
+      <motion.main id="main-content" tabIndex={-1} key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .14 }}><Suspense fallback={<div className="page-content nia-page-loading" role="status"><span/><p>正在打开工作空间…</p></div>}>{page === 'dashboard' ? <Dashboard onNavigate={navigate}/> : page === 'settings' ? <div className="page-content settings-container"><Settings onSaved={() => { void refreshStatus(); setToast('配置已保存'); }}/></div>: page === 'alerts' ? <Alerts onNavigate={navigate} onCreateDocument={context => { void navigate('documents', context); }}/> : page === 'records' ? <Records onNavigate={navigate}/> : page === 'documents' ? <Documents initialContext={documentContext} onContextConsumed={() => setDocumentContext(null)}/> : page === 'people' ? <People/> : page === 'knowledge' ? <Knowledge onAsk={() => navigate('assistant')}/> : page === 'assistant' ? <Assistant onKnowledge={() => navigate('knowledge')} onSettings={() => navigate('settings')}/> : page === 'appearance' ? <Appearance {...theme}/> : page === 'profiles' ? <Profiles/> : <Analytics/>}</Suspense></motion.main>
       <nav className="mobile-bottom" aria-label="移动快捷导航">{navigation.filter(n => ['dashboard','knowledge','records','settings'].includes(n.id)).map(n => <button key={n.id} className={page === n.id ? 'active' : ''} onClick={() => navigate(n.id)}><n.icon size={20}/><span>{n.id === 'dashboard' ? '工作台' : n.id === 'knowledge' ? '知识' : n.id === 'records' ? '笔录' : '配置'}</span></button>)}<button onClick={() => setSidebar(true)}><Menu size={20}/><span>更多</span></button></nav>
     </div>
     {toast && <div className="toast" role="status"><ShieldCheck size={17}/>{toast}<button aria-label="关闭提示" onClick={() => setToast('')}><X size={14}/></button></div>}

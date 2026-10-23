@@ -215,7 +215,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     </PageHeading>
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
-      <div><span className="settings-runtime-label">当前运行</span><strong>{runtime.active_environment === 'production' ? '正式环境' : '测试环境'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
+      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
       <div className="settings-runtime-status">{runtime.pending_restart ? <><span className="settings-status-dot pending" />配置已更新，等待重启</> : <><span className="settings-status-dot" />本地服务已连接</>}</div>
     </div>
 

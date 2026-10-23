@@ -101,7 +101,7 @@
 /* Original portrait with a local expression overlay; separate layers provide depth. */
 .officer-scene{position:absolute;inset:0;overflow:hidden;isolation:isolate;pointer-events:none;user-select:none;--portrait-x:0px;--portrait-y:0px;--depth-x:0px;--depth-y:0px;--orbit-angle:-18deg;--glow-opacity:.65}
 .officer-portrait{position:absolute;inset:0;transform:translate3d(var(--portrait-x),var(--portrait-y),0);will-change:transform}
-.officer-art{position:absolute;left:50%;top:-2px;height:194%;aspect-ratio:657 / 1396;transform:translateX(-50%)}
+.officer-art{position:absolute;left:50%;top:-2px;height:194%;aspect-ratio:657 / 1396;transform:translateX(-50%) scaleX(-1)}
 .officer-art img{display:block;width:100%;height:100%;max-width:none;pointer-events:none}
 .officer-expression{position:absolute;pointer-events:none}
 .officer-expression[hidden]{display:none}
