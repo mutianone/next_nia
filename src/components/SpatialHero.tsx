@@ -31,7 +31,7 @@ export function SpatialHero({ variant, action, compact = false, title, descripti
   useEffect(() => {
     let cancelled = false;
     setState('loading');
-    if (!('WebGL2RenderingContext' in window)) { setState('fallback'); return; }
+    if (variant !== 'dashboard' && !('WebGL2RenderingContext' in window)) { setState('fallback'); return; }
     const loadScene = variant === 'dashboard'
       ? import('./spatial/officerScene').then(({ createOfficerScene }) => (element: HTMLElement, _variant: SpatialVariant, settings: SceneOptions, fail: () => void) => createOfficerScene(element, settings, fail))
       : import('./spatial/scene').then(({ createSpatialScene }) => createSpatialScene);
@@ -62,18 +62,18 @@ export function SpatialHero({ variant, action, compact = false, title, descripti
       <div className="spatial-points">{(details ?? info.details).map((item, index) => <span key={item}><small>0{index + 1}</small>{item}</span>)}</div>
     </div>
     <div className="spatial-visual">
-      <div className="spatial-scene-heading"><span><Box size={13}/> {state === 'ready' ? variant === 'dashboard' ? '小依 · 立体形象' : '交互空间' : '空间视图'}</span><span className="spatial-coordinate">NIA / {String(Object.keys(content).indexOf(variant) + 1).padStart(2, '0')}</span></div>
-      <div className="spatial-stage" role="group" aria-label={`${info.tag}三维场景`} aria-describedby={descriptionId} tabIndex={state === 'ready' ? 0 : -1} data-scene-state={state}
+      <div className="spatial-scene-heading"><span><Box size={13}/> {state === 'ready' ? variant === 'dashboard' ? '小依 · 原图立体展示' : '交互空间' : '空间视图'}</span><span className="spatial-coordinate">NIA / {String(Object.keys(content).indexOf(variant) + 1).padStart(2, '0')}</span></div>
+      <div className="spatial-stage" role="group" aria-label={`${info.tag}${variant === 'dashboard' ? '原图立体场景' : '三维场景'}`} aria-describedby={descriptionId} tabIndex={state === 'ready' ? 0 : -1} data-scene-state={state}
         onPointerDown={event => { if (state !== 'ready' || event.button !== 0) return; event.currentTarget.focus({ preventScroll: true }); drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }}
         onPointerMove={pointerMove} onPointerUp={release} onPointerCancel={release} onLostPointerCapture={() => { drag.current = null; }}
         onPointerLeave={() => { if (!drag.current) controller.current?.point(0, 0); }}
         onKeyDown={event => { if (state !== 'ready') return; const steps: Record<string, [number, number]> = { ArrowLeft: [-.15, 0], ArrowRight: [.15, 0], ArrowUp: [0, -.08], ArrowDown: [0, .08] }; if (steps[event.key]) { event.preventDefault(); controller.current?.turn(...steps[event.key]); } else if (event.key === 'Home') { event.preventDefault(); controller.current?.reset(); } }}>
         <div className="spatial-canvas" ref={host}/>
-        {state !== 'ready' && variant === 'dashboard' && <div className="officer-fallback"><img src="/characters/xiaoyi-reference.png" alt="小依参考形象：身穿蓝色警服、深色领带的短发卡通人物"/><span>{state === 'loading' ? '正在载入立体人物' : '小依 · 静态参考形象'}</span></div>}
+        {state !== 'ready' && variant === 'dashboard' && <div className="officer-fallback"><img src="/characters/xiaoyi-reference.png" alt="小依参考形象：身穿蓝色警服、深色领带的短发卡通人物"/><span>{state === 'loading' ? '正在载入小依' : '小依 · 静态参考形象'}</span></div>}
         {state !== 'ready' && variant !== 'dashboard' && <div className="spatial-fallback" aria-hidden="true"><div><i/><i/><i/><Layers3 size={54} strokeWidth={1}/></div><span>{info.code}</span></div>}
       </div>
       <div className="spatial-toolbar"><div className="spatial-view-switch" role="group" aria-label={variant === 'dashboard' ? '人物取景' : '场景结构'}><button type="button" aria-pressed={!expanded} disabled={state !== 'ready'} onClick={() => setExpanded(false)}><Box size={13}/>{variant === 'dashboard' ? '全身' : '聚合'}</button><button type="button" aria-pressed={expanded} disabled={state !== 'ready'} onClick={() => setExpanded(true)}><Expand size={13}/>{variant === 'dashboard' ? '半身' : '展开'}</button></div><div className="spatial-tool-actions"><button type="button" aria-label="重置三维视角" title="重置视角" disabled={state !== 'ready'} onClick={() => { controller.current?.reset(); setExpanded(variant === 'dashboard'); }}><RotateCcw size={14}/></button><button type="button" aria-label={paused ? '播放场景动效' : '暂停场景动效'} title={preferences.reduced ? '已启用减少动态效果' : paused ? '播放场景动效' : '暂停场景动效'} aria-pressed={paused || preferences.reduced} disabled={state !== 'ready' || preferences.reduced} onClick={() => setPaused(value => !value)}>{paused || preferences.reduced ? <Play size={14}/> : <Pause size={14}/>}</button></div></div>
-      <p className="spatial-hint" id={descriptionId}><Hand size={12}/>{state === 'ready' ? preferences.reduced ? '静态展示 · 可拖动或用方向键调整视角' : paused ? '已暂停 · 拖动旋转 · Home 复位' : variant === 'dashboard' ? '自然呼吸 · 眨眼 · 拖动查看人物 · Home 复位' : '自动旋转 · 拖动探索 · Home 复位' : state === 'loading' ? '正在展开空间…' : '静态展示 · 业务功能正常可用'}</p>
+      <p className="spatial-hint" id={descriptionId}><Hand size={12}/>{state === 'ready' ? variant === 'dashboard' ? preferences.reduced || paused ? '已暂停 · 小范围视差 · Home 复位' : '轻微起伏 · 拖动感受景深 · Home 复位' : preferences.reduced ? '静态展示 · 可拖动或用方向键调整视角' : paused ? '已暂停 · 拖动旋转 · Home 复位' : '自动旋转 · 拖动探索 · Home 复位' : state === 'loading' ? '正在展开空间…' : '静态展示 · 业务功能正常可用'}</p>
     </div>
 
   </section>;

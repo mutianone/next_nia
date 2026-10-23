@@ -73,3 +73,11 @@ it('uses a portrait character view on the dashboard and keeps full-body framing 
   await userEvent.click(screen.getByRole('button', { name: '重置三维视角' }));
   expect(screen.getByRole('button', { name: '半身' })).toHaveAttribute('aria-pressed', 'true');
 });
+
+it('retains original-image interaction without WebGL support', async () => {
+  Reflect.deleteProperty(window, 'WebGL2RenderingContext');
+  render(<SpatialHero variant="dashboard"/>);
+  const stage = screen.getByRole('group', { name: '境智 · 智慧出入境原图立体场景' });
+  await waitFor(() => expect(stage).toHaveAttribute('data-scene-state', 'ready'));
+  expect(screen.getByText('小依 · 原图立体展示')).toBeInTheDocument();
+});
