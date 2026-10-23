@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="#184e60"/><path d="M13 15h22v5H18v9h17v5H13z" fill="#fff"/><path d="m26 10 12 12-12 12v-8H21v-8h5z" fill="#75d6bc"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>境智 · 通行之门</title>
+  <defs>
+    <linearGradient id="ink" x1="8" y1="4" x2="57" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2465D9"/>
+      <stop offset="1" stop-color="#123D91"/>
+    </linearGradient>
+    <linearGradient id="passage" x1="24" y1="47" x2="45" y2="29" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#79D8DD"/>
+      <stop offset="1" stop-color="#BDF5EF"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="17" fill="url(#ink)"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="16.5" stroke="white" stroke-opacity=".18"/>
+  <path d="M17 47V22C17 18.6863 19.6863 16 23 16H41C44.3137 16 47 18.6863 47 22V47H39V24H25V47H17Z" fill="#F5FAFF"/>
+  <path d="M25 40L39 29V39L25 50V40Z" fill="url(#passage)"/>
+</svg>
