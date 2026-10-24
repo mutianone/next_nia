@@ -165,7 +165,7 @@ function DetailDialog({ id, onClose, onChanged, onFacts, onDocuments, onDirty }:
   </Dialog>;
 }
 
-export function Alerts({ onNavigate, onCreateDocument }: { onNavigate: (page: PageId) => void; onCreateDocument?: (context: { person_id: string; stay_id: string; alert_id: string }) => void }) {
+export function Alerts({ onNavigate, onCreateDocument, initialId, onContextConsumed }: { initialId?: string | null; onContextConsumed?: () => void; onNavigate: (page: PageId) => void; onCreateDocument?: (context: { person_id: string; stay_id: string; alert_id: string }) => void }) {
   const [data, setData] = useState<AlertList | null>(null);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState('');
@@ -191,6 +191,7 @@ export function Alerts({ onNavigate, onCreateDocument }: { onNavigate: (page: Pa
   const dirty = childDirty || scanning;
   usePageDirty(dirty);
   const listView = useListPosition(`alerts:${JSON.stringify([search,status,category,page])}`, !modal, !loading);
+  useEffect(() => { if (initialId) { setSelectedId(initialId); setModal('detail'); onContextConsumed?.(); } }, [initialId, onContextConsumed]);
   useEffect(() => { if (query.trim() === search) return; const timer = window.setTimeout(() => { setSearch(query.trim()); setPage(1); }, 300); return () => window.clearTimeout(timer); }, [query, search, setSearch, setPage]);
   useEffect(() => {
     let cancelled = false; setLoading(true); setListError('');

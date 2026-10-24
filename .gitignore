@@ -36,3 +36,6 @@ backups/
 .DS_Store
 .idea/
 .vscode/
+
+# Isolated presentation workspace
+backend/presentation-data/

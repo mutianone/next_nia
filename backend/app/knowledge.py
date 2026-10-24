@@ -499,10 +499,16 @@ def ask(request: Request, body: AskRequest):
     as_of = body.as_of or _today()
     with request.app.state.store.lock:
         settings = request.app.state.store.current.model_copy(deep=True)
+    from . import presentation
+    local = presentation.enabled(request)
     # Keep publication/external-permission checks and the outbound request in one
     # serialized operation. A concurrent revocation cannot slip between them.
     with _WRITE_LOCK, _session(request, write=True) as session:
-        sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
+        sources, retrieval = _search(session, body.question, as_of, 8, external_only=not local)
+        if local:
+            result = presentation.answer(sources)
+            _audit(session, "knowledge.asked", count=len(sources))
+            return {**result, "as_of": as_of, "retrieval": retrieval}
         if not sources:
             return {"status": "insufficient", "answer": "没有检索到已发布、有效且允许用于外部 AI 的相关法规。请补充材料或调整问题。", "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
         if not body.confirm_external:

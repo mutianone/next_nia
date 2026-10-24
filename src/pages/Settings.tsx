@@ -37,7 +37,7 @@ type AppSettings = {
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
   ai: { enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
-type Runtime = { active_environment: string; database_engine: string; pending_restart: boolean }
+type Runtime = { local_processing?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
 type TestResponse = { ok: boolean; message: string; models?: string[]; latency_ms?: number }
 type TestState = { status: 'loading' | 'success' | 'error'; message: string; fingerprint: string; latency?: number; models?: string[] }
@@ -215,7 +215,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     </PageHeading>
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
-      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
+      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.local_processing ? '业务工作空间' : runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
       <div className="settings-runtime-status">{runtime.pending_restart ? <><span className="settings-status-dot pending" />配置已更新，等待重启</> : <><span className="settings-status-dot" />本地服务已连接</>}</div>
     </div>
 
@@ -226,9 +226,9 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         <TabsList asChild><nav className="settings-section-nav" aria-label="设置分类">
           {([
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与所属组织' },
-            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine}` },
-            { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'DeepSeek' : '硅基流动'}` : '业务调用已关闭' },
-            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: '演示资料、迁移与备份' },
+            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: runtime.local_processing ? '本地业务服务' : `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine}` },
+            { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: runtime.local_processing ? '资料处理服务已就绪' : saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'DeepSeek' : '硅基流动'}` : '业务调用已关闭' },
+            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: runtime.local_processing ? '资料迁移与备份' : '演示资料、迁移与备份' },
           ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
         </nav></TabsList>
 
@@ -244,7 +244,8 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           <div className="settings-inline-note"><LockKeyhole size={17} /><p>当前未启用登录，访问地址后直接进入工作台。</p></div></div>
         </section></TabsContent>}
 
-        {section === 'environment' && <TabsContent value="environment" asChild><section className="panel settings-card">
+        {section === 'environment' && runtime.local_processing && <section className="panel settings-card"><div className="settings-card-heading"><h2>运行环境</h2><span className="settings-small-badge enabled">已连接</span></div><div className="settings-card-body"><div className="settings-default-provider"><div><h3>本地业务数据库</h3><p>人员、法规、录音、文书与办理记录统一留存。</p></div><Database size={22}/></div><p className="settings-caption">SQLite · macOS / Linux · 当前运行配置由服务端管理</p></div></section>}
+        {section === 'environment' && !runtime.local_processing && <TabsContent value="environment" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div><h2>运行环境</h2></div></div>
           <div className="settings-card-body">
             <div className="settings-label-line"><span>目标运行环境</span><span className="settings-caption">保存配置后，重启后端生效</span></div>
@@ -268,7 +269,8 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           </div>
         </section></TabsContent>}
 
-        {section === 'ai' && <TabsContent value="ai" asChild><section className="settings-ai-section">
+        {section === 'ai' && runtime.local_processing && <section className="panel settings-card"><div className="settings-card-heading"><div><h2>智能处理服务</h2><p>当前工作空间的资料处理能力</p></div><span className="settings-small-badge enabled">已就绪</span></div><div className="settings-card-body">{[{name:'法规资料整理', detail:'检索已发布法规，核对适用版本，保留原文引用。'}, {name:'录音资料整理',detail:'使用配套录音资料，整理角色分段与转写正文。'}, {name:'文字要素整理',detail:'从已保存正文提取要素、整理摘要并关联来源。'}].map(item=><div className="settings-default-provider" key={item.name}><div><h3>{item.name}</h3><p>{item.detail}</p></div><ShieldCheck size={20}/></div>)}<p className="settings-caption">资料在当前工作空间内处理；服务连接方式由启动配置管理。</p></div></section>}
+        {section === 'ai' && !runtime.local_processing && <TabsContent value="ai" asChild><section className="settings-ai-section">
           <div className="panel settings-card"><div className="settings-card-heading"><div><h2>AI 服务配置</h2></div></div>
             <div className="settings-card-body"><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '法规问答、语音转写和摘要可使用已配置的服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
               <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写固定使用硅基流动。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><Choice className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></Choice></label></div>
@@ -296,7 +298,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           })}</div>
           <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>连接测试仅验证凭证与模型列表</strong><p>测试不会发送业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>密钥不回显、不写入浏览器存储，保存后立即清除本页输入。</p></div></div>
         </section></TabsContent>}
-        <TabsContent value="data" forceMount asChild><div hidden={section !== 'data'}><Maintenance/></div></TabsContent>
+        <TabsContent value="data" forceMount asChild><div hidden={section !== 'data'}><Maintenance localProcessing={runtime.local_processing}/></div></TabsContent>
       </motion.div>
     </div></Tabs>
 

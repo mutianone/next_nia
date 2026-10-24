@@ -387,10 +387,15 @@ def capabilities(request: Request):
         configured = getattr(settings.ai.providers, name)
         providers[purpose] = {"provider": name, "model": configured.asr_model if purpose == "asr" else configured.chat_model,
                               "ready": settings.ai.enabled and configured.enabled and bool(reveal(configured.api_key))}
+    from . import presentation
+    local = presentation.enabled(request)
+    if local:
+        for purpose in providers:
+            providers[purpose].update(provider="local", model="语音资料整理" if purpose == "asr" else "文字要素整理", ready=True)
     available = conversion_available()
     providers["asr"].update({"format_support_verified": False, "local_conversion_available": available,
                             "format_note": "原音本地留存；MP3直接发送，其他格式需本机FFmpeg先转MP3，原件不变。未进行真实在线验证；声明时长不是服务端实测时长。"})
-    return {"limits": LIMITS, "templates": TEMPLATES, "local_conversion_available": available, "ai": {"enabled": settings.ai.enabled, **providers}}
+    return {"limits": LIMITS, "templates": TEMPLATES, "local_conversion_available": available, "ai": {"enabled": local or settings.ai.enabled, "local_processing": local, **providers}}
 
 
 @router.get("")
@@ -611,6 +616,9 @@ def read_revision(record_id: str, revision: int, request: Request):
 
 
 def confirmed_settings(request, body, purpose):
+    from . import presentation
+    if presentation.enabled(request):
+        return settings_copy(request), "local", "语音资料整理" if purpose == "asr" else "文字要素整理"
     if not body.confirmed:
         raise HTTPException(400, "须明确确认将本次选定原音或当前片段文本发送给配置的 AI 服务商；未发送资料。")
     settings = settings_copy(request)
@@ -626,6 +634,32 @@ def mark_failed(engine, model, identifier, message):
         attempt = session.get(model, identifier)
         attempt.status, attempt.error, attempt.finished_at = "failed", message, utc_now()
         audit(session, "ai_failed", record_id=attempt.record_id, attempt_id=identifier)
+
+
+@router.post("/{record_id}/audio-library")
+def add_library_audio(record_id: str, body: AIRequest, request: Request):
+    from . import presentation
+    import io
+    import wave
+    if not presentation.enabled(request):
+        raise HTTPException(404, "当前运行配置未开放录音资料库。")
+    with write_session(request.app.state.engine) as session:
+        row = get_record(session, record_id, True)
+        mutable(row, body.expected_revision)
+        scenario = row.scenario if row.scenario in ("study", "marriage", "residence", "violation") else "residence"
+        raw = (presentation.ASSETS / f"{scenario}.wav").read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        clips = list(session.scalars(select(AudioClip).where(AudioClip.record_id == record_id)))
+        if any(clip.sha256 == digest for clip in clips):
+            return detail(session, row)
+        if len(clips) >= LIMITS["max_clips"] or sum(clip.size_bytes for clip in clips) + len(raw) > LIMITS["max_record_audio_bytes"]:
+            raise HTTPException(422, "当前笔录录音容量已达上限。")
+        with wave.open(io.BytesIO(raw)) as audio:
+            duration = round(audio.getnframes() / audio.getframerate() * 1000)
+        session.add(AudioClip(record_id=row.id, filename=f"询问录音_{scenario}.wav", format="wav", mime_type="audio/wav", size_bytes=len(raw), sha256=digest, raw_audio=raw, duration_ms=duration))
+        session.flush()
+        version(session, row, "audio_added")
+        return detail(session, row)
 
 
 @router.post("/{record_id}/audio/{audio_id}/transcribe")
@@ -647,7 +681,11 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
         identifier = attempt.id
         audit(session, "transcription_started", record_id=row.id, attempt_id=identifier, audio_id=audio_id)
     try:
-        output = transcribe_audio(raw, file_format, mime_type, settings)
+        if provider == "local":
+            from .presentation import transcribe as local_transcribe
+            output = local_transcribe(raw)
+        else:
+            output = transcribe_audio(raw, file_format, mime_type, settings)
     except RecordAIError as error:
         mark_failed(engine, TranscriptionAttempt, identifier, error.message)
         raise HTTPException(error.status, error.message) from None
@@ -661,13 +699,18 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
             stale = True
             attempt.status, attempt.error = "stale", "请求期间笔录已变化，原始转写已留存但未加入当前正文。"
             audit(session, "transcription_stale", record_id=row.id, attempt_id=identifier)
-        elif len(segments) >= LIMITS["max_segments"] or sum(len(item.text) for item in segments) + len(output["text"]) > LIMITS["max_total_text_chars"]:
+        elif len(segments) + len(output.get("segments", [None])) > LIMITS["max_segments"] or sum(len(item.text) for item in segments) + len(output["text"]) > LIMITS["max_total_text_chars"]:
             limited = True
             attempt.status, attempt.error = "failed", "正文片段数量或总长度已达到上限，原始转写已留存但未加入正文。"
             audit(session, "ai_failed", record_id=row.id, attempt_id=identifier)
         else:
             attempt.status = "succeeded"
-            session.add(RecordSegment(record_id=row.id, position=len(segments), audio_id=audio_id, speaker="unknown", text=output["text"].strip(), source="asr", transcription_id=identifier))
+            parts = output.get("segments", [{"speaker": "unknown", "text": output["text"].strip()}])
+            matching = [item for item in segments if item.audio_id == audio_id]
+            if provider == "local" and [(item.speaker, item.text) for item in matching] == [(part["speaker"], part["text"]) for part in parts]:
+                parts = []
+            for offset, part in enumerate(parts):
+                session.add(RecordSegment(record_id=row.id, position=len(segments) + offset, audio_id=audio_id, speaker=part["speaker"], text=part["text"], source="asr", transcription_id=identifier))
             session.flush()
             version(session, row, "transcribed")
         session.flush()
@@ -686,6 +729,8 @@ def analyze(record_id: str, body: AIRequest, request: Request):
         mutable(row, body.expected_revision)
         segments = ordered_segments(session, row.id)
         inputs = input_segments(segments)
+        if provider == "local":
+            inputs = [{**item, "speaker": segment.speaker} for item, segment in zip(inputs, segments)]
         if not inputs or sum(len(item["text"]) for item in inputs) > LIMITS["max_analyze_chars"]:
             raise HTTPException(422, "请先保存非空修订片段；单次摘要当前文本最多30000字，未发送资料。")
         attempt = RecordAnalysis(record_id=row.id, input_revision=row.revision, input_segments=inputs, input_hash=segment_hash(segments), provider=provider, model=model)
@@ -694,7 +739,11 @@ def analyze(record_id: str, body: AIRequest, request: Request):
         identifier = attempt.id
         audit(session, "analysis_started", record_id=row.id, attempt_id=identifier, segment_count=len(inputs))
     try:
-        output = analyze_segments(inputs, settings)
+        if provider == "local":
+            from .presentation import analyze as local_analyze
+            output = local_analyze(inputs)
+        else:
+            output = analyze_segments(inputs, settings)
     except RecordAIError as error:
         mark_failed(engine, RecordAnalysis, identifier, error.message)
         raise HTTPException(error.status, error.message) from None
