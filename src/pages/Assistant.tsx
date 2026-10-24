@@ -11,7 +11,7 @@ import { DocumentViewer } from './Knowledge';
 type ProviderConfig = { enabled: boolean; chat_model: string; api_key_configured: boolean };
 type AISettings = { enabled: boolean; default_provider: 'siliconflow' | 'deepseek'; providers: Record<'siliconflow' | 'deepseek', ProviderConfig> };
 type Turn = { question: string; date: string; mode: 'search' | 'ai'; answer?: Answer; result?: SearchResult; error?: string };
-const starterQuestions = ['居留证件事项发生变更，需要办理什么手续？', '如何查找有关签证停留期限的规定？', '办理延期申请需要准备哪些材料？'];
+const starterQuestions = ['申请延长居留期限，应当何时提出申请？', '签证停留期限延期，应当何时提出申请？', '外国人在中国境内工作需要哪些许可？'];
 
 export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void; onSettings: () => void }) {
   const [settings, setSettings] = useState<AISettings | null>(null);

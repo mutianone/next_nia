@@ -24,7 +24,7 @@ def test_offline_end_to_end(client):
     assert client.get('/api/settings').json()['runtime']['local_processing'] is True
     dashboard = client.get('/api/dashboard').json()
     assert dashboard['stats']['people'] > 0
-    response = client.post('/api/knowledge/ask', json={'question': '居留证件变更'})
+    response = client.post('/api/knowledge/ask', json={'question': '申请延长居留期限，应当何时提出申请？'})
     assert response.status_code == 200, response.text
     answer = response.json()
     assert answer['status'] == 'answered'
@@ -115,3 +115,16 @@ def test_local_mode_disallows_cloud_connection_tests(client):
     response = client.post('/api/settings/test-ai', json={'provider':'siliconflow', 'chat_model':'test', 'api_key':'not-a-real-key'})
     assert response.status_code == 409
     assert not client.get('/api/settings').json()['settings']['ai']['enabled']
+
+
+def test_missing_change_procedure_is_not_answered_with_extension_law(client):
+    result = client.post('/api/knowledge/ask', json={'question': '居留证件事项发生变更，需要办理什么手续？'}).json()
+    assert result['status'] == 'insufficient'
+    assert result['claims'] == []
+
+
+def test_residence_extension_does_not_include_employment_law(client):
+    result = client.post('/api/knowledge/ask', json={'question': '申请延长居留期限，应当何时提出申请？'}).json()
+    assert result['status'] == 'answered'
+    assert result['sources']
+    assert all('延长居留期限' in source['text'] for source in result['sources'])

@@ -44,10 +44,20 @@ def analyze(inputs):
     return {'summary': summary, 'key_facts': facts, 'issues': issues, 'provider': 'local', 'model': '文字要素整理'}
 
 
-def answer(sources):
+def answer(sources, question=""):
+    # Shared words such as "居留证件" do not establish the requested procedure.
+    # For explicit business intents, require the same intent in the source text.
+    topics = [("变更",), ("延期", "延长"), ("工作", "就业"), ("住宿", "旅馆")]
+    requested = [topic for topic in topics if any(word in question for word in topic)]
+    if requested:
+        sources = [source for source in sources if all(any(word in source["text"] for word in topic) for topic in requested)]
+    if any(word in question for word in ("延期", "延长")):
+        subject = "居留" if "居留" in question else "签证" if "签证" in question else None
+        if subject:
+            sources = [source for source in sources if subject in source["text"]]
     if not sources:
         return {'status': 'insufficient', 'answer': '当前资料未检索到足够依据，请调整关键词或补充已发布资料。', 'sources': [], 'claims': [], 'provider': 'local', 'model': '法规资料整理'}
     sources = sources[:4]
-    claims = [{'text': f'【{source["article"] or source["title"]}】{source["text"]}', 'source_ids': [source['id']]} for source in sources]
+    claims = [{'text': source["text"], 'source_ids': [source['id']]} for source in sources]
     return {'status': 'answered', 'answer': '\n\n'.join(item['text'] for item in claims),
             'claims': claims, 'sources': sources, 'provider': 'local', 'model': '法规资料整理'}

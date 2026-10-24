@@ -506,7 +506,7 @@ def ask(request: Request, body: AskRequest):
     with _WRITE_LOCK, _session(request, write=True) as session:
         sources, retrieval = _search(session, body.question, as_of, 8, external_only=not local)
         if local:
-            result = presentation.answer(sources)
+            result = presentation.answer(sources, body.question)
             _audit(session, "knowledge.asked", count=len(sources))
             return {**result, "as_of": as_of, "retrieval": retrieval}
         if not sources:
