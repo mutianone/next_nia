@@ -172,3 +172,7 @@ NEXT_NIA_HOST=0.0.0.0 bash scripts/presentation.sh
 同一局域网设备访问 `http://服务器局域网IPv4:5173`；本机仍可访问 `http://127.0.0.1:5173`。前端代理同源 `/api`，后端 8000 端口继续只监听本机，登录与跨站请求保护保持生效。启动前先停止本项目旧服务；无需修改密钥或数据库。不设置 `NEXT_NIA_HOST` 时仍默认仅本机访问。
 
 构建后的单端口服务也支持 `NEXT_NIA_HOST=0.0.0.0 bash scripts/serve.sh`（默认 8080）；使用当前工作空间时同时设置 `NEXT_NIA_DATA_DIR="$PWD/backend/presentation-data"`。局域网普通 HTTP 可浏览页面及上传录音，浏览器现场录音需要 HTTPS 安全上下文。
+
+## Mac 一键部署到云服务器
+
+双击根目录的 `一键部署.command`，通过 SSH 认证后自动部署到 `81.70.166.164:/root/nia`。首次运行前请阅读 [一键部署说明](docs/one-click-deploy.md)，其中包含环境要求、访问端口、数据保留与 HTTPS 录音说明。
