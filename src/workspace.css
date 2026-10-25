@@ -305,7 +305,7 @@
 
 /* Overview header lives inside the compact hero. */
 .dashboard-page .spatial-hero{min-height:244px;padding:36px 28px 16px;grid-template-columns:1fr 1fr}
-.dashboard-page .spatial-corner{position:absolute;top:10px;right:20px;z-index:4}
+.dashboard-page .spatial-corner{position:absolute;top:10px;right:18px;z-index:4}
 .dashboard-page .spatial-corner .dashboard-date{color:#d5e6f5;gap:9px;font-size:11px}
 .dashboard-page .spatial-corner .icon-button{color:inherit}
 .dashboard-page .spatial-hero .spatial-stage{height:190px;margin:0 82px 0 0;width:calc(100% - 82px)}
@@ -318,3 +318,8 @@
 .dashboard-page .spatial-action{margin-top:10px}
 @media(min-width:1600px){.dashboard-page .spatial-hero{min-height:260px}.dashboard-page .spatial-hero .spatial-stage{height:205px}}
 @media(max-width:700px){.dashboard-page .spatial-hero{grid-template-columns:1fr;padding:44px 18px 14px;gap:6px}.dashboard-page .spatial-hero .spatial-stage{height:180px}.dashboard-page .spatial-corner{right:14px;top:10px}.dashboard-page .spatial-corner .dashboard-date>svg{display:block}.dashboard-page .spatial-toolbar{right:14px;bottom:22px}.dashboard-page .spatial-toolbar button{min-height:38px}}
+
+.dashboard-page .officer-art{left:calc(50% - 16px)}
+@media(max-width:700px){.dashboard-page .officer-art{left:calc(50% - 10px)}}
+.dashboard-page .spatial-corner .dashboard-date{display:flex}
+.dashboard-page .spatial-corner .dashboard-date>span{display:inline}

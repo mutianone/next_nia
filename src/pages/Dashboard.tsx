@@ -3,7 +3,7 @@ import { usePermissions } from '../auth/AuthContext';
 import { formatDateTime } from '../lib/display';
 import { SpatialHero } from '../components/SpatialHero';
 import { useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, AudioLines, BookOpen, CalendarDays, Check, ChevronRight, FileText, Layers3, Radio, RefreshCw, Shield, Sparkles, UsersRound, WifiOff } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, AudioLines, BookOpen, CalendarDays, Check, ChevronRight, FileText, Layers3, Radio, Shield, Sparkles, UsersRound, WifiOff } from 'lucide-react';
 import { api } from '../api';
 import type { DashboardData } from '../api';
 import type { PageId } from '../navigation';
@@ -21,11 +21,11 @@ export function Dashboard({ onNavigate, onOpenAlert }: { onNavigate: (page: Page
     { label: '已发布法规', number: data?.stats.knowledge_documents, unit: '份', icon: BookOpen, caption: '查看法规目录', color: 'orange', route: 'knowledge' as PageId },
     { label: '文书草稿', number: data?.stats.draft_records, unit: '份', icon: FileText, caption: '继续填写与核对', color: 'purple', route: 'documents' as PageId },
   ];
-  const date = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
+  const date = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' }).formatToParts(new Date()).map(part => part.type === 'weekday' ? ` · ${part.value}` : part.value).join('');
   return <div className="page-content dashboard-page">
     {error && <div className="error-notice" role="alert"><WifiOff size={18}/><span>工作台暂时无法连接：{error}。请检查本地后端服务。</span><button onClick={refresh}>重试</button></div>}
     <h1 className="sr-only">总览工作台</h1>
-    <SpatialHero variant="dashboard" corner={<div className="dashboard-date"><CalendarDays size={15}/><span>{date}</span><button className="icon-button" aria-label="刷新工作台" onClick={refresh} disabled={loading}><RefreshCw size={15} className={loading ? 'spinning' : ''}/></button></div>} title={<>待核查提醒 <strong className="work-hero-count">{data?.stats.pending_alerts ?? '—'}</strong><small className="work-hero-unit">项</small></>} description={data?.alerts_last_scan_at ? `上次扫描 ${formatDateTime(data.alerts_last_scan_at)} · 需人工核查` : '尚无扫描结果，请进入期限核查运行扫描。'} details={[]} action={<div className="work-hero-tasks"><button className="hero-button" onClick={() => onNavigate('alerts')}>前往核查<ArrowRight size={16}/></button><button className="work-hero-secondary" onClick={() => onNavigate('records')}>待整理笔录 <b>{data?.stats.transcript_drafts ?? '—'}</b><ChevronRight size={14}/></button></div>}/>
+    <SpatialHero variant="dashboard" corner={<div className="dashboard-date"><CalendarDays size={15}/><span>{date}</span></div>} title={<>待核查提醒 <strong className="work-hero-count">{data?.stats.pending_alerts ?? '—'}</strong><small className="work-hero-unit">项</small></>} description={data?.alerts_last_scan_at ? `上次扫描 ${formatDateTime(data.alerts_last_scan_at)} · 需人工核查` : '尚无扫描结果，请进入期限核查运行扫描。'} details={[]} action={<div className="work-hero-tasks"><button className="hero-button" onClick={() => onNavigate('alerts')}>前往核查<ArrowRight size={16}/></button><button className="work-hero-secondary" onClick={() => onNavigate('records')}>待整理笔录 <b>{data?.stats.transcript_drafts ?? '—'}</b><ChevronRight size={14}/></button></div>}/>
 
     <div className="data-caption"><span><i className={`status-dot ${data?.demo ? 'amber' : ''}`}/>{data ? '当前环境登记记录 · 预警按最近扫描结果显示，仍需人工核查' : '正在读取本地数据源'}</span></div>
     <div className="stats-grid">{stats.map(s => <button className={`stat-card ${s.color}`} key={s.label} onClick={() => onNavigate(s.route)}><div className="stat-top"><span>{s.label}</span><span className="stat-icon"><s.icon size={19} strokeWidth={1.6}/></span></div><div className="stat-value">{s.number === undefined ? '—' : s.number.toLocaleString()}<small>{s.unit}</small></div><div className="stat-footer"><span>{s.caption}</span><ChevronRight size={14}/></div></button>)}</div>
