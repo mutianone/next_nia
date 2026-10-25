@@ -6,12 +6,9 @@ REMOTE_ROOT='/root/nia'
 RELEASE="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 source "$PROJECT_ROOT/scripts/common.sh"
 check_platform
-# Finder does not inherit the interactive shell PATH.
-export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
-if ! command -v node >/dev/null 2>&1; then
-  bundled="$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin"
-  [ ! -x "$bundled/node" ] || export PATH="$bundled:$PATH"
-fi
+# Finder may inherit an old Node even when newer runtimes are installed.
+source "$PROJECT_ROOT/scripts/deploy-node.sh"
+select_deploy_node
 check_node
 for tool in ssh scp tar git; do command -v "$tool" >/dev/null || fail "缺少命令：$tool"; done
 [ "$#" -eq 0 ] || { [ "$#" -eq 1 ] && [ "${1:-}" = '--package-only' ]; } || fail '仅支持 --package-only（只构建打包，不连接服务器）。'

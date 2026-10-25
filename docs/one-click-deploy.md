@@ -10,7 +10,7 @@
 
 ## 环境要求
 
-Mac 需要 Node.js 20.19+（20.x）或 22.12+，以及 Git/OpenSSH。脚本识别 Homebrew 和当前 Codex 的 Node 运行时路径。使用 `npm ci` 安装锁定依赖，然后本机构建，不将 Mac 虚拟环境或 node_modules 传到 Linux。
+Mac 需要 Node.js 22.14+（22.x）或 24+（推荐 24 LTS），以及 Git/OpenSSH。脚本会检查当前版本；遇到旧版本会继续查找 Codex、Homebrew、nvm 中的兼容 Node/npm，仅为本次部署调整 PATH，不修改系统默认版本或 shell 配置。使用 `npm ci` 安装锁定依赖，然后本机构建，不将 Mac 虚拟环境或 node_modules 传到 Linux。
 
 服务器需要 Linux + systemd，推荐 **Ubuntu 24.04 / Debian 12**，预先具备 Python 3.11+（含 venv/ensurepip）、FFmpeg、curl、ss、flock。为避免影响其他服务，脚本**不运行 apt/dnf、不安装或升级系统软件、不修改防火墙或 Nginx**。依赖缺失时明确停止，由服务器管理员单独准备；应用 Python 依赖只安装在版本目录的虚拟环境里。
 
