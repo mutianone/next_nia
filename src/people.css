@@ -6,10 +6,6 @@
 .people-notice button { margin-left: auto; display: grid; place-items: center; border: 0; background: transparent; color: inherit; padding: 3px; }
 .people-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 18px; margin-bottom: 25px; }
 .people-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 21px 18px; position: relative; overflow: hidden; }
-.people-stat::after { content: ''; position: absolute; bottom: 0; left: 21px; width: 25px; height: 2px; background: var(--primary); opacity: .6; }
-.people-stat.success::after { background: var(--success); }
-.people-stat.warning::after { background: var(--warning); }
-.people-stat.muted::after { background: var(--muted); }
 .people-stat > div { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; }
 .people-stat > div > svg { color: var(--primary); opacity: .8; }
 .people-stat.success > div > svg { color: var(--success); }

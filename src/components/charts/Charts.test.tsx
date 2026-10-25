@@ -18,9 +18,21 @@ describe('true-data chart behaviour', () => {
     expect(screen.getByText('2026-10-24 · 入境 2 · 出境 9 · 净流入 -7')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'查看数据表'}));
     fireEvent.click(screen.getByRole('button',{name:'面积图'}));
-    fireEvent.click(screen.getByRole('button',{name:'登记净流入'}));
-    expect(screen.getByRole('button',{name:'登记净流入'})).toHaveAttribute('aria-pressed','false');
+    fireEvent.click(screen.getByRole('button',{name:'出境'}));
+    expect(screen.getByRole('button',{name:'出境'})).toHaveAttribute('aria-pressed','false');
     expect(within(screen.getByRole('table')).getByText('-7')).toBeInTheDocument();
+  });
+  it('aligns each line marker to its matching bar top and centre, including zero values', () => {
+    const { container } = render(<TrendChart data={[{label:'10-24',entries:2,exits:9},{label:'10-25',entries:0,exits:4}]}/>);
+    for (const key of ['entries','exits']) {
+      const group = container.querySelector(`[data-series="${key}"]`)!;
+      const bars = group.querySelectorAll('rect'), markers = group.querySelectorAll('circle');
+      expect(markers.length).toBe(2);
+      bars.forEach((bar,i) => {
+        expect(Number(markers[i].getAttribute('cx'))).toBeCloseTo(Number(bar.getAttribute('x'))+Number(bar.getAttribute('width'))/2);
+        expect(Number(markers[i].getAttribute('cy'))).toBe(Number(bar.getAttribute('y')));
+      });
+    }
   });
   it('preserves every category and full denominator through distribution switches', () => {
     const rows = Array.from({length:12},(_,i) => ({label:`分类${i+1}`,value:1}));
