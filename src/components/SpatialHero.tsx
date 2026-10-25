@@ -18,7 +18,7 @@ const content: Record<SpatialVariant, { tag: string; title: ReactNode; descripti
   settings: { tag: '工作空间控制中心', title: '运行环境与服务', description: '环境、数据与智能服务，在一个本地工作空间中有序运行。', details: ['环境隔离', '服务配置', '本地优先'], code: 'CONFIGURE YOUR WORKSPACE' },
 };
 
-export function SpatialHero({ variant, action, compact = false, title, description, details }: { variant: SpatialVariant; action?: ReactNode; compact?: boolean; title?: ReactNode; description?: string; details?: string[] }) {
+export function SpatialHero({ variant, action, compact = false, title, description, details, corner }: { variant: SpatialVariant; corner?: ReactNode; action?: ReactNode; compact?: boolean; title?: ReactNode; description?: string; details?: string[] }) {
   const info = content[variant];
   const preferences = useSpatialPreferences();
   const [paused, setPaused] = useState(false), [expanded, setExpanded] = useState(variant === 'dashboard');
@@ -56,6 +56,7 @@ export function SpatialHero({ variant, action, compact = false, title, descripti
   };
   const release = (event: PointerEvent<HTMLDivElement>) => { drag.current = null; if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); };
   return <section className={`spatial-hero ${compact ? 'spatial-compact' : ''}`} data-scene={variant} data-motion={options.animated ? 'on' : 'off'} aria-label={`${info.tag}主视觉`}>
+    {corner && <div className="spatial-corner">{corner}</div>}
     <div className="spatial-atmosphere" aria-hidden="true"><i/><i/></div>
     <div className="spatial-copy"><span className="spatial-eyebrow"><i/>{info.tag}</span><h2>{title ?? info.title}</h2><p>{description ?? info.description}</p>
       {action && <div className="spatial-action">{action}</div>}

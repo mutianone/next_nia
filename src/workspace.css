@@ -302,3 +302,19 @@
 @media(max-width:700px){.dashboard-page .stats-grid{gap:10px}.dashboard-page .stats-grid .stat-card{padding:14px}.settings-page .settings-card-body{padding:16px}.settings-page .settings-field .input{min-height:42px}}
 .settings-page .settings-ai-section{gap:14px}.settings-page .settings-ai-master{padding:14px}.settings-page .settings-inline-note{margin-top:16px}
 @media(min-width:1100px){.settings-page .settings-provider-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-page .settings-provider-fields{display:flex;flex-direction:column}}
+
+/* Overview header lives inside the compact hero. */
+.dashboard-page .spatial-hero{min-height:244px;padding:36px 28px 16px;grid-template-columns:1fr 1fr}
+.dashboard-page .spatial-corner{position:absolute;top:10px;right:20px;z-index:4}
+.dashboard-page .spatial-corner .dashboard-date{color:#d5e6f5;gap:9px;font-size:11px}
+.dashboard-page .spatial-corner .icon-button{color:inherit}
+.dashboard-page .spatial-hero .spatial-stage{height:190px;margin:0 82px 0 0;width:calc(100% - 82px)}
+.dashboard-page .spatial-visual{position:static;padding:0;margin:0}
+.dashboard-page .spatial-toolbar{position:absolute;right:18px;bottom:22px;display:flex;flex-direction:column;gap:9px;margin:0}
+.dashboard-page .spatial-view-switch{flex-direction:column}
+.dashboard-page .spatial-toolbar button{min-height:32px}
+.dashboard-page .spatial-copy{padding-bottom:0}
+.dashboard-page .spatial-copy h2{margin-top:9px;margin-bottom:7px}
+.dashboard-page .spatial-action{margin-top:10px}
+@media(min-width:1600px){.dashboard-page .spatial-hero{min-height:260px}.dashboard-page .spatial-hero .spatial-stage{height:205px}}
+@media(max-width:700px){.dashboard-page .spatial-hero{grid-template-columns:1fr;padding:44px 18px 14px;gap:6px}.dashboard-page .spatial-hero .spatial-stage{height:180px}.dashboard-page .spatial-corner{right:14px;top:10px}.dashboard-page .spatial-corner .dashboard-date>svg{display:block}.dashboard-page .spatial-toolbar{right:14px;bottom:22px}.dashboard-page .spatial-toolbar button{min-height:38px}}
