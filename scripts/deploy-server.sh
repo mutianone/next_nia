@@ -59,7 +59,11 @@ for candidate in python3.13 python3.12 python3.11 python3; do
   if command -v "$candidate" >/dev/null && "$candidate" -c 'import sys; assert sys.version_info >= (3,11)' 2>/dev/null; then PYTHON="$candidate"; break; fi
 done
 [ -n "$PYTHON" ] || { echo '需要 Python 3.11+，推荐 Ubuntu 24.04 或 Debian 12。'; exit 1; }
-for required in ffmpeg curl ss; do
+FFMPEG_BIN="$(command -v ffmpeg || true)"
+if [ -x "$ROOT/tools/bin/ffmpeg" ]; then FFMPEG_BIN="$ROOT/tools/bin/ffmpeg"; fi
+[ -n "$FFMPEG_BIN" ] || { echo '缺少 FFmpeg：请准备系统 FFmpeg 或 /root/nia/tools/bin/ffmpeg 私有入口。'; exit 1; }
+"$FFMPEG_BIN" -version >/dev/null
+for required in curl ss; do
   command -v "$required" >/dev/null || { echo "缺少 $required，请先由服务器管理员安装；脚本不会修改系统软件或其他服务。"; exit 1; }
 done
 "$PYTHON" -c 'import venv, ensurepip' || { echo 'Python 缺少 venv/ensurepip，请先由管理员补齐。'; exit 1; }
@@ -100,6 +104,7 @@ Type=simple
 WorkingDirectory=$ROOT/current
 Environment=NEXT_NIA_DATA_DIR=$ROOT/data
 Environment=NEXT_NIA_SERVE_DIST=1
+Environment=NEXT_NIA_FFMPEG_BIN=$FFMPEG_BIN
 Environment=PYTHONUNBUFFERED=1
 Environment=TZ=Asia/Shanghai
 ExecStart=$ROOT/current/backend/.venv/bin/python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 5173 --workers 1
