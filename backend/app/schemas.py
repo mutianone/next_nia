@@ -13,6 +13,20 @@ class GeneralSettings(StrictModel):
     system_name: str = Field(default="境智 · 出入境业务平台", min_length=1, max_length=80)
     organization: str = Field(default="出入境业务中心", min_length=1, max_length=100)
 
+    interview_locations: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("interview_locations")
+    @classmethod
+    def normalize_locations(cls, values: list[str]) -> list[str]:
+        result = []
+        for value in values:
+            value = value.strip()
+            if len(value) > 500 or any(c in value for c in "\x00\r\n"):
+                raise ValueError("询问地点不超过500字，且不能包含换行")
+            if value and value not in result:
+                result.append(value)
+        return result
+
     @field_validator("system_name", "organization")
     @classmethod
     def trim_text(cls, value: str) -> str:

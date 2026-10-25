@@ -1,0 +1,24 @@
+import { useState } from 'react';
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from 'lucide-react';
+import { Dialog } from './Dialog';
+import { Choice } from './Choice';
+import './interview-fields.css';
+
+export const beijingInput = (value: string) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value)).replace(' ', 'T');
+const pad = (n: number) => String(n).padStart(2, '0');
+export function calendarDays(month: string) {
+  const [year, m] = month.split('-').map(Number);
+  return { offset: (new Date(Date.UTC(year, m - 1, 1)).getUTCDay() + 6) % 7, count: new Date(Date.UTC(year, m, 0)).getUTCDate() };
+}
+export function InterviewLocation({ value, onChange, locations, disabled }: { value: string; onChange: (value: string) => void; locations: string[]; disabled?: boolean }) {
+  return <span className="interview-location">{locations.length > 0 && <Choice aria-label="选择常用询问地点" className="select" value={locations.includes(value) ? value : ''} disabled={disabled} onChange={event => { if (event.target.value) onChange(event.target.value); }}><option value="">选择常用地点</option>{locations.map(location => <option key={location} value={location}>{location}</option>)}</Choice>}<input aria-label="询问地点" className="input" maxLength={500} value={value} onChange={event => onChange(event.target.value)} disabled={disabled} placeholder="填写或修改询问地点"/></span>;
+}
+export function InterviewDateTime({ value, onChange, disabled }: { value: string | null; onChange: (value: string | null) => void; disabled?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [day, setDay] = useState(''), [month, setMonth] = useState(''), [time, setTime] = useState('00:00');
+  const today = beijingInput(new Date().toISOString()).slice(0, 10);
+  const start = () => { const initial = beijingInput(value || new Date().toISOString()); setDay(initial.slice(0, 10)); setMonth(initial.slice(0, 7)); setTime(initial.slice(11, 16)); setOpen(true); };
+  const move = (step: number) => { const [y, m] = month.split('-').map(Number); const next = new Date(Date.UTC(y, m - 1 + step, 1)); setMonth(`${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}`); };
+  const grid = month ? calendarDays(month) : { offset: 0, count: 0 };
+  return <><button type="button" className="input interview-date-trigger" aria-label="选择询问发生时间" disabled={disabled} onClick={start}><CalendarDays size={18}/><span>{value ? beijingInput(value).replace('T', '  ') : '选择日期与时间'}</span><small>北京时间</small></button>{open && <Dialog title="询问发生时间" className="interview-calendar-dialog" onClose={() => setOpen(false)}><div className="interview-calendar" onClick={event => event.stopPropagation()}><div className="calendar-toolbar"><div><small>北京时间 · UTC+8</small><h3>{month.replace('-', ' 年 ')} 月</h3></div><button type="button" className="calendar-today" onClick={() => { setDay(today); setMonth(today.slice(0, 7)); }}>今天</button><button type="button" className="icon-button" aria-label="上个月" onClick={() => move(-1)}><ChevronLeft size={18}/></button><button type="button" className="icon-button" aria-label="下个月" onClick={() => move(1)}><ChevronRight size={18}/></button></div><div className="calendar-grid">{'一二三四五六日'.split('').map(d => <span className="calendar-weekday" key={d}>{d}</span>)}{Array.from({ length: grid.offset }, (_, i) => <span key={`blank-${i}`}/>)}{Array.from({ length: grid.count }, (_, i) => { const date = `${month}-${pad(i + 1)}`; return <button type="button" key={date} aria-label={date} aria-pressed={date === day} aria-current={date === today ? 'date' : undefined} className={`calendar-day ${date === today ? 'is-today' : ''} ${date === day ? 'is-selected' : ''}`} onClick={() => setDay(date)}>{i + 1}{date === today && <small>今天</small>}</button>; })}</div><div className="calendar-time"><Clock3 size={18}/><span>询问时间</span><Choice aria-label="小时" className="select" value={time.slice(0, 2)} onChange={e => setTime(`${e.target.value}:${time.slice(3)}`)}>{Array.from({ length: 24 }, (_, i) => <option key={i} value={pad(i)}>{pad(i)} 时</option>)}</Choice><Choice aria-label="分钟" className="select" value={time.slice(3)} onChange={e => setTime(`${time.slice(0, 2)}:${e.target.value}`)}>{Array.from({ length: 60 }, (_, i) => <option key={i} value={pad(i)}>{pad(i)} 分</option>)}</Choice></div><div className="calendar-selection">已选：{day}　{time}</div><div className="calendar-footer"><button type="button" className="text-button" disabled={disabled} onClick={() => { onChange(null); setOpen(false); }}>清空时间</button><button type="button" className="btn btn-secondary" onClick={() => setOpen(false)}>取消</button><button type="button" className="btn btn-primary" disabled={disabled} onClick={() => { onChange(`${day}T${time}:00+08:00`); setOpen(false); }}>确认时间</button></div></div></Dialog>}</>;
+}

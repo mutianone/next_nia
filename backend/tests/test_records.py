@@ -569,3 +569,12 @@ def test_historical_local_summary_is_readable_but_not_an_ai_export(client, cloud
     assert client.get('/api/records/'+row['id']).json()['analysis']['summary']
     assert client.get('/api/records/'+row['id']+'/export.txt').status_code == 200
     assert client.get('/api/records/'+row['id']+'/export.txt?include_ai=true').status_code == 409
+
+
+def test_common_locations_available_without_changing_existing_records(client):
+    row = client.post('/api/records', json={'title': '地点留存', 'location': '原地点'}).json()
+    settings = client.app.state.store.load()
+    settings.general.interview_locations = ['第一询问室', '第二询问室']
+    client.app.state.store.save(settings)
+    assert client.get('/api/records/capabilities').json()['interview_locations'] == ['第一询问室', '第二询问室']
+    assert client.get(f"/api/records/{row['id']}").json()['location'] == '原地点'

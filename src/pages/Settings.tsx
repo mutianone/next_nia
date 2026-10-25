@@ -1,3 +1,4 @@
+import '../components/interview-fields.css';
 import { AccountManagement } from '../auth/AccountManagement';
 import { useViewState } from '../hooks/useWorkspaceView';
 import { Maintenance } from '../components/Maintenance';
@@ -34,7 +35,7 @@ type PostgresSettings = {
   password_configured: boolean
 }
 type AppSettings = {
-  general: { system_name: string; organization: string }
+  general: { system_name: string; organization: string; interview_locations?: string[] }
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
   ai: { enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
@@ -185,7 +186,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     setSaving(true); setNotice(null)
     try {
       const payload = {
-        general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim() },
+        general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim(), interview_locations: draft.general.interview_locations || [] },
         environment: { mode: draft.environment.mode, postgres: postgresPayload() },
         ai: {
           enabled: draft.ai.enabled, default_provider: draft.ai.default_provider,
@@ -244,6 +245,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
             <label className="field settings-field"><span>系统名称 <b>*</b></span><input className="input" value={draft.general.system_name} maxLength={80} disabled={saving} placeholder="请输入系统名称" onChange={event => { setDraft({ ...draft, general: { ...draft.general, system_name: event.target.value } }); setNotice(null) }} /><small>显示在侧边导航与工作空间标题中。</small></label>
             <label className="field settings-field"><span>所属组织 <b>*</b></span><input className="input" value={draft.general.organization} maxLength={100} disabled={saving} placeholder="例如：出入境业务中心" onChange={event => { setDraft({ ...draft, general: { ...draft.general, organization: event.target.value } }); setNotice(null) }} /><small>用于标识当前部署单位。</small></label>
           </div>
+          <div className="location-settings"><h3>常用询问地点</h3><p>在智能笔录中快捷选择，也可手动填写其他地点。修改此列表不会改动已有笔录。</p>{(draft.general.interview_locations || []).map((location, index) => <div className="location-settings-row" key={index}><input className="input" aria-label={`询问地点 ${index + 1}`} value={location} maxLength={500} disabled={saving} placeholder="例如：第一询问室" onChange={event => setDraft({ ...draft, general: { ...draft.general, interview_locations: (draft.general.interview_locations || []).map((item, i) => i === index ? event.target.value : item) } })}/><button type="button" className="btn btn-secondary" disabled={saving} onClick={() => setDraft({ ...draft, general: { ...draft.general, interview_locations: (draft.general.interview_locations || []).filter((_, i) => i !== index) } })}>删除</button></div>)}<button type="button" className="btn btn-secondary" disabled={saving || (draft.general.interview_locations?.length || 0) >= 100} onClick={() => setDraft({ ...draft, general: { ...draft.general, interview_locations: [...(draft.general.interview_locations || []), ''] } })}>＋ 添加地点</button></div>
           <div className="settings-inline-note"><LockKeyhole size={17} /><p>已启用手机号与密码登录。账号及角色权限在“账号管理”中维护。</p></div></div>
         </section></TabsContent>}
 

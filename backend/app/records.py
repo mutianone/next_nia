@@ -390,7 +390,7 @@ def capabilities(request: Request):
     available = conversion_available()
     providers["asr"].update({"format_support_verified": False, "local_conversion_available": available,
                             "format_note": "原音本地留存；MP3直接发送，其他格式需本机FFmpeg先转MP3，原件不变。未进行真实在线验证；声明时长不是服务端实测时长。"})
-    return {"limits": LIMITS, "templates": TEMPLATES, "local_conversion_available": available, "ai": {"enabled": settings.ai.enabled, "audio_library_available": bool(getattr(request.app.state, "presentation", False)), **providers}}
+    return {"interview_locations": settings.general.interview_locations, "limits": LIMITS, "templates": TEMPLATES, "local_conversion_available": available, "ai": {"enabled": settings.ai.enabled, "audio_library_available": bool(getattr(request.app.state, "presentation", False)), **providers}}
 
 
 @router.get("")
