@@ -14,7 +14,7 @@ describe('interview fields', () => {
     fireEvent.click(screen.getByRole('button', { name: '选择询问发生时间' }));
     fireEvent.click(screen.getByRole('button', { name: '2026-10-20' }));
     expect(change).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: '取消', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^取消$/ }));
     expect(change).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: '选择询问发生时间' }));
     fireEvent.click(screen.getByRole('button', { name: '2026-10-21' }));
@@ -25,7 +25,7 @@ describe('interview fields', () => {
     const change = vi.fn();
     render(<><InterviewDateTime value={null} onChange={change}/><InterviewLocation value="原询问室" locations={['第一询问室']} onChange={change}/></>);
     fireEvent.click(screen.getByRole('button', { name: '选择询问发生时间' }));
-    fireEvent.click(screen.getByRole('button', { name: '今天', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^今天$/ }));
     expect(document.querySelector('[aria-current="date"]')).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByRole('button', { name: '清空时间' }));
     expect(change).toHaveBeenCalledWith(null);
