@@ -16,7 +16,7 @@ describe('real execution in populated workspaces',()=>{
   it('requires configured credentials and consent even with a stale local_processing flag',async()=>{
     vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>settings})));
     render(<Assistant onKnowledge={vi.fn()} onSettings={vi.fn()}/>);
-    fireEvent.click(screen.getByRole('button',{name:'AI 问答'}));
+    expect(screen.queryByRole('button',{name:'查找依据'})).not.toBeInTheDocument();
     await screen.findByText('请先配置 API 密钥，并启用 AI 和默认服务商。');
     fireEvent.change(screen.getByLabelText('法规问题'),{target:{value:'签证延期'}});
     expect(screen.getByRole('button',{name:'生成回答'})).toBeDisabled();
@@ -46,7 +46,7 @@ it('blocks questions when central permission is off and directs users to setting
   vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>configured})));
   const openSettings = vi.fn();
   render(<Assistant onKnowledge={vi.fn()} onSettings={openSettings}/>);
-  fireEvent.click(screen.getByRole('button',{name:'AI 问答'}));
+
   await screen.findByText(/勾选“允许法规问答发送至服务商”/);
   fireEvent.change(screen.getByLabelText('法规问题'),{target:{value:'签证延期'}});
   expect(screen.getByRole('button',{name:'生成回答'})).toBeDisabled();
