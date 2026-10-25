@@ -159,3 +159,16 @@ bash scripts/presentation.sh
 自动测试会使用隔离数据库与协议替身；通过不等同于云端验收。2026-10-25 已用真实硅基流动接口验证 5.4 秒测试录音转写（SenseVoiceSmall）、结构化摘要（Qwen3-8B）、来源要素登记、Word 导出和本地检索引用问答。测试库已删除，真实业务资料未外发。DeepSeek（deepseek-flash）也已使用真实接口完成会议测试文字摘要、结构化要素及引用校验、本地画像登记、Word 导出和检索引用问答联调，使用临时数据库且未修改业务数据；长录音、噪声及实际业务质量仍需专门评估；真实 PostgreSQL、手机 HTTPS/麦克风、法定文书模板及可选本地向量模型仍需对应环境或材料。扫描件 OCR、自动说话人识别、电子签章和正式送达不是已实现能力。
 
 如需恢复开场资料，先停服务，再执行 `bash scripts/presentation.sh --reset`。旧工作空间会整体移至 `backups/presentation-时间戳/`，不会删除原数据或影响 `backend/data/`。不要对正式业务工作空间执行资料重置。
+
+
+### 局域网访问
+
+当前已使用的工作空间可通过以下命令启动局域网预览（保留原账号、数据和 AI 配置）：
+
+```bash
+NEXT_NIA_HOST=0.0.0.0 bash scripts/presentation.sh
+```
+
+同一局域网设备访问 `http://服务器局域网IPv4:5173`；本机仍可访问 `http://127.0.0.1:5173`。前端代理同源 `/api`，后端 8000 端口继续只监听本机，登录与跨站请求保护保持生效。启动前先停止本项目旧服务；无需修改密钥或数据库。不设置 `NEXT_NIA_HOST` 时仍默认仅本机访问。
+
+构建后的单端口服务也支持 `NEXT_NIA_HOST=0.0.0.0 bash scripts/serve.sh`（默认 8080）；使用当前工作空间时同时设置 `NEXT_NIA_DATA_DIR="$PWD/backend/presentation-data"`。局域网普通 HTTP 可浏览页面及上传录音，浏览器现场录音需要 HTTPS 安全上下文。

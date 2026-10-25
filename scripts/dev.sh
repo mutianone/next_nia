@@ -8,6 +8,7 @@ source "$PROJECT_ROOT/scripts/common.sh"
 check_platform
 check_node
 check_venv
+export NEXT_NIA_HOST="${NEXT_NIA_HOST:-127.0.0.1}"
 cd "$PROJECT_ROOT"
 
 [ -f node_modules/vite/bin/vite.js ] || fail '未找到 Vite，请先运行 bash scripts/setup.sh。'
@@ -19,15 +20,16 @@ backend/.venv/bin/python - <<'PY'
 import socket
 import sys
 import errno
+import os
 
-for port in (8000, 5173):
+for host, port in (("127.0.0.1", 8000), (os.environ["NEXT_NIA_HOST"], 5173)):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
-            sock.bind(("127.0.0.1", port))
+            sock.bind((host, port))
         except OSError as error:
             if error.errno == errno.EADDRINUSE:
-                print(f"错误：127.0.0.1:{port} 已被占用，请先检查并自行停止对应服务。", file=sys.stderr)
+                print(f"错误：{host}:{port} 已被占用，请先检查并自行停止对应服务。", file=sys.stderr)
             else:
                 print(f"错误：无法监听本地端口 {port}，请检查系统或沙箱网络权限（{error.strerror}）。", file=sys.stderr)
             sys.exit(1)
@@ -76,7 +78,7 @@ then
   fail '后端健康检查未通过，请查看上方日志。正式环境还需检查 PostgreSQL 连接和数据库权限。'
 fi
 
-node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173 --strictPort &
+node node_modules/vite/bin/vite.js --host "$NEXT_NIA_HOST" --port 5173 --strictPort &
 frontend_pid=$!
 
 printf '\n本地预览：http://127.0.0.1:5173\n后端健康：http://127.0.0.1:8000/api/health\n按 Ctrl+C 停止本次启动的前后端服务。\n\n'
