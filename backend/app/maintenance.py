@@ -62,7 +62,7 @@ def verify_archive(source):
         names = archive.namelist()
         expected = {table.name+'.jsonl' for table in Base.metadata.sorted_tables} | {'manifest.json'}
         # 0.5.0 archives predate the optional presentation-data ledger.
-        for optional in ('demo_datasets', 'accounts', 'login_sessions', 'login_attempts'):
+        for optional in ('demo_datasets', 'accounts', 'login_sessions', 'login_attempts', 'analysis_templates'):
             if optional+'.jsonl' not in names: expected.discard(optional+'.jsonl')
         if len(names) != len(set(names)) or set(names) != expected: raise ValueError('备份文件条目或表版本不匹配')
         if archive.getinfo('manifest.json').file_size > 128*1024: raise ValueError('备份清单过大')

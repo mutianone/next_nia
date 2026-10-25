@@ -26,8 +26,8 @@ def complete_claims(raw):
     return claims
 
 
-def stream_answer(question, sources, settings):
-    provider, model, key, payload = prepare_answer(question, sources, settings)
+def stream_answer(question, sources, settings, *, analysis=False):
+    provider, model, key, payload = prepare_answer(question, sources, settings, analysis=analysis)
     payload['stream'] = True
     raw, pending, size, emitted, finish, done = '', '', 0, 0, None, False
     started = time.monotonic()

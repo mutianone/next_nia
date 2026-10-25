@@ -176,6 +176,8 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
     as_of: date | None = None
     confirm_external: bool = False
+    template_id: str | None = Field(default=None, max_length=36)
+    template_revision: int | None = Field(default=None, ge=1)
 
     @field_validator("question")
     @classmethod
@@ -500,6 +502,13 @@ def search(request: Request, body: SearchRequest):
 @router.post("/ask")
 def ask(request: Request, body: AskRequest):
     as_of = body.as_of or _today()
+    question = body.question
+    template_sources = None
+    if body.template_id:
+        from .analysis_templates import resolve_template, analysis_question
+        with _WRITE_LOCK, _session(request) as session:
+            template, template_sources = resolve_template(session, body.template_id, body.template_revision, as_of)
+        question = analysis_question(body.question, template, as_of)
     with request.app.state.store.lock:
         settings = request.app.state.store.current.model_copy(deep=True)
     if not settings.ai.external_permissions.question:
@@ -508,12 +517,14 @@ def ask(request: Request, body: AskRequest):
     # serialized operation. A concurrent revocation cannot slip between them.
     with _WRITE_LOCK, _session(request, write=True) as session:
         sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
+        if template_sources is not None:
+            sources = template_sources + sources[:4]
         if not sources:
             return {"status": "insufficient", "answer": "没有检索到已发布、有效且允许用于外部 AI 的相关法规。请补充材料、调整问题，或前往系统配置 → AI 服务检查法规资料许可。", "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
         if not body.confirm_external:
             raise HTTPException(400, "需要明确确认将本次问题与检索到的公开法规片段发送给已配置的 AI 服务商。")
         try:
-            result = answer_with_sources(body.question, sources, settings)
+            result = answer_with_sources(question, sources, settings, **({"analysis": True} if template_sources is not None else {}))
         except KnowledgeAIError as error:
             raise HTTPException(error.status, error.message) from None
         _audit(session, "knowledge.asked", count=len(sources))
@@ -523,6 +534,13 @@ def ask(request: Request, body: AskRequest):
 @router.post("/ask/stream")
 def ask_stream(request: Request, body: AskRequest):
     as_of = body.as_of or _today()
+    question = body.question
+    template_sources = None
+    if body.template_id:
+        from .analysis_templates import resolve_template, analysis_question
+        with _WRITE_LOCK, _session(request) as session:
+            template, template_sources = resolve_template(session, body.template_id, body.template_revision, as_of)
+        question = analysis_question(body.question, template, as_of)
     with request.app.state.store.lock:
         settings = request.app.state.store.current.model_copy(deep=True)
     if not settings.ai.external_permissions.question:
@@ -537,12 +555,14 @@ def ask_stream(request: Request, body: AskRequest):
         # Release it before yielding: generator resumes may use different threads.
         with _WRITE_LOCK, _session(request) as session:
             sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
+        if template_sources is not None:
+            sources = template_sources + sources[:4]
         if not sources:
             yield event({"type": "complete", "answer": {"status": "insufficient", "answer": "没有检索到可用于 AI 的有效法规，请补充资料或在系统配置中检查法规资料许可。", "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}})
             return
         yield event({"type": "status", "message": "已找到法规依据，AI 正在生成回答…"})
         try:
-            for result in stream_answer(body.question, sources, settings):
+            for result in stream_answer(question, sources, settings, **({"analysis": True} if template_sources is not None else {})):
                 result['answer'].update({'as_of': as_of, 'retrieval': retrieval})
                 if result['type'] == 'complete':
                     with _session(request, write=True) as session:

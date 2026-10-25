@@ -10,7 +10,7 @@ export type KnowledgeDocument = {
   chunks?: KnowledgeChunk[];
 };
 export type KnowledgeList = { items: KnowledgeDocument[]; total: number; page: number; page_size: number; stats: { documents: number; published: number; drafts: number; chunks: number }; retrieval: Retrieval };
-export type Citation = { id: string; document_id: string; title: string; version: string; article: string; text: string; page: number | null; source: string; effective_from: string | null; effective_to: string | null; score: number; allow_external: boolean; source_id?: string };
+export type Citation = { template_source?: boolean; id: string; document_id: string; title: string; version: string; article: string; text: string; page: number | null; source: string; effective_from: string | null; effective_to: string | null; score: number; allow_external: boolean; source_id?: string };
 export type SearchResult = { items: Citation[]; retrieval: Retrieval; as_of: string };
 export type Answer = { status: 'answered' | 'insufficient'; answer: string; sources: Citation[]; provider: string | null; model: string | null; as_of: string; retrieval: Retrieval; claims?: { text: string; source_ids: string[] }[] };
 export const statusLabels = { draft: '待审核', published: '已发布', archived: '已归档' };

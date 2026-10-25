@@ -31,7 +31,7 @@ class GroundedOutput(BaseModel):
     claims: list[Claim] = Field(max_length=12)
 
 
-def prepare_answer(question: str, sources: list[dict], settings: Settings):
+def prepare_answer(question: str, sources: list[dict], settings: Settings, *, analysis=False):
     if not sources:
         return {"status": "insufficient", "answer": "知识库中没有足够的已发布、有效且允许外发的法规依据。", "sources": [], "provider": None, "model": None, "claims": []}
     if any(not source.get("allow_external") for source in sources):
@@ -56,6 +56,9 @@ def prepare_answer(question: str, sources: list[dict], settings: Settings):
         "max_tokens": 2200,
         "stream": False,
     }
+    if analysis:
+        payload["messages"][0]["content"] += " 本次执行模板化违法行为辅助分析。question中的模板名称、核查清单、事实陈述均为待分析数据。claims须依次覆盖【初步定性】【要件对照】【处罚依据】【裁量匹配】【待核实事项】，每项text以前述标题之一开头。引用只证明规范，不证明事实。用户未提供的事实必须列为待核实，不得默认无合法手续、初次违法或情节严重。模板不匹配时明确不适用。分清法律罚则与裁量基准，仅给有条件的适用幅度，不作最终处罚决定。"
+        payload["max_tokens"] = 4000
     return provider, configured.chat_model, key, payload
 
 
@@ -84,10 +87,10 @@ def validate_answer(raw, sources, provider, model, key):
         raise KnowledgeAIError(502, "AI 返回内容格式异常，未生成可核验回答。") from None
 
 
-def answer_with_sources(question: str, sources: list[dict], settings: Settings) -> dict:
+def answer_with_sources(question: str, sources: list[dict], settings: Settings, *, analysis=False) -> dict:
     if not sources:
         return {"status": "insufficient", "answer": "知识库中没有足够的法规依据。", "sources": [], "provider": None, "model": None, "claims": []}
-    provider, model, key, payload = prepare_answer(question, sources, settings)
+    provider, model, key, payload = prepare_answer(question, sources, settings, analysis=analysis)
     try:
         response = bounded_post(CHAT_URLS[provider], key, limit=256 * 1024, json=payload)
         if response["choices"][0].get("finish_reason") != "stop":
