@@ -1,5 +1,5 @@
 import type { Answer } from '../knowledge-types';
-export type AIStreamEvent = { type: 'status'; message: string } | { type: 'partial' | 'complete'; answer: Answer } | { type: 'error'; message: string };
+export type AIStreamEvent = { type:'saved'; conversation_id:string; message_id:string } | { type: 'status'; message: string } | { type: 'partial' | 'complete'; answer: Answer } | { type: 'error'; message: string };
 export async function streamQuestion(body: object, onEvent: (event: AIStreamEvent) => void, signal: AbortSignal) {
   const response = await fetch('/api/knowledge/ask/stream', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), signal });
   if (!response.ok) {

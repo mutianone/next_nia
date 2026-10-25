@@ -9,7 +9,7 @@ afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();});
 it('retries the original question and date, copies messages and exports a completed answer',async()=>{
   const writeText=vi.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}});
-  vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>url.includes('/analysis/templates')?{items:[]}:{settings:{ai:{enabled:true,external_permissions:{question:true},default_provider:'siliconflow',providers:{siliconflow:{enabled:true,api_key_configured:true}}}}}})));
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>(url.includes('/analysis/templates')||url.includes('/conversations'))?{items:[],has_more:false}:{settings:{ai:{enabled:true,external_permissions:{question:true},default_provider:'siliconflow',providers:{siliconflow:{enabled:true,api_key_configured:true}}}}}})));
   const mock=vi.mocked(streamQuestion);
   mock.mockRejectedValueOnce(new Error('请求失败'));
   mock.mockImplementationOnce(async(_body,receive)=>{receive({type:'complete',answer:{status:'answered',answer:'核查结论',claims:[{text:'核查结论',source_ids:[]}],sources:[],provider:'siliconflow',model:'test',as_of:'2026-10-25',retrieval:{mode:'test',message:''}}});});
@@ -18,7 +18,7 @@ it('retries the original question and date, copies messages and exports a comple
   await waitFor(()=>expect(screen.getByRole('button',{name:'生成回答'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'生成回答'}));
   await screen.findByText('请求失败');
-  expect(screen.queryByRole('button',{name:'导出第1个回答'})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:'导出第2个回答'})).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('法规问题'),{target:{value:'尚未发送的新问题'}});
   fireEvent.change(screen.getByLabelText('适用日期'),{target:{value:'2020-01-01'}});
   fireEvent.click(screen.getByRole('button',{name:'重试第1个问题'}));
@@ -27,12 +27,31 @@ it('retries the original question and date, copies messages and exports a comple
   expect(screen.getByLabelText('法规问题')).toHaveValue('尚未发送的新问题');
   fireEvent.click(screen.getByRole('button',{name:'复制第1个问题'}));
   expect(writeText).toHaveBeenCalledWith('原始问题');
-  fireEvent.click(screen.getByRole('button',{name:'复制第1个回答'}));
+  fireEvent.click(screen.getByRole('button',{name:'复制第2个回答'}));
   expect(writeText.mock.calls[1][0]).toContain('核查结论');
   expect(writeText.mock.calls[1][0]).toContain('法规依据');
   const create=vi.fn(()=> 'blob:test'),revoke=vi.fn();
   vi.stubGlobal('URL',Object.assign(URL,{createObjectURL:create,revokeObjectURL:revoke}));
   const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
-  fireEvent.click(screen.getByRole('button',{name:'导出第1个回答'}));
+  fireEvent.click(screen.getByRole('button',{name:'导出第2个回答'}));
   expect(create).toHaveBeenCalledOnce();expect(click).toHaveBeenCalledOnce();
+});
+
+it('restores a saved conversation and keeps new conversation separate from history',async()=>{
+  vi.mocked(streamQuestion).mockClear();
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>{
+    if(url.endsWith('/conversations/c1'))return {id:'c1',items:[{id:'m1',question:'已保存的问题',date:'2026-10-20',status:'complete',answer:{status:'answered',answer:'数据库中的回答',sources:[],claims:[]}}]};
+    if(url.includes('/conversations'))return {items:[{id:'c1',title:'已保存的问题',updated_at:'2026-10-20T00:00:00Z'}],has_more:false};
+    if(url.includes('/analysis/templates'))return {items:[]};
+    return {settings:{ai:{enabled:true,external_permissions:{question:true},default_provider:'siliconflow',providers:{siliconflow:{enabled:true,api_key_configured:true}}}}};
+  }})));
+  render(<Assistant onKnowledge={vi.fn()} onSettings={vi.fn()}/>);
+  expect(await screen.findByText('数据库中的回答')).toBeInTheDocument();
+  expect(screen.getByLabelText('适用日期')).toHaveValue('2026-10-20');
+  expect(streamQuestion).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'新会话'}));
+  expect(screen.queryByText('数据库中的回答')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'历史会话'}));
+  fireEvent.click(await screen.findByRole('button',{name:/已保存的问题/}));
+  expect(await screen.findByText('数据库中的回答')).toBeInTheDocument();
 });

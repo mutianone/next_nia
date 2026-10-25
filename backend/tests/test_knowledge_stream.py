@@ -62,7 +62,7 @@ def test_stream_endpoint_permissions_and_final_event(client,monkeypatch):
     assert response.status_code==200
     assert 'text/event-stream' in response.headers['content-type']
     events=[json.loads(line[6:]) for line in response.text.splitlines() if line.startswith('data: ')]
-    assert events[0]['type']=='status' and events[-1]['type']=='complete'
+    assert events[0]['type']=='saved' and events[-1]['type']=='complete'
     settings=client.app.state.store.load(); settings.ai.external_permissions.question=False; client.app.state.store.save(settings)
     assert client.post('/api/knowledge/ask/stream',json={'question':'签证延期','confirm_external':True}).status_code==403
     assert len(calls)==1

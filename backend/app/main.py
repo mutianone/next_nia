@@ -20,6 +20,7 @@ from .database import AuditEvent, Base, application_engine, probe_postgres, writ
 from .people import Person, PersonStay, router as people_router
 from .knowledge import KnowledgeDocument, router as knowledge_router
 from .alerts import Alert, AlertRule, scan_alerts, scheduler_loop, router as alerts_router
+from .assistant_history import router as assistant_history_router, recover_history
 from .analysis_templates import seed_analysis_templates, router as analysis_templates_router
 from .documents import DocumentDraft, seed_templates, router as documents_router
 from .records import RecordSession, recover_interrupted_attempts, router as records_router
@@ -90,6 +91,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
             seed_admin(engine)
             seed_templates(engine)
             seed_analysis_templates(engine)
+            recover_history(engine)
             recover_interrupted_attempts(engine)
             if presentation and settings.environment.mode == "test":
                 from .demo import DemoDataset, dataset_session, populate
@@ -243,6 +245,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
         return dashboard_data(application.state.engine)
 
     application.include_router(people_router)
+    application.include_router(assistant_history_router)
     application.include_router(analysis_templates_router)
     application.include_router(knowledge_router)
     application.include_router(auth_router)

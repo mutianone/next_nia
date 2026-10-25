@@ -176,6 +176,7 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
     as_of: date | None = None
     confirm_external: bool = False
+    conversation_id: str | None = Field(default=None, max_length=36)
     template_id: str | None = Field(default=None, max_length=36)
     template_revision: int | None = Field(default=None, ge=1)
 
@@ -533,13 +534,16 @@ def ask(request: Request, body: AskRequest):
 
 @router.post("/ask/stream")
 def ask_stream(request: Request, body: AskRequest):
+    from .assistant_history import begin_turn, finish_turn
     as_of = body.as_of or _today()
     question = body.question
     template_sources = None
+    template_name = None
     if body.template_id:
         from .analysis_templates import resolve_template, analysis_question
         with _WRITE_LOCK, _session(request) as session:
             template, template_sources = resolve_template(session, body.template_id, body.template_revision, as_of)
+        template_name = template.name
         question = analysis_question(body.question, template, as_of)
     with request.app.state.store.lock:
         settings = request.app.state.store.current.model_copy(deep=True)
@@ -547,29 +551,44 @@ def ask_stream(request: Request, body: AskRequest):
         raise HTTPException(403, "请前往系统配置 → AI 服务，勾选允许法规问答发送至 AI。")
     if not body.confirm_external:
         raise HTTPException(400, "AI 外发许可尚未确认。")
+    conversation_id, message_id = begin_turn(request, body.model_copy(update={'as_of':as_of}), template_name)
     def events():
+        completed = False
         def event(value):
             return "data: " + json.dumps(jsonable_encoder(value), ensure_ascii=False) + "\n\n"
-        yield event({"type": "status", "message": "正在检索法规依据…"})
-        # Snapshot sources under the same publication lock as non-stream requests.
-        # Release it before yielding: generator resumes may use different threads.
-        with _WRITE_LOCK, _session(request) as session:
-            sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
-        if template_sources is not None:
-            sources = template_sources + sources[:4]
-        if not sources:
-            yield event({"type": "complete", "answer": {"status": "insufficient", "answer": "没有检索到可用于 AI 的有效法规，请补充资料或在系统配置中检查法规资料许可。", "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}})
-            return
-        yield event({"type": "status", "message": "已找到法规依据，AI 正在生成回答…"})
+        def persist(answer):
+            nonlocal completed
+            finish_turn(request, conversation_id, message_id, answer=jsonable_encoder(answer))
+            completed = True
         try:
+            yield event({'type':'saved','conversation_id':conversation_id,'message_id':message_id})
+            yield event({"type": "status", "message": "正在检索法规依据…"})
+            with _WRITE_LOCK, _session(request) as session:
+                sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
+            if template_sources is not None:
+                sources = template_sources + sources[:4]
+            if not sources:
+                answer = {"status": "insufficient", "answer": "没有检索到可用于 AI 的有效法规，请补充资料或在系统配置中检查法规资料许可。", "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}
+                persist(answer)
+                yield event({"type":"complete", "answer":answer})
+                return
+            yield event({"type": "status", "message": "已找到法规依据，AI 正在生成回答…"})
             for result in stream_answer(question, sources, settings, **({"analysis": True} if template_sources is not None else {})):
                 result['answer'].update({'as_of': as_of, 'retrieval': retrieval})
                 if result['type'] == 'complete':
+                    persist(result['answer'])
                     with _session(request, write=True) as session:
                         _audit(session, "knowledge.asked", count=len(sources))
                 yield event(result)
         except KnowledgeAIError as error:
+            finish_turn(request, conversation_id, message_id, error=error.message)
+            completed = True
             yield event({"type": "error", "message": error.message})
+        except Exception:
+            yield event({'type':'error','message':'处理未完成，请重新打开会话后重试。'})
+        finally:
+            if not completed:
+                finish_turn(request, conversation_id, message_id, error='生成中断，未保存不完整回答，请重试。')
     return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 

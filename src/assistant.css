@@ -38,3 +38,17 @@
 .qa-guidance li p {margin:6px 0;font-size:.76rem;}
 @media(max-width:1100px){.assistant-page .qa-layout{grid-template-columns:minmax(0,1fr);}.assistant-page .qa-sidebar{display:none;}}
 @media(max-width:700px){.assistant-page .qa-conversation{padding:16px 10px;}.assistant-page .qa-question{margin-left:5%;}.assistant-page .qa-question .qa-user-bubble{padding:12px;}.assistant-page .qa-response{margin-right:3%;padding:14px 12px;}.assistant-page .analysis-template-picker{margin:12px 10px 0;}.assistant-page .qa-composer{margin:14px 10px 10px;}.assistant-page .qa-response-label strong{font-size:.8rem;}.assistant-page .qa-you{display:none;}}
+.assistant-page .qa-workspace {height:calc(100dvh - var(--qa-top, 180px) - 22px);min-height:280px;display:flex;flex-direction:column;}
+.assistant-page .qa-workspace-header {flex:none;flex-wrap:wrap;}
+.qa-scroll-region {flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;overflow-anchor:none;}
+.qa-history-actions {display:flex;align-items:center;gap:12px;margin-left:auto;}
+.qa-history-actions button {font-size:.75rem;}
+.qa-history-list {padding:16px 0;max-height:65dvh;overflow:auto;}
+.qa-history-list > button {width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);margin-bottom:8px;cursor:pointer;}
+.qa-history-list span {flex:1;min-width:0;}.qa-history-list strong {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.qa-history-list small{display:block;margin-top:5px;color:var(--muted);}
+.analysis-howto {border-left:3px solid var(--primary);padding:10px 12px;margin:12px 0;background:var(--surface);border-radius:4px;font-size:.8rem;line-height:1.8;}
+.analysis-howto ol{margin:6px 0;padding-left:20px;}.analysis-checklist{font-size:.8rem;line-height:1.9;padding-left:20px;}
+.analysis-template-guide details {margin:10px 0;}.analysis-template-guide summary{cursor:pointer;font-size:.8rem;}
+@media(max-width:700px){.assistant-page .qa-workspace{height:calc(100dvh - var(--qa-top,160px) - 90px);min-height:240px;}.qa-history-actions{width:100%;justify-content:flex-end;}.assistant-page .qa-workspace-header{padding:12px;gap:8px;}}
+.assistant-page {padding-bottom:0;}
+.assistant-page .qa-sidebar {max-height:calc(100dvh - 190px);overflow:auto;overscroll-behavior:contain;}
