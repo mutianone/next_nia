@@ -6,7 +6,7 @@ import { Login } from './Login';
 import { AccountManagement } from './AccountManagement';
 import { api } from '../api';
 vi.mock('../api', () => ({api:vi.fn()}));
-const admin:Account={id:'a',phone:'18792636900',name:'管理员',role:'admin',enabled:true,created_at:0,last_login:null};
+const admin:Account={id:'a',phone:'18792636900',name:'管理员',department:'',notes:'',role:'admin',enabled:true,created_at:0,last_login:null};
 afterEach(()=>vi.resetAllMocks());
 it('shows a police entrance and sends phone/password without exposing default credentials',async()=>{
   const onLogin=vi.fn();vi.mocked(api).mockResolvedValue(admin);
@@ -39,7 +39,7 @@ it('creates an account with the selected role in a custom dialog',async()=>{
   render(<AuthContext.Provider value={{user:admin,refresh:async()=>{},logout:async()=>{}}}><AccountManagement/></AuthContext.Provider>);
   await screen.findByText('18792636900');await userEvent.click(screen.getByRole('button',{name:'新增账号'}));
   expect(screen.getByRole('dialog')).toHaveAccessibleName('新增账号');
-  await userEvent.type(screen.getByLabelText('姓名'),'办案人员');await userEvent.type(screen.getByLabelText('手机号'),'13800138000');await userEvent.type(screen.getByLabelText('初始密码'),'new12345');
+  await userEvent.type(screen.getByLabelText('姓名'),'办案人员');await userEvent.type(screen.getByLabelText('部门'),'出入境管理大队');await userEvent.type(screen.getByLabelText(/^备注/),'负责窗口业务');await userEvent.type(screen.getByLabelText('手机号'),'13800138000');await userEvent.type(screen.getByLabelText('初始密码'),'new12345');
   await userEvent.click(screen.getByRole('button',{name:'确认保存'}));
-  await waitFor(()=>expect(api).toHaveBeenCalledWith('/accounts',{method:'POST',body:JSON.stringify({name:'办案人员',phone:'13800138000',role:'business',password:'new12345'})}));
+  await waitFor(()=>expect(api).toHaveBeenCalledWith('/accounts',{method:'POST',body:JSON.stringify({name:'办案人员',department:'出入境管理大队',notes:'负责窗口业务',phone:'13800138000',role:'business',password:'new12345'})}));
 });

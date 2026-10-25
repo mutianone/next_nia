@@ -9,7 +9,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
-from sqlalchemy import Boolean, Float, Integer, String, delete, select, text
+from sqlalchemy import Boolean, Float, Integer, String, delete, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from .database import Base, AuditEvent
@@ -23,6 +23,8 @@ class Account(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     phone: Mapped[str] = mapped_column(String(11), unique=True)
     name: Mapped[str] = mapped_column(String(60))
+    department: Mapped[str] = mapped_column(String(100), default='', server_default='')
+    notes: Mapped[str] = mapped_column(String(1000), default='', server_default='')
     role: Mapped[str] = mapped_column(String(16))
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     password_hash: Mapped[str] = mapped_column(String(256))
@@ -68,10 +70,15 @@ def verify_password(password, encoded):
         return False
 
 def public_account(user):
-    return {key: getattr(user, key) for key in ('id', 'phone', 'name', 'role', 'enabled', 'created_at', 'last_login')}
+    return {key: getattr(user, key) for key in ('id', 'phone', 'name', 'department', 'notes', 'role', 'enabled', 'created_at', 'last_login')}
 
 def seed_admin(engine):
     with transaction(engine) as session:
+        # Upgrade existing SQLite/PostgreSQL accounts without replacing any rows.
+        columns = {column['name'] for column in inspect(session.connection()).get_columns('accounts')}
+        for name, length in (('department', 100), ('notes', 1000)):
+            if name not in columns:
+                session.execute(text(f"ALTER TABLE accounts ADD COLUMN {name} VARCHAR({length}) NOT NULL DEFAULT ''"))
         if session.scalar(select(Account.id).limit(1)) is None:
             session.add(Account(phone='18792636900', name='系统管理员', role='admin', password_hash=password_hash('123456')))
 
@@ -116,9 +123,13 @@ class Credentials(BaseModel):
     phone: str = Field(pattern=r'^1[3-9]\d{9}$')
     password: str = Field(min_length=6, max_length=128)
 class CreateAccount(Credentials):
+    department: str = Field(default='', max_length=100)
+    notes: str = Field(default='', max_length=1000)
     name: str = Field(min_length=1, max_length=60, pattern=r'\S')
     role: Role
 class EditAccount(BaseModel):
+    department: str = Field(default='', max_length=100)
+    notes: str = Field(default='', max_length=1000)
     name: str = Field(min_length=1, max_length=60, pattern=r'\S')
     phone: str = Field(pattern=r'^1[3-9]\d{9}$')
     role: Role
@@ -221,7 +232,7 @@ def accounts(request: Request):
 def create_account(body: CreateAccount, request: Request):
     try:
         with transaction(request.app.state.engine) as session:
-            user = Account(phone=body.phone, name=body.name.strip(), role=body.role, password_hash=password_hash(body.password))
+            user = Account(phone=body.phone, name=body.name.strip(), department=body.department.strip(), notes=body.notes.strip(), role=body.role, password_hash=password_hash(body.password))
             session.add(user)
             session.flush()
             audit(session, request, 'account.created', user.id)
@@ -240,7 +251,7 @@ def edit_account(account_id: str, body: EditAccount, request: Request):
                 others = session.scalar(select(Account.id).where(Account.id != user.id, Account.role == 'admin', Account.enabled.is_(True)).limit(1))
                 if others is None:
                     raise HTTPException(409, '至少需要保留一位启用中的管理员。')
-            for key, value in body.model_dump().items():
+            for key, value in body.model_dump(exclude_unset=True).items():
                 setattr(user, key, value.strip() if isinstance(value, str) else value)
             revoke(session, user.id)
             session.flush()

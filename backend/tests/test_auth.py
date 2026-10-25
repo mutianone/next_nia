@@ -119,3 +119,70 @@ def test_admin_password_not_reset_on_restart(tmp_path,monkeypatch):
     with TestClient(create_app(tmp_path)) as second:
         assert second.post('/api/auth/login',json=ADMIN).status_code==401
         login(second,{'phone':ADMIN['phone'],'password':'changed123'})
+
+def test_account_department_notes_roundtrip_and_validation(app):
+    login(app)
+    fields = {'name': ' 张明 ', 'department': ' 出入境管理大队 ', 'notes': '负责窗口业务\n兼任材料复核'}
+    response = app.post('/api/accounts', json={**fields, 'phone':'13800138000', 'password':'abc12345', 'role':'business'})
+    assert response.status_code == 201
+    account = response.json()
+    assert account['name'] == '张明' and account['department'] == '出入境管理大队'
+    assert account['notes'] == fields['notes']
+    assert app.patch('/api/accounts/'+account['id'], json={**account,'department':'综合科','notes':'负责人'}).status_code == 200
+    # An older client omitting optional fields must not erase stored data.
+    assert app.patch('/api/accounts/'+account['id'], json={key:account[key] for key in ('name','phone','role','enabled')}).status_code == 200
+    assert app.post('/api/accounts', json={**fields,'department':'字'*101,'phone':'13800138001','password':'abc12345','role':'viewer'}).status_code == 422
+    assert app.patch('/api/accounts/'+account['id'], json={**account,'notes':'字'*1001}).status_code == 422
+    app.post('/api/auth/logout')
+    login(app, {'phone':'13800138000','password':'abc12345'})
+    me = app.get('/api/auth/me').json()
+    assert me['department'] == '综合科' and me['notes'] == '负责人'
+    me = app.patch('/api/auth/profile', json={'name':'张明','department':'擅自更改','notes':'擅自更改'}).json()
+    assert me['department'] == '综合科' and me['notes'] == '负责人'
+
+
+def test_existing_database_adds_account_fields_without_reset(tmp_path, monkeypatch):
+    from sqlalchemy import create_engine, text
+    monkeypatch.delenv('NEXT_NIA_PRESENTATION', raising=False)
+    with TestClient(create_app(tmp_path)) as client:
+        original = login(client).json()
+        client.patch('/api/auth/profile',json={'name':'原管理员'})
+        client.post('/api/auth/password',json={'current_password':'123456','new_password':'kept12345'})
+    engine = create_engine(f'sqlite:///{tmp_path / "test.sqlite3"}')
+    with engine.begin() as connection:
+        connection.execute(text('ALTER TABLE accounts DROP COLUMN department'))
+        connection.execute(text('ALTER TABLE accounts DROP COLUMN notes'))
+    engine.dispose()
+    for _ in range(2):
+        with TestClient(create_app(tmp_path)) as client:
+            user = login(client,{'phone':ADMIN['phone'],'password':'kept12345'}).json()
+            assert user['id'] == original['id'] and user['name'] == '原管理员'
+            assert user['department'] == user['notes'] == ''
+
+
+def test_legacy_account_backup_restores_new_fields_as_empty(app, tmp_path):
+    import json
+    import zipfile
+    from sqlalchemy import create_engine
+    login(app)
+    current, legacy = tmp_path/'current.zip', tmp_path/'legacy.zip'
+    snapshot(app.app.state.engine,current)
+    with zipfile.ZipFile(current) as source:
+        manifest = json.loads(source.read('manifest.json'))
+        rows = [json.loads(line) for line in source.read('accounts.jsonl').splitlines()]
+        for row in rows:
+            row.pop('department'); row.pop('notes')
+        raw = ''.join(json.dumps(row)+'\n' for row in rows).encode()
+        manifest['tables']['accounts']['columns'] = [c for c in manifest['tables']['accounts']['columns'] if c not in {'department','notes'}]
+        manifest['tables']['accounts']['sha256'] = hashlib.sha256(raw).hexdigest()
+        with zipfile.ZipFile(legacy,'w') as target:
+            for name in source.namelist():
+                target.writestr(name,json.dumps(manifest).encode() if name=='manifest.json' else raw if name=='accounts.jsonl' else source.read(name))
+    verify_archive(legacy)
+    engine = create_engine(f'sqlite:///{tmp_path / "restored.sqlite3"}')
+    restore_empty(engine,legacy)
+    with Session(engine) as session:
+        user = session.scalar(select(Account))
+        assert user.phone == ADMIN['phone'] and verify_password('123456', user.password_hash)
+        assert user.department == user.notes == ''
+    engine.dispose()

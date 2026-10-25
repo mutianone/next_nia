@@ -71,7 +71,9 @@ def verify_archive(source):
         for table in Base.metadata.sorted_tables:
             if table.name not in manifest['tables']: continue
             metadata = manifest['tables'][table.name]
-            if metadata.get('columns') != list(table.columns.keys()): raise ValueError('备份列结构不匹配')
+            columns = list(table.columns.keys())
+            legacy_account = table.name == 'accounts' and metadata.get('columns') == [name for name in columns if name not in {'department', 'notes'}]
+            if metadata.get('columns') != columns and not legacy_account: raise ValueError('备份列结构不匹配')
             digest = hashlib.sha256(); count = 0
             with archive.open(table.name+'.jsonl') as stream:
                 for line in archive_lines(stream):
@@ -99,6 +101,10 @@ def restore_empty(engine, source):
                 with archive.open(table.name+'.jsonl') as stream:
                     for line in archive_lines(stream):
                         row = json.loads(line)
+                        if set(row) != set(manifest['tables'][table.name]['columns']): raise ValueError('备份记录字段不匹配')
+                        if table.name == 'accounts':
+                            row.setdefault('department', '')
+                            row.setdefault('notes', '')
                         if set(row) != set(table.columns.keys()): raise ValueError('备份记录字段不匹配')
                         for column in table.columns:
                             value = row[column.name]

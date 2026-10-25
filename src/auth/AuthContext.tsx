@@ -3,7 +3,7 @@ import { api } from '../api';
 import { Login } from './Login';
 import { clearWorkspaceViews } from '../hooks/useWorkspaceView';
 export type Role = 'admin' | 'business' | 'viewer';
-export type Account = { id: string; phone: string; name: string; role: Role; enabled: boolean; created_at: number; last_login: number | null };
+export type Account = { id: string; phone: string; name: string; department: string; notes: string; role: Role; enabled: boolean; created_at: number; last_login: number | null };
 export const roleLabels: Record<Role, string> = { admin: '管理员', business: '业务人员', viewer: '查看人员' };
 type AuthValue = { user: Account | null; refresh: () => Promise<void>; logout: () => Promise<void> };
 export const AuthContext = createContext<AuthValue>({ user: null, refresh: async () => {}, logout: async () => {} });
