@@ -71,9 +71,9 @@ def test_record_audio_transcripts_summary_and_exports_are_consistent(client):
                 assert abs(clip.duration_ms-wav.getnframes()/wav.getframerate()*1000)<2
     for identifier in identifiers:
         record=client.get('/api/records/'+identifier).json()
-        assert len(record['segments'])==6 and not record['analysis']['stale']
-        assert record['analysis']['provider']=='local'
-        assert record['transcription_attempts'][0]['text']=='\n'.join(s['text'] for s in record['segments'])
+        assert len(record['segments'])==6 and record['analysis'] is None
+        assert all(segment['source'] == 'manual' for segment in record['segments'])
+        assert record['transcription_attempts'] == []
         assert client.get(f'/api/records/{identifier}/export.txt').status_code==200
     documents=client.get('/api/documents').json()['items']
     for doc in documents:

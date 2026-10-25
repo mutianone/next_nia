@@ -7,7 +7,7 @@ elif [ "$#" -gt 0 ]; then
   printf '用法：bash scripts/presentation.sh [--reset]\n' >&2
   exit 1
 fi
-# The presentation switch is server-owned. No UI mode selector or badge.
+# Compatibility launcher: selects the populated workspace only. All AI uses real providers.
 export NEXT_NIA_PRESENTATION=1
 export NEXT_NIA_DATA_DIR="$PROJECT_ROOT/backend/presentation-data"
 exec bash "$PROJECT_ROOT/scripts/dev.sh"

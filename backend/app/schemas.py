@@ -141,6 +141,8 @@ class SettingsUpdate(StrictModel):
 
 class AITestRequest(StrictModel):
     provider: ProviderName
+    capability: Literal["models", "chat", "asr"] = "models"
+    asr_model: str | None = Field(default=None, min_length=1, max_length=200)
     api_key: SecretStr = SecretStr("")
     chat_model: str | None = Field(default=None, min_length=1, max_length=200)
 

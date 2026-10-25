@@ -135,3 +135,12 @@ def test_installed_ffmpeg_rejects_multiple_m4a_audio_tracks(tmp_path):
         media.normalize_for_asr(original, "m4a")
     assert str(tmp_path) not in str(error.value)
     assert "原件未修改，尚未发送" in str(error.value)
+
+
+@pytest.mark.skipif(not media.conversion_available(), reason="Local FFmpeg is optional")
+def test_packaged_healthcheck_contains_decodable_audio(tmp_path):
+    asset=Path(__file__).resolve().parents[1]/'assets'/'healthcheck.mp3'
+    decoded=generate_audio(tmp_path/'healthcheck.wav','-i',str(asset),'-ar','16000','-ac','1','-c:a','pcm_s16le')
+    with wave.open(BytesIO(decoded)) as audio:
+        assert 2 < audio.getnframes()/audio.getframerate() < 15
+        assert any(audio.readframes(audio.getnframes()))

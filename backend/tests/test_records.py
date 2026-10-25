@@ -555,3 +555,17 @@ def test_register_audio_duration_preserves_unknowns_and_text_only_records(client
     assert item['segment_count'] == 0
     row = segments(client, row, [{'text': '核对文字', 'speaker': 'interviewee'}]).json()
     assert row['segment_count'] == 1 and row['audio_duration_ms'] == 65000
+
+
+def test_historical_local_summary_is_readable_but_not_an_ai_export(client, cloud):
+    enable_ai(client)
+    row = with_segments(client)
+    cloud.respond = lambda _: analysis_response(row['segments'][0]['id'])
+    analyzed = analyze(client, row).json()
+    with Session(client.app.state.engine) as session:
+        result = session.get(records.RecordAnalysis, analyzed['analysis']['id'])
+        result.provider = 'local'
+        session.commit()
+    assert client.get('/api/records/'+row['id']).json()['analysis']['summary']
+    assert client.get('/api/records/'+row['id']+'/export.txt').status_code == 200
+    assert client.get('/api/records/'+row['id']+'/export.txt?include_ai=true').status_code == 409

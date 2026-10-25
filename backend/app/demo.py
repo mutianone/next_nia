@@ -22,7 +22,7 @@ from .documents import DocumentTemplate, DocumentDraft, DocumentHistory, templat
 from .knowledge import KnowledgeDocument, _build_chunks
 from .profiles import ProfileFact, ProfileRelation
 from .records import (RecordSession, AudioClip, RecordSegment, RecordAnalysis, RecordVersion,
-                      TranscriptionAttempt, TEMPLATES, input_segments, segment_hash, render_text, detail)
+                      TranscriptionAttempt, TEMPLATES, render_text, detail)
 
 ASSETS = Path(__file__).resolve().parents[1] / 'assets'
 SOURCE = 'https://www.nia.gov.cn/n794014/n1050181/n1050479/c1013311/content.html'
@@ -218,14 +218,10 @@ def populate(session, today):
         raw=(ASSETS/(scenario+'.wav')).read_bytes()
         with wave.open(str(ASSETS/(scenario+'.wav'))) as audio:duration=int(audio.getnframes()/audio.getframerate()*1000)
         clip=add(AudioClip(record_id=record.id,filename=f'询问录音_{today:%Y%m%d}_{i+1:02}.wav',format='wav',mime_type='audio/wav',size_bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),raw_audio=raw,duration_ms=duration,created_at=happened))
-        transcript='\n'.join(line for _,line in scripts[scenario])
-        attempt=add(TranscriptionAttempt(record_id=record.id,audio_id=clip.id,status='succeeded',text=transcript,provider='local',model='文字整理',input_revision=1,created_at=happened,finished_at=happened))
+        # Supplied written notes are manual source material, never AI successes.
         segments=[]
         for position,(speaker,content) in enumerate(scripts[scenario]):
-            segments.append(add(RecordSegment(record_id=record.id,position=position,audio_id=clip.id,speaker=speaker,text=content,source='manual',transcription_id=attempt.id)))
-        add(RecordAnalysis(record_id=record.id,status='succeeded',summary=f'本次询问围绕{p.purpose}事由、现居住安排和相关材料展开。当事人介绍了目前情况，并表示将按要求核对资料、补充联系人或行程信息。',
-            key_facts=[{'label':'事由与居住安排','value':segments[1].text,'segment_ids':[segments[1].id]},{'label':'材料情况','value':segments[3].text,'segment_ids':[segments[3].id]}],
-            issues=['在华联系人或后续行程资料尚需补充核对。'],input_segments=input_segments(segments),input_hash=segment_hash(segments),input_revision=1,provider='local',model='文字整理',created_at=happened,finished_at=happened))
+            segments.append(add(RecordSegment(record_id=record.id,position=position,audio_id=clip.id,speaker=speaker,text=content,source='manual')))
         if i%3==0:
             record.reviewed_text=render_text(record,segments);record.status='reviewed';record.review_note='已结合原始录音逐项核对文字、角色及整理内容。';record.reviewed_at=happened
             session.flush()

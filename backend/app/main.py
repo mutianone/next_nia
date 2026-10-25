@@ -78,12 +78,10 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        if presentation and (directory / "test.sqlite3").exists() and not (directory / ".presentation-workspace").exists():
-            raise ConfigurationError("所选目录已有业务数据库，请使用独立的展示资料目录；未修改原有数据。")
         settings = store.load()
-        if presentation and settings.environment.mode != "test":
-            raise ConfigurationError("本地展示启动配置仅允许独立 SQLite 数据目录。")
-        if presentation:
+        if presentation and settings.environment.mode == "test" and (directory / "test.sqlite3").exists() and not (directory / ".presentation-workspace").exists():
+            raise ConfigurationError("所选目录已有业务数据库，请使用独立的展示资料目录；未修改原有数据。")
+        if presentation and settings.environment.mode == "test":
             (directory / ".presentation-workspace").write_text("1", encoding="utf-8")
         engine = application_engine(settings, directory)
         try:
@@ -91,7 +89,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
             seed_admin(engine)
             seed_templates(engine)
             recover_interrupted_attempts(engine)
-            if presentation:
+            if presentation and settings.environment.mode == "test":
                 from .demo import DemoDataset, dataset_session, populate
                 from .people import business_today
                 with dataset_session(engine) as session:
@@ -131,7 +129,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
             "database_engine": "SQLite" if active.environment.mode == "test" else "PostgreSQL",
             "pending_restart": database_identity(active) != database_identity(store.current),
             "audit_available": application.state.audit_available,
-            "local_processing": presentation,
+            "sample_workspace": presentation,
         }
 
     def audit(action: str, details: dict) -> None:
@@ -200,8 +198,6 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
     def update_settings(update: SettingsUpdate):
         with store.lock:
             settings = merge_settings(update, store.current)
-            if presentation and settings.environment.mode != "test":
-                raise HTTPException(409, "当前启动配置固定使用本地数据库，请通过服务端切换运行配置。")
             if settings.ai.enabled:
                 selected = getattr(settings.ai.providers, settings.ai.default_provider)
                 if not selected.enabled:
@@ -218,8 +214,6 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.post("/api/settings/test-database")
     def test_database(update: PostgresUpdate):
-        if presentation:
-            raise HTTPException(409, "当前工作空间使用本地数据库，无需建立外部连接。")
         with store.lock:
             config = merge_postgres(update, store.current.environment.postgres)
         try:
@@ -232,16 +226,14 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.post("/api/settings/test-ai")
     def test_ai(request: AITestRequest):
-        if presentation:
-            raise HTTPException(409, "当前工作空间使用本地处理服务，无需建立外部连接。")
         with store.lock:
             settings = store.current.model_copy(deep=True)
         try:
             result = test_ai_connection(request, settings)
         except AIConnectionError as error:
-            audit("ai.connection_test", {"provider": request.provider, "ok": False})
+            audit("ai.connection_test", {"provider": request.provider, "capability": request.capability, "ok": False})
             raise HTTPException(error.status, error.message) from None
-        audit("ai.connection_test", {"provider": request.provider, "ok": True})
+        audit("ai.connection_test", {"provider": request.provider, "capability": request.capability, "ok": True})
         return result
 
     @application.get("/api/dashboard")

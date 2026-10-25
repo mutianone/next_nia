@@ -170,7 +170,14 @@ def update_fact(person_id: str, fact_id: str, data: FactUpdate, request: Request
     with Session(request.app.state.engine) as session:
         editable(session, person_id)
         values = data.model_dump(exclude={'expected_revision'})
-        values.update(source_snapshot=source_snapshot(session, person_id, data), revision=data.expected_revision+1, updated_at=utc_now())
+        snapshot = source_snapshot(session, person_id, data)
+        previous = session.get(ProfileFact, fact_id)
+        if previous is None or previous.person_id != person_id or previous.revision != data.expected_revision:
+            raise HTTPException(409, '事实已被更新或不存在，请刷新后重试。')
+        if previous.source_snapshot.get('analysis_id'):
+            snapshot.update(analysis_id=previous.source_snapshot['analysis_id'], fact_index=previous.source_snapshot['fact_index'],
+                            analysis_origin=previous.source_snapshot.get('analysis_origin', previous.source_snapshot))
+        values.update(source_snapshot=snapshot, revision=data.expected_revision+1, updated_at=utc_now())
         result = session.execute(update(ProfileFact).where(ProfileFact.id == fact_id, ProfileFact.person_id == person_id, ProfileFact.revision == data.expected_revision).values(**values))
         if result.rowcount != 1:
             raise HTTPException(409, '事实已被更新或不存在，请刷新后重试。')
@@ -205,3 +212,60 @@ def update_relation(person_id: str, relation_id: str, data: RelationUpdate, requ
             raise HTTPException(409, '关系已被更新或不存在，请从登记人员画像刷新后修改。')
         add_audit(session, 'profile.relation_updated', person_id=person_id, relation_id=relation_id, revision=data.expected_revision+1)
         session.commit(); return serialize(session.get(ProfileRelation, relation_id))
+
+
+class AnalysisFactInput(InputModel):
+    analysis_id: str = Field(min_length=1, max_length=36)
+    fact_index: int = Field(ge=0, le=29)
+    kind: Literal['identity', 'purpose', 'residence', 'other'] = 'other'
+
+
+def eligible_analysis(session, record):
+    from .records import RecordAnalysis, ordered_segments, segment_hash
+    analysis = session.scalar(select(RecordAnalysis).where(RecordAnalysis.record_id == record.id, RecordAnalysis.status == 'succeeded').order_by(RecordAnalysis.created_at.desc(), RecordAnalysis.id))
+    if record.status == 'archived' or analysis is None or analysis.provider not in ('siliconflow', 'deepseek') or analysis.input_hash != segment_hash(ordered_segments(session, record.id)):
+        return None
+    return analysis
+
+
+@router.get('/{person_id}/analysis-facts')
+def analysis_facts(person_id: str, request: Request):
+    with Session(request.app.state.engine) as session:
+        find_person(session, person_id)
+        imported = {(fact.source_snapshot.get('analysis_id'), fact.source_snapshot.get('fact_index')) for fact in session.scalars(select(ProfileFact).where(ProfileFact.person_id == person_id))}
+        candidates = []
+        for record in session.scalars(select(RecordSession).where(RecordSession.person_id == person_id, RecordSession.status != 'archived').order_by(RecordSession.created_at.desc()).limit(100)):
+            analysis = eligible_analysis(session, record)
+            if analysis is None:
+                continue
+            for index, fact in enumerate(analysis.key_facts):
+                candidates.append({'analysis_id': analysis.id, 'fact_index': index, 'record_id': record.id, 'record_title': record.title, 'record_revision': record.revision, 'provider': analysis.provider, 'model': analysis.model, 'label': fact['label'], 'value': fact['value'], 'sources': [part for part in analysis.input_segments if part['segment_id'] in fact['segment_ids']], 'imported': (analysis.id, index) in imported})
+        return {'items': candidates}
+
+
+@router.post('/{person_id}/facts/from-analysis', status_code=201)
+def register_analysis_fact(person_id: str, data: AnalysisFactInput, request: Request):
+    from .records import RecordAnalysis, write_session
+    # Same lock/transaction as transcript writes: source validity and registration
+    # are atomic, and a second click cannot create duplicate facts.
+    with write_session(request.app.state.engine) as session:
+        editable(session, person_id)
+        analysis = session.get(RecordAnalysis, data.analysis_id)
+        record = session.scalar(select(RecordSession).where(RecordSession.id == analysis.record_id).with_for_update()) if analysis else None
+        if record is None or record.person_id != person_id:
+            raise HTTPException(404, '未找到属于当前人员的笔录分析。')
+        current = eligible_analysis(session, record)
+        if current is None or current.id != analysis.id:
+            raise HTTPException(409, '笔录或摘要已变化，请重新生成摘要并刷新候选事实。')
+        if data.fact_index >= len(analysis.key_facts):
+            raise HTTPException(422, '所选要素不存在。')
+        for previous in session.scalars(select(ProfileFact).where(ProfileFact.person_id == person_id)):
+            if previous.source_snapshot.get('analysis_id') == analysis.id and previous.source_snapshot.get('fact_index') == data.fact_index:
+                return serialize(previous)
+        fact = analysis.key_facts[data.fact_index]
+        row = ProfileFact(person_id=person_id, kind=data.kind, label=fact['label'], value=fact['value'], source_type='record', source_id=record.id,
+                          source=f'笔录《{record.title}》版本 {record.revision} · AI 要素待人工核验', verified=False, review_note='',
+                          source_snapshot={'id': record.id, 'source_type': 'record', 'revision': record.revision, 'analysis_id': analysis.id, 'fact_index': data.fact_index, 'provider': analysis.provider, 'model': analysis.model, 'captured_at': timestamp(utc_now()), 'segments': [part for part in analysis.input_segments if part['segment_id'] in fact['segment_ids']]})
+        session.add(row); session.flush()
+        add_audit(session, 'profile.fact_created', person_id=person_id, fact_id=row.id, analysis_id=analysis.id)
+        return serialize(row)

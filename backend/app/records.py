@@ -387,15 +387,10 @@ def capabilities(request: Request):
         configured = getattr(settings.ai.providers, name)
         providers[purpose] = {"provider": name, "model": configured.asr_model if purpose == "asr" else configured.chat_model,
                               "ready": settings.ai.enabled and configured.enabled and bool(reveal(configured.api_key))}
-    from . import presentation
-    local = presentation.enabled(request)
-    if local:
-        for purpose in providers:
-            providers[purpose].update(provider="local", model="语音资料整理" if purpose == "asr" else "文字要素整理", ready=True)
     available = conversion_available()
     providers["asr"].update({"format_support_verified": False, "local_conversion_available": available,
                             "format_note": "原音本地留存；MP3直接发送，其他格式需本机FFmpeg先转MP3，原件不变。未进行真实在线验证；声明时长不是服务端实测时长。"})
-    return {"limits": LIMITS, "templates": TEMPLATES, "local_conversion_available": available, "ai": {"enabled": local or settings.ai.enabled, "local_processing": local, **providers}}
+    return {"limits": LIMITS, "templates": TEMPLATES, "local_conversion_available": available, "ai": {"enabled": settings.ai.enabled, "audio_library_available": bool(getattr(request.app.state, "presentation", False)), **providers}}
 
 
 @router.get("")
@@ -616,9 +611,6 @@ def read_revision(record_id: str, revision: int, request: Request):
 
 
 def confirmed_settings(request, body, purpose):
-    from . import presentation
-    if presentation.enabled(request):
-        return settings_copy(request), "local", "语音资料整理" if purpose == "asr" else "文字要素整理"
     if not body.confirmed:
         raise HTTPException(400, "须明确确认将本次选定原音或当前片段文本发送给配置的 AI 服务商；未发送资料。")
     settings = settings_copy(request)
@@ -638,16 +630,16 @@ def mark_failed(engine, model, identifier, message):
 
 @router.post("/{record_id}/audio-library")
 def add_library_audio(record_id: str, body: AIRequest, request: Request):
-    from . import presentation
+    from pathlib import Path
     import io
     import wave
-    if not presentation.enabled(request):
+    if not getattr(request.app.state, "presentation", False):
         raise HTTPException(404, "当前运行配置未开放录音资料库。")
     with write_session(request.app.state.engine) as session:
         row = get_record(session, record_id, True)
         mutable(row, body.expected_revision)
         scenario = row.scenario if row.scenario in ("study", "marriage", "residence", "violation") else "residence"
-        raw = (presentation.ASSETS / f"{scenario}.wav").read_bytes()
+        raw = (Path(__file__).resolve().parents[1] / "assets" / f"{scenario}.wav").read_bytes()
         digest = hashlib.sha256(raw).hexdigest()
         clips = list(session.scalars(select(AudioClip).where(AudioClip.record_id == record_id)))
         if any(clip.sha256 == digest for clip in clips):
@@ -681,11 +673,7 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
         identifier = attempt.id
         audit(session, "transcription_started", record_id=row.id, attempt_id=identifier, audio_id=audio_id)
     try:
-        if provider == "local":
-            from .presentation import transcribe as local_transcribe
-            output = local_transcribe(raw)
-        else:
-            output = transcribe_audio(raw, file_format, mime_type, settings)
+        output = transcribe_audio(raw, file_format, mime_type, settings)
     except RecordAIError as error:
         mark_failed(engine, TranscriptionAttempt, identifier, error.message)
         raise HTTPException(error.status, error.message) from None
@@ -707,7 +695,7 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
             attempt.status = "succeeded"
             parts = output.get("segments", [{"speaker": "unknown", "text": output["text"].strip()}])
             matching = [item for item in segments if item.audio_id == audio_id]
-            if provider == "local" and [(item.speaker, item.text) for item in matching] == [(part["speaker"], part["text"]) for part in parts]:
+            if [(item.speaker, item.text) for item in matching] == [(part["speaker"], part["text"]) for part in parts]:
                 parts = []
             for offset, part in enumerate(parts):
                 session.add(RecordSegment(record_id=row.id, position=len(segments) + offset, audio_id=audio_id, speaker=part["speaker"], text=part["text"], source="asr", transcription_id=identifier))
@@ -729,8 +717,6 @@ def analyze(record_id: str, body: AIRequest, request: Request):
         mutable(row, body.expected_revision)
         segments = ordered_segments(session, row.id)
         inputs = input_segments(segments)
-        if provider == "local":
-            inputs = [{**item, "speaker": segment.speaker} for item, segment in zip(inputs, segments)]
         if not inputs or sum(len(item["text"]) for item in inputs) > LIMITS["max_analyze_chars"]:
             raise HTTPException(422, "请先保存非空修订片段；单次摘要当前文本最多30000字，未发送资料。")
         attempt = RecordAnalysis(record_id=row.id, input_revision=row.revision, input_segments=inputs, input_hash=segment_hash(segments), provider=provider, model=model)
@@ -739,11 +725,7 @@ def analyze(record_id: str, body: AIRequest, request: Request):
         identifier = attempt.id
         audit(session, "analysis_started", record_id=row.id, attempt_id=identifier, segment_count=len(inputs))
     try:
-        if provider == "local":
-            from .presentation import analyze as local_analyze
-            output = local_analyze(inputs)
-        else:
-            output = analyze_segments(inputs, settings)
+        output = analyze_segments(inputs, settings)
     except RecordAIError as error:
         mark_failed(engine, RecordAnalysis, identifier, error.message)
         raise HTTPException(error.status, error.message) from None
@@ -779,6 +761,8 @@ def export_record(record_id, request, format, include_ai):
         body = render_text(row, segments)
         if include_ai:
             analysis = session.scalar(select(RecordAnalysis).where(RecordAnalysis.record_id == row.id, RecordAnalysis.status == "succeeded").order_by(RecordAnalysis.created_at.desc(), RecordAnalysis.id))
+            if analysis is not None and analysis.provider not in ("siliconflow", "deepseek"):
+                raise HTTPException(409, "历史文字整理资料不能作为 AI 摘要附入导出，请先通过已配置的服务商重新生成。")
             if analysis is None or analysis.input_hash != segment_hash(segments):
                 raise HTTPException(409, "当前无有效摘要或摘要已因片段修订过期，不能附入导出。")
             body += f"\n\nAI摘要附录（辅助整理，未自动核实；不属于原始询问陈述）\n分析编号：{analysis.id}；输入版本：{analysis.input_revision}\n" + analysis.summary

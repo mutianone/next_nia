@@ -52,20 +52,26 @@ def enable_ai(client, provider="siliconflow"):
     store.save(config)
 
 
-def fake_ai(monkeypatch, *, invalid_id=False, status=200, content=None):
+def fake_ai(monkeypatch, *, invalid_id=False, status=200, content=None, finish_reason="stop"):
     captures = []
     fake_client = Mock()
     fake_client.__enter__ = Mock(return_value=fake_client)
     fake_client.__exit__ = Mock(return_value=False)
 
-    def post(url, **kwargs):
+    def post(method, url, **kwargs):
         captures.append((url, kwargs))
         evidence = json.loads(kwargs["json"]["messages"][1]["content"])["evidence"]
         result = content if content is not None else json.dumps({"claims": [{"text": "申请签证延期需要提交证明材料。", "source_ids": ["invented-source" if invalid_id else evidence[0]["source_id"]]}]})
-        return httpx.Response(status, json={"choices": [{"message": {"content": result}}]})
-    fake_client.post.side_effect = post
+        response = httpx.Response(status, json={"choices": [{"finish_reason": finish_reason, "message": {"content": result}}]})
+        return response
+    from contextlib import contextmanager
+    @contextmanager
+    def stream(*args, **kwargs):
+        yield post(*args, **kwargs)
+    fake_client.stream.side_effect = stream
     factory = Mock(return_value=fake_client)
-    monkeypatch.setattr(knowledge_ai.httpx, "Client", factory)
+    from backend.app import records_ai
+    monkeypatch.setattr(records_ai.httpx, "Client", factory)
     return captures, factory
 
 
@@ -367,3 +373,12 @@ def test_document_permission_revocation_blocks_next_ask(client, monkeypatch):
     assert client.patch(f"/api/knowledge/{document['id']}", json={"allow_external": False}).status_code == 200
     assert ask(client).json()["status"] == "insufficient"
     assert len(captures) == 1
+
+
+def test_truncated_ai_output_cannot_be_used_as_answer(client,monkeypatch):
+    document=upload(client).json()
+    assert publish(client,document,allow_external=True).status_code==200
+    enable_ai(client)
+    fake_ai(monkeypatch,finish_reason='length')
+    response=ask(client)
+    assert response.status_code==502

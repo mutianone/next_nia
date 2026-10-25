@@ -38,7 +38,7 @@ type AppSettings = {
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
   ai: { enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
-type Runtime = { local_processing?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
+type Runtime = { sample_workspace?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
 type TestResponse = { ok: boolean; message: string; models?: string[]; latency_ms?: number }
 type TestState = { status: 'loading' | 'success' | 'error'; message: string; fingerprint: string; latency?: number; models?: string[] }
@@ -136,7 +136,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     ...(password ? { password } : {}), ...(clearPassword ? { clear_password: true } : {}),
   } : {}
   const databaseFingerprint = JSON.stringify(postgresPayload())
-  const providerFingerprint = (id: ProviderId) => JSON.stringify({ model: draft?.ai.providers[id].chat_model, key: keys[id], clear: clearKeys[id] })
+  const providerFingerprint = (id: ProviderId) => JSON.stringify({ model: draft?.ai.providers[id].chat_model, asr_model: draft?.ai.providers[id].asr_model, key: keys[id], clear: clearKeys[id] })
   const productionChanged = Boolean(draft?.environment.mode === 'production' && (saved?.environment.mode !== 'production' || JSON.stringify(draft.environment.postgres) !== JSON.stringify(saved?.environment.postgres) || password || clearPassword))
   const databaseVerified = databaseTest?.status === 'success' && databaseTest.fingerprint === databaseFingerprint
   const needsDatabaseTest = productionChanged && !databaseVerified
@@ -150,13 +150,13 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     } catch (error) { setDatabaseTest({ status: 'error', message: error instanceof Error ? error.message : '数据库连接测试失败。', fingerprint }) }
   }
 
-  async function testAi(id: ProviderId) {
+  async function testAi(id: ProviderId, capability: 'models' | 'chat' | 'asr' = 'models') {
     if (!draft) return
     const fingerprint = providerFingerprint(id)
-    setAiTests(current => ({ ...current, [id]: { status: 'loading', message: '正在验证凭证与模型…', fingerprint } }))
+    setAiTests(current => ({ ...current, [id]: { status: 'loading', message: capability === 'models' ? '正在验证凭证与模型…' : capability === 'asr' ? '正在发送标准测试录音并等待实际转写…' : '正在发送固定测试文字并等待结构化结果…', fingerprint } }))
     try {
       const result = await request<TestResponse>('/api/settings/test-ai', {
-        method: 'POST', body: JSON.stringify({ provider: id, chat_model: draft.ai.providers[id].chat_model.trim(), ...(keys[id].trim() ? { api_key: keys[id].trim() } : {}) }),
+        method: 'POST', body: JSON.stringify({ provider: id, capability, ...(id === 'siliconflow' ? { asr_model: draft.ai.providers[id].asr_model } : {}), chat_model: draft.ai.providers[id].chat_model.trim(), ...(keys[id].trim() ? { api_key: keys[id].trim() } : {}) }),
       })
       setAiTests(current => ({ ...current, [id]: { status: result.ok ? 'success' : 'error', message: result.message || (result.ok ? '凭证与模型验证通过。' : '连接验证失败。'), fingerprint, latency: result.latency_ms, models: result.models } }))
     } catch (error) { setAiTests(current => ({ ...current, [id]: { status: 'error', message: error instanceof Error ? error.message : '连接验证失败。', fingerprint } })) }
@@ -216,7 +216,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     </PageHeading>
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
-      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.local_processing ? '业务工作空间' : runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
+      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
       <div className="settings-runtime-status">{runtime.pending_restart ? <><span className="settings-status-dot pending" />配置已更新，等待重启</> : <><span className="settings-status-dot" />本地服务已连接</>}</div>
     </div>
 
@@ -228,9 +228,9 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           {([
             { id: 'accounts' as const, icon: ShieldCheck, title: '账号管理', subtitle: '人员账号与角色权限' },
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与所属组织' },
-            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: runtime.local_processing ? '本地业务服务' : `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine}` },
-            { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: runtime.local_processing ? '资料处理服务已就绪' : saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'DeepSeek' : '硅基流动'}` : '业务调用已关闭' },
-            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: runtime.local_processing ? '资料迁移与备份' : '演示资料、迁移与备份' },
+            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine}` },
+            { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'DeepSeek' : '硅基流动'}` : '业务调用已关闭' },
+            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: runtime.sample_workspace ? '资料迁移与备份' : '演示资料、迁移与备份' },
           ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
         </nav></TabsList>
 
@@ -247,8 +247,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           <div className="settings-inline-note"><LockKeyhole size={17} /><p>已启用手机号与密码登录。账号及角色权限在“账号管理”中维护。</p></div></div>
         </section></TabsContent>}
 
-        {section === 'environment' && runtime.local_processing && <section className="panel settings-card"><div className="settings-card-heading"><h2>运行环境</h2><span className="settings-small-badge enabled">已连接</span></div><div className="settings-card-body"><div className="settings-default-provider"><div><h3>本地业务数据库</h3><p>人员、法规、录音、文书与办理记录统一留存。</p></div><Database size={22}/></div><p className="settings-caption">SQLite · macOS / Linux · 当前运行配置由服务端管理</p></div></section>}
-        {section === 'environment' && !runtime.local_processing && <TabsContent value="environment" asChild><section className="panel settings-card">
+        {section === 'environment' && <TabsContent value="environment" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div><h2>运行环境</h2></div></div>
           <div className="settings-card-body">
             <div className="settings-label-line"><span>目标运行环境</span><span className="settings-caption">保存配置后，重启后端生效</span></div>
@@ -272,8 +271,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           </div>
         </section></TabsContent>}
 
-        {section === 'ai' && runtime.local_processing && <section className="panel settings-card"><div className="settings-card-heading"><div><h2>智能处理服务</h2><p>当前工作空间的资料处理能力</p></div><span className="settings-small-badge enabled">已就绪</span></div><div className="settings-card-body">{[{name:'法规资料整理', detail:'检索已发布法规，核对适用版本，保留原文引用。'}, {name:'录音资料整理',detail:'使用配套录音资料，整理角色分段与转写正文。'}, {name:'文字要素整理',detail:'从已保存正文提取要素、整理摘要并关联来源。'}].map(item=><div className="settings-default-provider" key={item.name}><div><h3>{item.name}</h3><p>{item.detail}</p></div><ShieldCheck size={20}/></div>)}<p className="settings-caption">资料在当前工作空间内处理；服务连接方式由启动配置管理。</p></div></section>}
-        {section === 'ai' && !runtime.local_processing && <TabsContent value="ai" asChild><section className="settings-ai-section">
+        {section === 'ai' && <TabsContent value="ai" asChild><section className="settings-ai-section">
           <div className="panel settings-card"><div className="settings-card-heading"><div><h2>AI 服务配置</h2></div></div>
             <div className="settings-card-body"><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '法规问答、语音转写和摘要可使用已配置的服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
               <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写固定使用硅基流动。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><Choice className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></Choice></label></div>
@@ -291,17 +289,17 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
               <div className="settings-provider-fields">
                 <label className="field settings-field"><span>服务地址 <LockKeyhole size={12} /></span><input className="input settings-readonly" value={provider.url} readOnly aria-label={`${provider.name}固定服务地址`} /><small>固定官方端点，由后端统一访问。</small></label>
                 <label className="field settings-field"><span>对话模型</span><input className="input" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <details className="nia-model-options"><summary>选择已检测模型 · {test.models.length}</summary><div>{test.models.map(model => <button type="button" key={model} disabled={saving} onClick={() => updateProvider(provider.id, { chat_model: model })}>{model}</button>)}</div></details>}</label>
-                {provider.id === 'siliconflow' && <label className="field settings-field"><span>中文语音转写模型</span><input className="input" value={config.asr_model || ''} disabled={saving} maxLength={200} placeholder="FunAudioLLM/SenseVoiceSmall" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { asr_model: event.target.value })} /><small>录音转写独立使用此模型；对话模型用于摘要与法规问答。模型列表测试不代表音频转写已实测。</small></label>}
+                {provider.id === 'siliconflow' && <label className="field settings-field"><span>中文语音转写模型</span><input className="input" value={config.asr_model || ''} disabled={saving} maxLength={200} placeholder="FunAudioLLM/SenseVoiceSmall" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { asr_model: event.target.value })} /><small>录音转写独立使用此模型；对话模型用于摘要与法规问答。请使用“语音转写测试”单独验证识别能力。</small></label>}
                 {provider.id === 'deepseek' && <p className="settings-caption">用于文字摘要与要素整理。录音转写使用硅基流动的语音接口。</p>}
                 <div className="field settings-field"><div className="settings-label-line"><label htmlFor={`key-${provider.id}`}>API Key</label><span className={`settings-secret-state ${config.api_key_configured && !clearKeys[provider.id] ? 'configured' : ''}`}><KeyRound size={12} />{clearKeys[provider.id] ? '保存后清空' : config.api_key_configured ? '已配置 · 不回显' : '未配置'}</span></div><div className="settings-secret-input"><input className="input" id={`key-${provider.id}`} type={visibleKeys[provider.id] ? 'text' : 'password'} value={keys[provider.id]} disabled={saving || clearKeys[provider.id]} autoComplete="new-password" spellCheck={false} placeholder={config.api_key_configured ? '留空保留，输入以更换密钥' : '粘贴此服务商的 API Key'} onChange={event => { setKeys({ ...keys, [provider.id]: event.target.value }); setNotice(null) }} /><button type="button" disabled={saving || clearKeys[provider.id] || !keys[provider.id]} aria-label={visibleKeys[provider.id] ? `隐藏${provider.name}新密钥` : `显示${provider.name}新密钥`} onClick={() => setVisibleKeys({ ...visibleKeys, [provider.id]: !visibleKeys[provider.id] })}>{visibleKeys[provider.id] ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{config.api_key_configured && <label className="settings-checkbox"><input type="checkbox" checked={clearKeys[provider.id]} disabled={saving} onChange={event => { setClearKeys({ ...clearKeys, [provider.id]: event.target.checked }); setKeys({ ...keys, [provider.id]: '' }); setNotice(null) }} />保存时清空此密钥</label>}</div>
               </div>
-              <div className="settings-provider-footer"><button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.chat_model.trim()} onClick={() => testAi(provider.id)}>{test?.status === 'loading' ? <LoaderCircle size={15} className="settings-spin" /> : <Unplug size={15} />}测试连接</button><span>{clearKeys[provider.id] ? '清空密钥后无法调用' : config.enabled ? '服务商已启用' : '服务商未启用'}</span></div>
+              <div className="settings-provider-footer"><button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.chat_model.trim()} onClick={() => testAi(provider.id)}>{test?.status === 'loading' ? <LoaderCircle size={15} className="settings-spin" /> : <Unplug size={15} />}检测模型</button><button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.chat_model.trim()} onClick={() => testAi(provider.id, 'chat')}>实际生成测试</button>{provider.id === 'siliconflow' && <button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.asr_model?.trim()} onClick={() => testAi(provider.id, 'asr')}>语音转写测试</button>}<span>{clearKeys[provider.id] ? '清空密钥后无法调用' : config.enabled ? '服务商已启用' : '服务商未启用'}</span></div>
               <TestFeedback state={test} fingerprint={fingerprint} />
             </article>
           })}</div>
-          <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>连接测试仅验证凭证与模型列表</strong><p>测试不会发送业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>密钥不回显、不写入浏览器存储，保存后立即清除本页输入。</p></div></div>
+          <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>分别验证连接与实际处理能力</strong><p>检测模型只读取模型列表；实际生成测试发送固定会议文字，语音测试发送随系统安装的中文测试录音，会产生服务商调用费用。测试不会读取业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>密钥不回显、不写入浏览器存储，保存后立即清除本页输入。</p></div></div>
         </section></TabsContent>}
-        <TabsContent value="data" forceMount asChild><div hidden={section !== 'data'}><Maintenance localProcessing={runtime.local_processing}/></div></TabsContent>
+        <TabsContent value="data" forceMount asChild><div hidden={section !== 'data'}><Maintenance sampleWorkspace={runtime.sample_workspace}/></div></TabsContent>
       </motion.div>
     </div></Tabs>
 
