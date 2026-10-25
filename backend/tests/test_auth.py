@@ -9,7 +9,7 @@ from backend.app.auth import Account, LoginSession, LoginAttempt, verify_passwor
 from backend.app.maintenance import snapshot, verify_archive, restore_empty
 from backend.app.database import application_engine
 
-ADMIN = {'phone':'18792636900','password':'123456'}
+ADMIN = {'phone':'15210451737','password':'123456'}
 @pytest.fixture
 def app(tmp_path, monkeypatch):
     monkeypatch.delenv('NEXT_NIA_PRESENTATION', raising=False)

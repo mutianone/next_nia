@@ -80,7 +80,7 @@ def seed_admin(engine):
             if name not in columns:
                 session.execute(text(f"ALTER TABLE accounts ADD COLUMN {name} VARCHAR({length}) NOT NULL DEFAULT ''"))
         if session.scalar(select(Account.id).limit(1)) is None:
-            session.add(Account(phone='18792636900', name='系统管理员', role='admin', password_hash=password_hash('123456')))
+            session.add(Account(phone='15210451737', name='系统管理员', role='admin', password_hash=password_hash('123456')))
 
 def session_user(request):
     token = request.cookies.get(COOKIE, '')
