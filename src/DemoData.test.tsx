@@ -1,4 +1,5 @@
-import { render,screen,waitFor } from '@testing-library/react';
+import { render } from './test/auth';
+import { screen,waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach,expect,it,vi } from 'vitest';
 import { DemoDataTools } from './components/DemoDataTools';

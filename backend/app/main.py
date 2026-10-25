@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
+from .auth import router as auth_router, seed_admin, session_user, permitted
 from .ai import AIConnectionError, test_ai_connection
 from .config import ConfigurationError, SettingsStore
 from .database import AuditEvent, Base, application_engine, probe_postgres, write_audit
@@ -87,6 +88,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
         engine = application_engine(settings, directory)
         try:
             Base.metadata.create_all(engine)
+            seed_admin(engine)
             seed_templates(engine)
             recover_interrupted_attempts(engine)
             if presentation:
@@ -145,8 +147,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     @application.middleware("http")
     async def private_api(request: Request, call_next):
-        # A local app has no login in this phase. Block cross-site mutations rather
-        # than allowing an unrelated webpage to change local configuration.
+        # Reject cross-site mutations even when a browser has an authenticated cookie.
         if request.method in {"PUT", "POST", "PATCH", "DELETE"}:
             origin = request.headers.get("origin")
             from urllib.parse import urlsplit
@@ -156,7 +157,17 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
                     return JSONResponse(status_code=403, content={"detail": "不允许跨站修改配置，请从本系统页面操作。"})
             if request.headers.get("sec-fetch-site") == "cross-site":
                 return JSONResponse(status_code=403, content={"detail": "不允许跨站修改配置，请从本系统页面操作。"})
+        path = request.url.path
+        if path.startswith('/api/') and path.rstrip('/') not in {'/api/auth/login', '/api/health'}:
+            user = await asyncio.to_thread(session_user, request)
+            if not user:
+                return JSONResponse(status_code=401, content={"detail": "请登录后继续使用。"}, headers={"Cache-Control": "no-store"})
+            request.state.user = user
+            if not permitted(user['role'], request.method, path, request.query_params):
+                return JSONResponse(status_code=403, content={"detail": "当前账号没有此操作权限。"}, headers={"Cache-Control": "no-store"})
         response = await call_next(request)
+        if response.status_code < 400 and request.method in {'POST', 'PUT', 'PATCH', 'DELETE'} and hasattr(request.state, 'user') and not path.startswith('/api/auth/'):
+            await asyncio.to_thread(audit, 'account.business_operation', {'actor_id': request.state.user['id'], 'role': request.state.user['role'], 'method': request.method, 'resource': path[:200]})
         if request.url.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store"
             response.headers["X-Content-Type-Options"] = "nosniff"
@@ -176,9 +187,14 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
         return {"status": "ok" if application.state.audit_available else "degraded", "version": VERSION, "stage": 5, **runtime()}
 
     @application.get("/api/settings")
-    def get_settings():
+    def get_settings(request: Request):
         with store.lock:
-            return envelope()
+            result = envelope()
+            if request.state.user['role'] != 'admin':
+                result['settings'].pop('environment', None)
+                for provider in result['settings']['ai']['providers'].values():
+                    provider.pop('base_url', None)
+            return result
 
     @application.put("/api/settings")
     def update_settings(update: SettingsUpdate):
@@ -234,6 +250,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
 
     application.include_router(people_router)
     application.include_router(knowledge_router)
+    application.include_router(auth_router)
     application.include_router(alerts_router)
     application.include_router(documents_router)
     application.include_router(records_router)

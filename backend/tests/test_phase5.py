@@ -7,7 +7,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import Session
 

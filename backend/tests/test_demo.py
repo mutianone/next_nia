@@ -7,7 +7,7 @@ from unittest.mock import patch
 import zipfile
 
 import pytest
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 

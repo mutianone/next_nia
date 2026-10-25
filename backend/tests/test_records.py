@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from zipfile import ZipFile
 
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 import httpx
 from pydantic import SecretStr
 import pytest

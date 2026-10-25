@@ -2,7 +2,7 @@ import csv
 from io import StringIO
 import json
 
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 import pytest
 from sqlalchemy import event, select
 from sqlalchemy.exc import SQLAlchemyError

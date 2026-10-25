@@ -5,7 +5,7 @@ from threading import Barrier
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 import pytest
 from sqlalchemy import event, select
 from sqlalchemy.exc import SQLAlchemyError

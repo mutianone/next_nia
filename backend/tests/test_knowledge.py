@@ -3,7 +3,7 @@ import json
 from unittest.mock import Mock
 import zipfile
 
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 import httpx
 import pytest
 from pypdf import PdfWriter

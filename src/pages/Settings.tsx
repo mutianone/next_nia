@@ -1,3 +1,4 @@
+import { AccountManagement } from '../auth/AccountManagement';
 import { useViewState } from '../hooks/useWorkspaceView';
 import { Maintenance } from '../components/Maintenance';
 import { PageHeading } from '../components/PageHeading';
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react'
 
 type ProviderId = 'siliconflow' | 'deepseek'
-type Section = 'general' | 'environment' | 'ai' | 'data'
+type Section = 'general' | 'environment' | 'ai' | 'data' | 'accounts'
 type ProviderSettings = {
   enabled: boolean
   base_url: string
@@ -210,7 +211,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   if (loadError || !draft || !runtime) return <div className="settings-page"><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel settings-load-error" role="alert"><Unplug size={30} /><h2>暂时无法读取配置</h2><p>{loadError || '服务没有返回完整配置。'}</p><button className="btn btn-primary" onClick={() => setReload(value => value + 1)}><RefreshCw size={16} />重新连接</button></div></div>
 
   return <div className="settings-page">
-    <PageHeading title="系统设置" description="管理运行环境、AI 服务和本地数据。" scene="settings">
+    <PageHeading title="系统设置" description="管理账号权限、运行环境、AI 服务和本地数据。" scene="settings">
       <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '配置已保存'}</div>
     </PageHeading>
     <div className="settings-runtime-strip">
@@ -225,6 +226,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       <aside className="settings-nav-column">
         <TabsList asChild><nav className="settings-section-nav" aria-label="设置分类">
           {([
+            { id: 'accounts' as const, icon: ShieldCheck, title: '账号管理', subtitle: '人员账号与角色权限' },
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与所属组织' },
             { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: runtime.local_processing ? '本地业务服务' : `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine}` },
             { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: runtime.local_processing ? '资料处理服务已就绪' : saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'DeepSeek' : '硅基流动'}` : '业务调用已关闭' },
@@ -235,13 +237,14 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       </aside>
 
       <motion.div className="settings-main" key="settings-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        {section === 'accounts' && <TabsContent value="accounts"><AccountManagement/></TabsContent>}
         {section === 'general' && <TabsContent value="general" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div><h2>基础信息</h2></div></div>
           <div className="settings-card-body"><div className="settings-field-grid">
             <label className="field settings-field"><span>系统名称 <b>*</b></span><input className="input" value={draft.general.system_name} maxLength={80} disabled={saving} placeholder="请输入系统名称" onChange={event => { setDraft({ ...draft, general: { ...draft.general, system_name: event.target.value } }); setNotice(null) }} /><small>显示在侧边导航与工作空间标题中。</small></label>
             <label className="field settings-field"><span>所属组织 <b>*</b></span><input className="input" value={draft.general.organization} maxLength={100} disabled={saving} placeholder="例如：出入境业务中心" onChange={event => { setDraft({ ...draft, general: { ...draft.general, organization: event.target.value } }); setNotice(null) }} /><small>用于标识当前部署单位。</small></label>
           </div>
-          <div className="settings-inline-note"><LockKeyhole size={17} /><p>当前未启用登录，访问地址后直接进入工作台。</p></div></div>
+          <div className="settings-inline-note"><LockKeyhole size={17} /><p>已启用手机号与密码登录。账号及角色权限在“账号管理”中维护。</p></div></div>
         </section></TabsContent>}
 
         {section === 'environment' && runtime.local_processing && <section className="panel settings-card"><div className="settings-card-heading"><h2>运行环境</h2><span className="settings-small-badge enabled">已连接</span></div><div className="settings-card-body"><div className="settings-default-provider"><div><h3>本地业务数据库</h3><p>人员、法规、录音、文书与办理记录统一留存。</p></div><Database size={22}/></div><p className="settings-caption">SQLite · macOS / Linux · 当前运行配置由服务端管理</p></div></section>}

@@ -1,3 +1,5 @@
+import { AuthProvider } from './auth/AuthContext';
+import './auth.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
@@ -17,4 +19,4 @@ import './workspace.css';
 import './profile-studio.css';
 import { ConfirmationHost } from './components/ConfirmationHost';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /><ConfirmationHost /></React.StrictMode>);
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AuthProvider><App /></AuthProvider><ConfirmationHost /></React.StrictMode>);

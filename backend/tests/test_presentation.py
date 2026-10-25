@@ -1,6 +1,6 @@
 """Exercise the offline workflow with all outbound processing disabled."""
 import pytest
-from fastapi.testclient import TestClient
+from backend.tests.auth_client import TestClient
 from sqlalchemy.orm import Session
 
 from backend.app.main import create_app

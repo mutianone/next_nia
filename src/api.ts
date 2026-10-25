@@ -15,6 +15,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   if (!(init?.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   const response = await fetch(`/api${path}`, { ...init, headers });
   const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(typeof data?.detail === 'string' ? data.detail : `请求失败（${response.status}）`);
+  if (!response.ok) {
+    if (response.status === 401 && path !== '/auth/login' && path !== '/auth/me') window.dispatchEvent(new Event('auth-expired'));
+    throw Object.assign(new Error(typeof data?.detail === 'string' ? data.detail : `请求失败（${response.status}）`), { status: response.status });
+  }
   return data as T;
 }
