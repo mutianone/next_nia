@@ -15,7 +15,7 @@ export async function streamQuestion(body: object, onEvent: (event: AIStreamEven
       const {value, done} = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > 4 * 1024 * 1024) throw new Error('AI 回答超过长度限制。');
+      if (size > 16 * 1024 * 1024) throw new Error('AI 回答超过长度限制。');
       buffer += decoder.decode(value, {stream:true}).replace(/\r\n/g,'\n');
       let end: number;
       while ((end = buffer.indexOf('\n\n')) >= 0) {

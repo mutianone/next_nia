@@ -3,7 +3,7 @@ import json
 import re
 import time
 import httpx
-from .knowledge_ai import CHAT_URLS, KnowledgeAIError, prepare_answer, validate_answer, attach_analysis_basis
+from .knowledge_ai import CHAT_URLS, KnowledgeAIError, prepare_answer, validate_answer, attach_analysis_basis, MAX_CLAIMS, MAX_ANSWER_CHARS
 
 
 def complete_claims(raw):
@@ -21,8 +21,8 @@ def complete_claims(raw):
         except ValueError:
             break
         claims.append(claim)
-        if len(claims) > 12:
-            raise KnowledgeAIError(502, 'AI 回答超过长度限制。')
+        if len(claims) > MAX_CLAIMS:
+            raise KnowledgeAIError(502, 'AI 结论条目过多，请缩小问题范围后重试。')
     return claims
 
 
@@ -38,7 +38,7 @@ def stream_answer(question, sources, settings, *, analysis=False):
                     raise KnowledgeAIError(502, 'AI 请求未成功，请检查接口配置、额度或稍后重试。')
                 for block in response.iter_text():
                     size += len(block.encode('utf-8'))
-                    if size > 256 * 1024 or time.monotonic() - started > 120:
+                    if size > 2 * 1024 * 1024 or time.monotonic() - started > 120:
                         raise KnowledgeAIError(502, 'AI 响应超过时间或长度限制。')
                     pending += block
                     while '\n' in pending:
@@ -60,7 +60,7 @@ def stream_answer(question, sources, settings, *, analysis=False):
                         if not isinstance(delta, str):
                             raise ValueError('bad delta')
                         raw += delta
-                        if len(raw) > 30000 or key in raw:
+                        if len(raw) > MAX_ANSWER_CHARS or key in raw:
                             raise ValueError('invalid output')
                         finish = choice.get('finish_reason') or finish
                         claims = complete_claims(raw)

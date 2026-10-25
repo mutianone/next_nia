@@ -66,3 +66,16 @@ def test_stream_endpoint_permissions_and_final_event(client,monkeypatch):
     settings=client.app.state.store.load(); settings.ai.external_permissions.question=False; client.app.state.store.save(settings)
     assert client.post('/api/knowledge/ask/stream',json={'question':'签证延期','confirm_external':True}).status_code==403
     assert len(calls)==1
+
+def test_more_than_twelve_claims_stream_and_validate(monkeypatch):
+    claims=[{'text':f'第{i+1}项核查结论','source_ids':['source-1']} for i in range(24)]
+    settings=setup(monkeypatch,wire(json.dumps({'claims':claims},ensure_ascii=False)))
+    events=list(stream_answer('逐项核查',SOURCES,settings))
+    assert events[-1]['type']=='complete'
+    assert len(events[-1]['answer']['claims'])==24
+
+def test_claim_limit_remains_bounded():
+    from backend.app.knowledge_stream import complete_claims
+    from backend.app.knowledge_ai import MAX_CLAIMS
+    raw=json.dumps({'claims':[{'text':'结论','source_ids':['source-1']} for _ in range(MAX_CLAIMS+1)]})
+    with pytest.raises(KnowledgeAIError):complete_claims(raw)
