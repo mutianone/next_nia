@@ -63,3 +63,29 @@
 .qa-history-delete{display:flex;align-items:center;gap:6px;border:0;border-left:1px solid var(--border);padding:8px 14px;margin-right:8px;background:transparent;color:var(--danger,#c34b4b);cursor:pointer;font-size:.8125rem}
 .qa-history-open:hover{background:var(--surface-2)}.qa-history-delete:hover{background:var(--surface-2);border-radius:6px}.qa-history-row button:disabled{opacity:.5;cursor:wait}
 @media(max-width:700px){[data-slot="dialog-content"].qa-history-dialog{padding:18px}.qa-history-open{padding:12px;gap:8px}.qa-history-delete{padding:8px;margin-right:4px}.qa-history-list strong{white-space:normal;overflow-wrap:anywhere}}
+/* Template controls stay separate from the independently scrolling conversation. */
+.assistant-page .qa-layout{grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.qa-template-sidebar{min-width:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.qa-template-panel{max-height:calc(100dvh - 160px);overflow-y:auto;overscroll-behavior:contain;padding:16px}
+.qa-template-panel[hidden]{display:none}
+.qa-template-toggle{display:none}
+.assistant-page .qa-template-sidebar .analysis-template-picker{margin:0;padding:0;border:0;background:transparent}
+.qa-template-sidebar .analysis-template-toolbar{gap:10px}
+.qa-template-sidebar .analysis-template-toolbar label{flex:1 0 100%;min-width:0;display:grid;gap:10px;font-size:.875rem;font-weight:600}
+.qa-template-sidebar [role=combobox]{width:100%;min-width:0}
+.qa-template-sidebar .analysis-template-toolbar .text-button{font-size:.75rem}
+.qa-template-sidebar .analysis-template-guide p{font-size:.75rem;line-height:1.8;overflow-wrap:anywhere}
+.qa-template-sidebar .analysis-howto{padding:10px;margin-top:12px}
+.qa-template-sidebar .analysis-howto > strong,.qa-template-sidebar .analysis-howto > ol{display:none}
+.qa-template-sidebar .analysis-howto .text-button{margin:0;font-size:.75rem}
+.qa-template-sidebar .analysis-outline{display:none}
+.qa-template-sidebar .analysis-checklist{font-size:.75rem;padding-left:18px;line-height:1.8}
+.qa-template-sidebar .analysis-template-guide details{border-top:1px solid var(--border);padding-top:12px;margin-top:14px}
+.qa-template-sidebar summary{line-height:1.7;font-size:.75rem}
+.qa-left-guidance{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.qa-left-guidance h3{font-size:.875rem;font-weight:600;margin-bottom:12px}
+.qa-left-guidance ol{list-style:decimal;padding-left:20px;display:grid;gap:12px;font-size:.75rem;line-height:1.7}
+.qa-left-guidance li::marker{color:var(--primary);font-weight:600}.qa-left-guidance p{color:var(--muted);margin:3px 0 0}
+.qa-left-guidance > button{margin-top:16px;font-size:.75rem}
+@media(max-width:1100px) and (min-width:851px){.assistant-page .qa-layout{grid-template-columns:260px minmax(0,1fr)}}
+@media(max-width:850px){.assistant-page .qa-layout{grid-template-columns:minmax(0,1fr);gap:10px}.qa-template-toggle{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;background:var(--surface);border:0;color:var(--text);text-align:left;font-size:.8125rem}.qa-template-toggle span:first-of-type{flex:1;min-width:0}.qa-template-toggle span:last-child{font-size:.75rem;color:var(--primary)}.qa-template-panel{max-height:280px;border-top:1px solid var(--border)}.assistant-page .qa-workspace{min-height:300px}.qa-left-guidance ol{gap:8px}}
