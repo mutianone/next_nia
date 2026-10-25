@@ -220,7 +220,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
       <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine.toLowerCase() === 'sqlite' ? '本地数据库' : runtime.database_engine}</span></div>
-      <div className="settings-runtime-status">{runtime.pending_restart ? <><span className="settings-status-dot pending" />配置已更新，等待重启</> : <><span className="settings-status-dot" />本地服务已连接</>}</div>
+      {runtime.pending_restart && <div className="settings-runtime-status"><span className="settings-status-dot pending" />配置已更新，等待重启</div>}
     </div>
 
     {notice && <div ref={noticeRef} tabIndex={-1} className={`settings-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.kind === 'success' ? <CheckCircle2 size={19} /> : <CircleAlert size={19} />}<span>{notice.text}</span><button type="button" aria-label="关闭提示" onClick={() => setNotice(null)}><X size={17} /></button></div>}

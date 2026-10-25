@@ -1,8 +1,5 @@
 /* Typography uses rem; component spacing and chart geometry stay independent. */
-:root { font-size: 16px; }
-:root[data-font-size="large"] { font-size: 18.4px; }
-:root[data-font-size="larger"] { font-size: 20.8px; }
-:root[data-font-size="largest"] { font-size: 24px; }
+:root { font-size: var(--reading-font-size, 16px); }
 .page-content { max-width: none; width: 100%; }
 @media (min-width: 1650px) { .page-content { padding-inline: clamp(28px, 2vw, 64px); } }
 .font-size-panel { margin-bottom: 24px; display: grid; gap: 16px; }
@@ -17,3 +14,38 @@
 @media print { :root { font-size: 16px !important; } }
 /* Keep the fixed brand lockup on one line at every reading size. */
 .brand small { font-size: min(.5625rem, 10px); letter-spacing: .5px; white-space: nowrap; }
+
+.font-size-slider { display: grid; gap: 8px; max-width: 620px; }
+.font-size-slider > span { display:flex; justify-content:space-between; align-items:center; font-size:.8125rem; }
+.font-size-slider output { color:var(--primary); font-weight:650; font-variant-numeric:tabular-nums; }
+.font-size-slider input { width:100%; height:28px; accent-color:var(--primary); cursor:pointer; margin:0; }
+.font-size-slider small { display:flex; justify-content:space-between; color:var(--muted); font-size:.6875rem; }
+@media(max-width:700px) {
+  .work-scene-trigger { display:none; }
+  .page-content .page-description, .settings-page .page-description { font-size:.625rem; line-height:1.65; }
+  .kb-storage-label { display:none; }
+  .profiles-page .work-heading { position:relative; }
+  .profiles-page .work-heading-title { padding-right:78px; }
+  .profiles-page .work-heading-actions { position:absolute; top:0; right:0; }
+  .profiles-page .work-heading-actions .btn { padding:7px 10px; font-size:.6875rem; min-height:32px; }
+  .dashboard-page .spatial-hero { min-height:0; padding:43px 18px 10px; gap:0; }
+  .dashboard-page .spatial-eyebrow { position:absolute; left:18px; top:12px; line-height:20px; font-size:min(.625rem,11px); letter-spacing:.4px; gap:7px; }
+  .dashboard-page .spatial-corner { top:12px; right:14px; }
+  .dashboard-page .spatial-corner .dashboard-date { margin:0; line-height:20px; font-size:min(.625rem,11px); gap:5px; }
+  .dashboard-page .spatial-corner .dashboard-date svg { width:12px; height:12px; }
+  .dashboard-page .spatial-copy > p { display:none; }
+  .dashboard-page .spatial-copy h2 { font-size:1.125rem; line-height:1.35; margin:4px 0; }
+  .dashboard-page .work-hero-count { font-size:1.75rem; letter-spacing:-.5px; }
+  .dashboard-page .work-hero-unit { font-size:.6875rem; }
+  .dashboard-page .spatial-action { margin-top:6px; }
+  .dashboard-page .work-hero-tasks { gap:12px; }
+  .dashboard-page .hero-button, .dashboard-page .work-hero-secondary { font-size:.625rem; padding:7px 9px; gap:6px; }
+  .dashboard-page .work-hero-secondary { padding-inline:0; }
+  .dashboard-page .work-hero-secondary b { font-size:.75rem; }
+  .dashboard-page .spatial-hero .spatial-stage { height:150px; }
+  .dashboard-page .spatial-toolbar { bottom:16px; }
+}
+@media(max-width:700px) {
+  .dashboard-page .spatial-copy { position:static; }
+  .dashboard-page .spatial-points:empty { display:none; }
+}

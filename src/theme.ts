@@ -10,15 +10,23 @@ export const themes = [
 ] as const;
 export type ThemeId = typeof themes[number]['id'];
 export const fontSizes = [{ id: 'standard', label: '标准', percent: 100 }, { id: 'large', label: '较大', percent: 115 }, { id: 'larger', label: '大号', percent: 130 }, { id: 'largest', label: '特大', percent: 150 }] as const;
-export type FontSize = typeof fontSizes[number]['id'];
+export type FontSize = number;
 export type ColorMode = 'light' | 'dark' | 'system';
 
 function stored(key: string, fallback: string) { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } }
 export function useTheme() {
   const [theme, setTheme] = useState<ThemeId>(() => { const value = stored('nia-theme', 'government'); return themes.some(t => t.id === value) ? value as ThemeId : 'government'; });
   const [mode, setMode] = useState<ColorMode>(() => { const value = stored('nia-mode', 'light'); return ['light', 'dark', 'system'].includes(value) ? value as ColorMode : 'light'; });
-  const [fontSize, setFontSize] = useState<FontSize>(() => { const value = stored('nia-font-size', 'standard'); return fontSizes.some(size => size.id === value) ? value as FontSize : 'standard'; });
-  useEffect(() => { document.documentElement.dataset.fontSize = fontSize; try { localStorage.setItem('nia-font-size', fontSize); } catch { /* Session only. */ } }, [fontSize]);
+  const [fontSize, setFontSize] = useState<FontSize>(() => {
+    const value = stored('nia-font-size', '100');
+    const preset = fontSizes.find(size => size.id === value);
+    const percent = preset?.percent ?? Number(value);
+    return Number.isFinite(percent) && percent >= 80 && percent <= 160 ? percent : 100;
+  });
+  useEffect(() => {
+    document.documentElement.style.setProperty('--reading-font-size', `${16 * fontSize / 100}px`);
+    try { localStorage.setItem('nia-font-size', String(fontSize)); } catch { /* Session only. */ }
+  }, [fontSize]);
   const [reducedMotion, setReducedMotion] = useState(() => stored('nia-reduced-motion', 'false') === 'true');
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
