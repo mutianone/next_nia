@@ -26,6 +26,7 @@ type Form = typeof blank;
 export const errorMessage = (error: unknown) => error instanceof Error ? error.message : '操作未完成，请重试。';
 
 export function Profiles() {
+  const [nationality, setNationality] = useViewState('profiles.nationality', ''), [gender, setGender] = useViewState('profiles.gender', 'all'), [verification, setVerification] = useViewState('profiles.verification', 'all');
   const [query, setQuery] = useViewState('profiles.query', ''), [page, setPage] = useViewState('profiles.page', 1), [archived, setArchived] = useViewState('profiles.archived', false);
   const [list, setList] = useState<PeopleResponse | null>(null), [selected, setSelected] = useViewState('profiles.selected', '');
   const [profile, setProfile] = useState<Profile | null>(null), [reload, setReload] = useState(0), [error, setError] = useState('');
@@ -35,13 +36,13 @@ export function Profiles() {
   const [profileError, setProfileError] = useState('');
   const [editor, setEditor] = useState<{ type: 'fact'|'relation'; fact?: Fact; relation?: Relation } | null>(null), [form, setForm] = useState<Form>(blank), [busy, setBusy] = useState(false), [formError, setFormError] = useState('');
   const [evidence, setEvidence] = useState<{ title: string; text: string } | null>(null), [targetQuery, setTargetQuery] = useState(''), [targets, setTargets] = useState<Person[]>([]);
-  useListPosition(`profiles:${JSON.stringify([query,page,archived,selected,tab])}`, !editor && !evidence, !!list && (!selected || !!profile));
+  useListPosition(`profiles:${JSON.stringify([query,page,archived,selected,tab,nationality,gender,verification])}`, !editor && !evidence, !!list && (!selected || !!profile));
   usePageDirty(Boolean(editor) || busy);
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(() => { setError(''); api<PeopleResponse>(`/people?q=${encodeURIComponent(query)}&page=${page}&page_size=12&archived=${archived}`, { signal: controller.signal }).then(setList).catch(e => { if (!controller.signal.aborted) setError(errorMessage(e)); }); }, 200);
+    const timer = setTimeout(() => { setError(''); api<PeopleResponse>(`/people?q=${encodeURIComponent(query)}&page=${page}&page_size=12&archived=${archived}&nationality=${encodeURIComponent(nationality)}&gender=${gender}&verification=${verification}`, { signal: controller.signal }).then(setList).catch(e => { if (!controller.signal.aborted) setError(errorMessage(e)); }); }, 200);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [query, page, archived, reload]);
+  }, [query, page, archived, reload, nationality, gender, verification]);
   useEffect(() => {
     if (!selected) return; const controller = new AbortController(); setProfile(null); setProfileError(''); setFactFilter('all');
     api<Profile>(`/profiles/${selected}`, { signal: controller.signal }).then(setProfile).catch(e => { if (!controller.signal.aborted) setProfileError(errorMessage(e)); });
@@ -69,7 +70,7 @@ export function Profiles() {
   return <div className="page-content p5-page profiles-page">
     <PageHeading title="人员事实与关系" description="按人员查看已登记事实、关系及业务时间线。" scene="profiles"><button className="btn btn-secondary" onClick={() => setReload(v => v+1)}><RefreshCw size={15}/>刷新</button></PageHeading>
     {error && <div className="p5-notice error" role="alert">{error}</div>}
-    <div className="p5-workspace"><aside className="panel p5-directory"><div className="section-title"><h2><UsersRound size={17}/>选择档案</h2><span className="badge">{list?.total ?? '—'}</span></div><label className="p5-search"><Search size={16}/><input aria-label="搜索画像人员" value={query} placeholder="姓名、证件或档案编号" onChange={e => { setQuery(e.target.value); setPage(1); }}/></label><label className="p5-check"><input type="checkbox" checked={archived} onChange={e => { setArchived(e.target.checked); setPage(1); }}/>查看归档人员</label>
+    <div className="p5-workspace"><aside className="panel p5-directory"><div className="section-title"><h2><UsersRound size={17}/>选择档案</h2><span className="badge">{list?.total ?? '—'}</span></div><label className="p5-search"><Search size={16}/><input aria-label="搜索画像人员" value={query} placeholder="姓名、证件或档案编号" onChange={e => { setQuery(e.target.value); setPage(1); }}/></label><div className="profile-directory-filters"><label className="field"><span>国籍</span><input className="input" aria-label="按国籍筛选" maxLength={100} placeholder="输入国籍" value={nationality} onChange={e => { setNationality(e.target.value); setPage(1); }}/></label><label className="field"><span>性别</span><Choice className="select" aria-label="按性别筛选" value={gender} onChange={e => { setGender(e.target.value); setPage(1); }}><option value="all">全部性别</option><option value="male">男</option><option value="female">女</option><option value="unknown">未知 / 未填写</option></Choice></label><label className="field"><span>核实状态</span><Choice className="select" aria-label="按核实状态筛选" value={verification} onChange={e => { setVerification(e.target.value); setPage(1); }}><option value="all">全部状态</option><option value="verified">已核实</option><option value="pending">待核实</option></Choice></label>{(nationality || gender !== 'all' || verification !== 'all') && <button className="text-button" onClick={() => { setNationality(''); setGender('all'); setVerification('all'); setPage(1); }}>清除筛选</button>}</div><label className="p5-check"><input type="checkbox" checked={archived} onChange={e => { setArchived(e.target.checked); setPage(1); }}/>查看归档人员</label>
       <div className="p5-person-list">{list?.items.map(person => <button aria-label={'查看画像 '+person.name} key={person.id} className={selected === person.id ? 'selected' : ''} onClick={() => { setSelected(person.id); setTab('analysis'); }}><span className="p5-avatar">{person.name.slice(0,1)}</span><span><strong>{person.name}</strong><small>{person.code}</small></span><ChevronRight size={14}/></button>)}{list && !list.items.length && <div className="p5-empty"><UsersRound size={28}/><strong>暂无匹配档案</strong><p>先在人员档案中建档，或调整搜索条件。</p></div>}</div>
       <div className="p5-pager"><button className="icon-button" aria-label="上一页" disabled={page===1} onClick={() => setPage(v=>v-1)}><ChevronLeft size={16}/></button><span>{page} / {Math.max(1, Math.ceil((list?.total || 0)/12))}</span><button className="icon-button" aria-label="下一页" disabled={!list || page*12>=list.total} onClick={() => setPage(v=>v+1)}><ChevronRight size={16}/></button></div>
     </aside><div className="p5-detail">

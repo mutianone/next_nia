@@ -33,7 +33,6 @@ export function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [themeOpen, setThemeOpen] = useState(false);
-  const [organization, setOrganization] = useState('出入境业务中心');
   const [systemName, setSystemName] = useState('境智 · 出入境业务平台');
   const [toast, setToast] = useState('');
   const [alertContext, setAlertContext] = useState<string | null>(null);
@@ -48,7 +47,7 @@ export function App() {
   const refreshStatus = useCallback(async () => {
     try {
       const result = await api<{settings:{general:{organization:string;system_name:string}}}>('/settings');
-      setOrganization(result.settings.general.organization); setSystemName(result.settings.general.system_name);
+      setSystemName(result.settings.general.system_name);
     } catch { /* Keep the last known workspace labels while the service is unavailable. */ }
   }, []);
   useEffect(() => { void refreshStatus(); const timer = window.setInterval(refreshStatus, 30000); return () => window.clearInterval(timer); }, [refreshStatus]);
@@ -91,7 +90,6 @@ export function App() {
     <a className="skip-link" href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }}>跳转到主要内容</a>
     {sidebar && <button className="sidebar-scrim" aria-label="关闭导航菜单" onClick={() => setSidebar(false)}/>}
     <aside className={`sidebar ${sidebar ? 'open' : ''}`} aria-label="主导航"><button className="brand" onClick={() => navigate('dashboard')} aria-label="境智首页"><span className="brand-mark"><img src="/favicon.svg?v=20261023-gate" alt="" aria-hidden="true" width="44" height="44"/></span><span><strong>境智<span>NIA</span></strong><small>{systemName}</small></span></button>
-      <div className="workspace-switch"><span className="workspace-icon"><ShieldCheck size={17}/></span><div><strong>{organization}</strong><small>本地工作空间</small></div><span className="workspace-dot"/></div>
       <nav className="nav-list">{visibleNavigation.map((item, i) => <div key={item.id}>{(i === 0 || item.group !== visibleNavigation[i - 1].group) && <div className="nav-group-label">{item.group}</div>}<button className={`nav-item ${page === item.id ? 'active' : ''}`} aria-current={page === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><item.icon size={18} strokeWidth={1.7}/><span>{item.label}</span>{page === item.id && <ChevronRight size={14} className="nav-arrow"/>}</button></div>)}</nav>
     </aside>
     <div className="main-shell"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" aria-label="打开导航菜单" aria-expanded={sidebar} onClick={() => setSidebar(v => !v)}><Menu size={21}/></button><span className="breadcrumb-root">工作空间</span><ChevronRight size={13} className="breadcrumb-chevron"/><strong>{activeNav.label}</strong></div><div className="topbar-actions"><button className="search-trigger" onClick={() => setSearchOpen(true)} aria-label="搜索功能"><Search size={16}/><span>搜索功能…</span><kbd>⌘ K</kbd></button><span className="topbar-divider"/><button className="icon-button" aria-label="切换主题" onClick={() => setThemeOpen(true)}><Palette size={18}/></button><button className="icon-button mode-toggle" aria-label={theme.mode === 'dark' ? '切换为白天模式' : '切换为黑夜模式'} onClick={() => theme.setMode(theme.mode === 'dark' ? 'light' : 'dark')}>{theme.mode === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}</button><UserMenu/></div></header>
@@ -99,7 +97,7 @@ export function App() {
       <nav className="mobile-bottom" aria-label="移动快捷导航">{visibleNavigation.filter(n => ['dashboard','knowledge','records','settings'].includes(n.id)).map(n => <button key={n.id} className={page === n.id ? 'active' : ''} onClick={() => navigate(n.id)}><n.icon size={20}/><span>{n.id === 'dashboard' ? '工作台' : n.id === 'knowledge' ? '知识' : n.id === 'records' ? '笔录' : '配置'}</span></button>)}<button onClick={() => setSidebar(true)}><Menu size={20}/><span>更多</span></button></nav>
     </div>
     {toast && <div className="toast" role="status"><ShieldCheck size={17}/>{toast}<button aria-label="关闭提示" onClick={() => setToast('')}><X size={14}/></button></div>}
-    {searchOpen && <Dialog title="快速前往" onClose={() => setSearchOpen(false)} className="search-dialog"><div className="command-input"><Search size={20}/><input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索工作台、主题、后台配置…" aria-label="功能名称"/></div><div className="command-results">{filtered.map(n => <button key={n.id} onClick={() => navigate(n.id)}><span className="command-icon"><n.icon size={19}/></span><div><strong>{n.label}</strong><small>{n.en}</small></div><ArrowRight size={15}/></button>)}{!filtered.length && <p className="empty-copy">没有找到对应功能，试试“配置”或“主题”。</p>}</div><div className="command-footer"><Command size={12}/> 快速导航<span>ESC 关闭</span></div></Dialog>}
+    {searchOpen && <Dialog title="快速前往" onClose={() => setSearchOpen(false)} className="search-dialog"><div className="command-input"><Search size={20}/><input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索工作台、主题、系统配置…" aria-label="功能名称"/></div><div className="command-results">{filtered.map(n => <button key={n.id} onClick={() => navigate(n.id)}><span className="command-icon"><n.icon size={19}/></span><div><strong>{n.label}</strong><small>{n.en}</small></div><ArrowRight size={15}/></button>)}{!filtered.length && <p className="empty-copy">没有找到对应功能，试试“配置”或“主题”。</p>}</div><div className="command-footer"><Command size={12}/> 快速导航<span>ESC 关闭</span></div></Dialog>}
     {themeOpen && <Dialog title="工作空间外观" onClose={() => setThemeOpen(false)} className="theme-dialog"><p className="muted dialog-description">当前：{selectedTheme.name}。选择后立即生效。</p><div className="theme-list">{themes.map(t => <button className={theme.theme === t.id ? 'selected' : ''} key={t.id} onClick={() => theme.setTheme(t.id)} aria-pressed={theme.theme === t.id}><span className="theme-color" style={{ background: `linear-gradient(135deg,${t.color},${t.second})` }}/><span><strong>{t.name}</strong><small>{t.tag}</small></span><span className="theme-radio"/></button>)}</div><div className="mode-options compact">{([{value:'light',name:'白天',icon:Sun},{value:'dark',name:'黑夜',icon:Moon},{value:'system',name:'跟随系统',icon:Monitor}] as const).map(m => <button className={theme.mode === m.value ? 'active' : ''} onClick={() => theme.setMode(m.value)} key={m.value} aria-pressed={theme.mode === m.value}><m.icon size={17}/>{m.name}</button>)}</div><button className="theme-all-button" onClick={() => navigate('appearance')}>浏览全部主题与动效设置 <ArrowRight size={15}/></button></Dialog>}
   </div></MotionConfig></SpatialExperience>;
 }

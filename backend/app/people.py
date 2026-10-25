@@ -386,9 +386,18 @@ def parse_csv(csv_text: str, session: Session) -> tuple[list[dict], list[dict], 
 
 @router.get("")
 def list_people(request: Request, q: str = Query(default="", max_length=200), archived: bool = False,
-                page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
+                page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100),
+                nationality: str = Query(default="", max_length=100),
+                gender: Literal["all", "male", "female", "unknown"] = "all",
+                verification: Literal["all", "verified", "pending"] = "all"):
     with Session(request.app.state.engine) as session:
         conditions = filters(q, archived)
+        if nationality.strip():
+            conditions.append(Person.nationality.icontains(nationality.strip(), autoescape=True))
+        if gender != "all":
+            conditions.append(Person.gender == gender)
+        if verification != "all":
+            conditions.append(Person.verification == verification)
         total = session.scalar(select(func.count()).select_from(Person).where(*conditions)) or 0
         people = session.scalars(select(Person).where(*conditions).order_by(Person.updated_at.desc(), Person.id).offset((page - 1) * page_size).limit(page_size)).all()
         counts = session.execute(select(func.count(Person.id),

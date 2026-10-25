@@ -271,3 +271,34 @@
 .brand-mark img{display:block;width:100%;height:100%;border-radius:12px;box-shadow:0 3px 9px #123d9118}
 
 @media (max-width: 700px) { .page-content { padding-top: 12px; }.page-content .work-heading { margin-bottom: 18px; } }
+
+/* Compact workspace rhythm, with separate overview metric cards. */
+.dashboard-page .stats-grid{gap:12px;border:0;border-radius:0;background:transparent;overflow:visible}
+.dashboard-page .stats-grid .stat-card{border:1px solid var(--border);border-radius:9px;background:var(--surface);padding:16px 18px}
+.dashboard-page .stats-grid .stat-card:last-child{border-right:1px solid var(--border)}
+.dashboard-page .stat-value{margin:10px 0 14px}
+.dashboard-middle,.dashboard-bottom{gap:16px;margin-bottom:16px}
+.page-content .work-heading{margin-bottom:16px}
+.people-stats,.doc-stats,.al-stats,.rec-stats{margin-bottom:18px;padding-bottom:16px}
+.p5-workspace{gap:16px}.profile-directory-filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.profile-directory-filters .field{min-width:0;gap:5px}.profile-directory-filters .field:first-child{grid-column:1/-1}
+.profile-directory-filters .input,.profile-directory-filters .select{width:100%;min-width:0;font-size:12px}
+.profile-directory-filters .field>span{font-size:11px;color:var(--muted)}
+.business-trend .bar-value{font-size:10px;font-weight:650;fill:var(--text)}
+.settings-page .settings-layout{gap:16px;grid-template-columns:190px minmax(0,1fr)}
+.settings-page .settings-runtime-strip{margin-bottom:16px;padding:10px 16px}
+.settings-page .settings-card-heading{padding:16px 20px}
+.settings-page .settings-card-body{padding:18px 20px}
+.settings-page .settings-provider-grid{gap:12px}
+.settings-page .settings-provider-card{padding:16px}
+.settings-page .settings-provider-header{margin-bottom:14px;gap:9px}
+.settings-page .settings-provider-fields{gap:12px}
+.settings-page .settings-field{gap:6px}
+.settings-page .settings-field-grid{gap:14px}
+.settings-page .settings-provider-footer{padding-top:12px;margin-top:14px}
+.settings-page .settings-section-nav>button{padding:12px 10px}
+.settings-page .settings-field .input,.settings-page .settings-provider-select .select{min-height:38px}
+@media(max-width:1000px){.settings-page .settings-layout{grid-template-columns:1fr}}
+@media(max-width:700px){.dashboard-page .stats-grid{gap:10px}.dashboard-page .stats-grid .stat-card{padding:14px}.settings-page .settings-card-body{padding:16px}.settings-page .settings-field .input{min-height:42px}}
+.settings-page .settings-ai-section{gap:14px}.settings-page .settings-ai-master{padding:14px}.settings-page .settings-inline-note{margin-top:16px}
+@media(min-width:1100px){.settings-page .settings-provider-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-page .settings-provider-fields{display:flex;flex-direction:column}}

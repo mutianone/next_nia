@@ -53,3 +53,9 @@ describe('true-data chart behaviour', () => {
     expect(screen.getByText('暂无可统计的记录')).toBeInTheDocument();
   });
 });
+
+it('shows all bar values without trend lines in dashboard mode', () => {
+  const { container } = render(<TrendChart compact barsOnly data={[{label:'10-24',entries:2,exits:0},{label:'10-25',entries:4,exits:9}]}/>);
+  expect(container.querySelectorAll('[data-series] path, [data-series] circle')).toHaveLength(0);
+  expect(Array.from(container.querySelectorAll('.bar-value')).map(node => node.textContent)).toEqual(['2','4','0','9']);
+});

@@ -328,3 +328,14 @@ def test_not_found_and_cross_site_write(client):
     response = client.post("/api/people", json=person_payload(), headers={"origin": "https://unrelated.invalid"})
     assert response.status_code == 403
     assert client.get("/api/people").json()["total"] == 0
+
+
+def test_profile_filters_combine_before_pagination(client):
+    create(client, nationality='法国', gender='female', verification='verified')
+    create(client, document_number='TEST-P-002', nationality='法国', gender='male')
+    create(client, document_number='TEST-P-003', nationality='德国', gender='female')
+    result = client.get('/api/people', params={'nationality': '法国', 'gender': 'female', 'verification': 'verified', 'page_size': 1}).json()
+    assert result['total'] == 1 and result['items'][0]['document_number'] == 'TEST-P-001'
+    assert client.get('/api/people', params={'nationality': '%'}).json()['total'] == 0
+    assert client.get('/api/people?gender=invalid').status_code == 422
+    assert client.get('/api/people?gender=female&page_size=1').json()['total'] == 2
