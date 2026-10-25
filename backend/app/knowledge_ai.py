@@ -31,7 +31,7 @@ class GroundedOutput(BaseModel):
     claims: list[Claim] = Field(max_length=12)
 
 
-def answer_with_sources(question: str, sources: list[dict], settings: Settings) -> dict:
+def prepare_answer(question: str, sources: list[dict], settings: Settings):
     if not sources:
         return {"status": "insufficient", "answer": "知识库中没有足够的已发布、有效且允许外发的法规依据。", "sources": [], "provider": None, "model": None, "claims": []}
     if any(not source.get("allow_external") for source in sources):
@@ -56,11 +56,11 @@ def answer_with_sources(question: str, sources: list[dict], settings: Settings) 
         "max_tokens": 2200,
         "stream": False,
     }
+    return provider, configured.chat_model, key, payload
+
+
+def validate_answer(raw, sources, provider, model, key):
     try:
-        response = bounded_post(CHAT_URLS[provider], key, limit=256 * 1024, json=payload)
-        if response["choices"][0].get("finish_reason") != "stop":
-            raise ValueError("incomplete response")
-        raw = response["choices"][0]["message"]["content"]
         if not isinstance(raw, str) or len(raw) > 30_000:
             raise ValueError("invalid response")
         output = GroundedOutput.model_validate_json(raw)
@@ -72,13 +72,28 @@ def answer_with_sources(question: str, sources: list[dict], settings: Settings) 
             if re.search(r"\[\d+\]", claim.text) or key in claim.text:
                 raise KnowledgeAIError(502, "AI 返回内容未通过引用检查，本次回答已拒绝展示。")
         if not output.claims:
-            return {"status": "insufficient", "answer": "现有检索材料不足以支持可靠回答，请补充或核实法规材料。", "sources": sources, "provider": provider, "model": configured.chat_model, "claims": []}
+            return {"status": "insufficient", "answer": "现有检索材料不足以支持可靠回答，请补充或核实法规材料。", "sources": sources, "provider": provider, "model": model, "claims": []}
         numbers = {source["id"]: index + 1 for index, source in enumerate(sources)}
         answer = "\n\n".join(f"{claim.text.strip()} " + "".join(f"[{numbers[source_id]}]" for source_id in dict.fromkeys(claim.source_ids)) for claim in output.claims)
-        return {"status": "answered", "answer": answer, "sources": sources, "provider": provider, "model": configured.chat_model, "claims": [claim.model_dump() for claim in output.claims]}
+        return {"status": "answered", "answer": answer, "sources": sources, "provider": provider, "model": model, "claims": [claim.model_dump() for claim in output.claims]}
     except KnowledgeAIError:
         raise
     except RecordAIError as error:
         raise KnowledgeAIError(error.status, error.message) from None
     except (ValueError, TypeError, KeyError, IndexError, ValidationError):
+        raise KnowledgeAIError(502, "AI 返回内容格式异常，未生成可核验回答。") from None
+
+
+def answer_with_sources(question: str, sources: list[dict], settings: Settings) -> dict:
+    if not sources:
+        return {"status": "insufficient", "answer": "知识库中没有足够的法规依据。", "sources": [], "provider": None, "model": None, "claims": []}
+    provider, model, key, payload = prepare_answer(question, sources, settings)
+    try:
+        response = bounded_post(CHAT_URLS[provider], key, limit=256 * 1024, json=payload)
+        if response["choices"][0].get("finish_reason") != "stop":
+            raise ValueError("incomplete response")
+        return validate_answer(response["choices"][0]["message"]["content"], sources, provider, model, key)
+    except RecordAIError as error:
+        raise KnowledgeAIError(error.status, error.message) from None
+    except (ValueError, TypeError, KeyError, IndexError):
         raise KnowledgeAIError(502, "AI 返回内容格式异常，未生成可核验回答。") from None

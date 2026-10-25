@@ -111,7 +111,7 @@ def permitted(role, method, path, query):
         download = download or (parts[2] == 'knowledge' and parts[-1] == 'file')
         return method == 'GET' and not download
     if parts[2] == 'knowledge':
-        return method == 'GET' or path.rstrip('/') in {'/api/knowledge/search', '/api/knowledge/ask'}
+        return method == 'GET' or path.rstrip('/') in {'/api/knowledge/search', '/api/knowledge/ask', '/api/knowledge/ask/stream'}
     if parts[2] == 'documents' and parts[3:4] == ['templates']:
         return method == 'GET'
     if path.rstrip('/') == '/api/alerts/rules':

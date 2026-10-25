@@ -1,3 +1,4 @@
+import { aiLabel } from './lib/aiLabel';
 export type Runtime = { active_environment: 'test' | 'production'; database_engine: string; pending_restart: boolean };
 export type Health = Runtime & { status: string; version: string; stage: number | string };
 export type DashboardData = {
@@ -17,7 +18,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     if (response.status === 401 && path !== '/auth/login' && path !== '/auth/me') window.dispatchEvent(new Event('auth-expired'));
-    throw Object.assign(new Error(typeof data?.detail === 'string' ? data.detail : `请求失败（${response.status}）`), { status: response.status });
+    throw Object.assign(new Error(aiLabel(typeof data?.detail === 'string' ? data.detail : `请求失败（${response.status}）`)), { status: response.status });
   }
   return data as T;
 }

@@ -246,3 +246,8 @@
 .settings-external-permissions>label{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)}
 .settings-external-permissions input{margin-top:3px;accent-color:var(--primary);width:16px;height:16px;flex-shrink:0}
 .settings-external-permissions strong{font-size:12px;font-weight:550;display:block}.settings-external-permissions small{display:block;font-size:11px;color:var(--muted);margin-top:5px}
+.settings-page .settings-external-permissions{padding:12px 14px;margin-bottom:10px}
+.settings-page .settings-external-permissions>label{padding:7px 0;gap:8px}
+.settings-page .settings-external-permissions p{margin:5px 0 8px;font-size:11px}
+.settings-page .settings-external-permissions small{margin-top:3px;font-size:10px}
+.permission-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.permission-heading>div{display:flex;gap:12px}.permission-heading button{font-size:11px}

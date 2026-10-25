@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
 import hashlib
+import json
 from io import BytesIO
 from pathlib import PurePath
 import re
@@ -13,7 +14,8 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.routing import APIRoute
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, func, or_, select, text
@@ -22,6 +24,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .database import AuditEvent, Base
 from .knowledge_ai import KnowledgeAIError, answer_with_sources
+from .knowledge_stream import stream_answer
 from .retrieval import rank_sources, retrieval_status
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -515,6 +518,39 @@ def ask(request: Request, body: AskRequest):
             raise HTTPException(error.status, error.message) from None
         _audit(session, "knowledge.asked", count=len(sources))
     return {**result, "as_of": as_of, "retrieval": retrieval}
+
+
+@router.post("/ask/stream")
+def ask_stream(request: Request, body: AskRequest):
+    as_of = body.as_of or _today()
+    with request.app.state.store.lock:
+        settings = request.app.state.store.current.model_copy(deep=True)
+    if not settings.ai.external_permissions.question:
+        raise HTTPException(403, "请前往系统配置 → AI 服务，勾选允许法规问答发送至 AI。")
+    if not body.confirm_external:
+        raise HTTPException(400, "AI 外发许可尚未确认。")
+    def events():
+        def event(value):
+            return "data: " + json.dumps(jsonable_encoder(value), ensure_ascii=False) + "\n\n"
+        yield event({"type": "status", "message": "正在检索法规依据…"})
+        # Snapshot sources under the same publication lock as non-stream requests.
+        # Release it before yielding: generator resumes may use different threads.
+        with _WRITE_LOCK, _session(request) as session:
+            sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
+        if not sources:
+            yield event({"type": "complete", "answer": {"status": "insufficient", "answer": "没有检索到可用于 AI 的有效法规，请补充资料或在系统配置中检查法规资料许可。", "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}})
+            return
+        yield event({"type": "status", "message": "已找到法规依据，AI 正在生成回答…"})
+        try:
+            for result in stream_answer(body.question, sources, settings):
+                result['answer'].update({'as_of': as_of, 'retrieval': retrieval})
+                if result['type'] == 'complete':
+                    with _session(request, write=True) as session:
+                        _audit(session, "knowledge.asked", count=len(sources))
+                yield event(result)
+        except KnowledgeAIError as error:
+            yield event({"type": "error", "message": error.message})
+    return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
 @router.get("/{document_id}")
