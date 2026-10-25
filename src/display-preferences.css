@@ -1,0 +1,19 @@
+/* Typography uses rem; component spacing and chart geometry stay independent. */
+:root { font-size: 16px; }
+:root[data-font-size="large"] { font-size: 18.4px; }
+:root[data-font-size="larger"] { font-size: 20.8px; }
+:root[data-font-size="largest"] { font-size: 24px; }
+.page-content { max-width: none; width: 100%; }
+@media (min-width: 1650px) { .page-content { padding-inline: clamp(28px, 2vw, 64px); } }
+.font-size-panel { margin-bottom: 24px; display: grid; gap: 16px; }
+.font-size-panel h2 { font-size: 1rem; }
+.font-size-panel .muted { font-size: .8125rem; margin-top: 6px; }
+.font-size-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.font-size-options button { display: flex; align-items: center; gap: 16px; padding: 10px 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: .875rem; }
+.font-size-options button[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+.font-size-options span { font-size: .75rem; }
+.font-size-preview { padding: 14px 16px; border-radius: 8px; background: var(--surface-2); font-size: .875rem; line-height: 1.7; }
+.topbar-actions, .page-heading { flex-wrap: wrap; }
+@media print { :root { font-size: 16px !important; } }
+/* Keep the fixed brand lockup on one line at every reading size. */
+.brand small { font-size: min(.5625rem, 10px); letter-spacing: .5px; white-space: nowrap; }

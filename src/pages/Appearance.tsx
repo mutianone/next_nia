@@ -1,12 +1,13 @@
 import { PageHeading } from '../components/PageHeading';
 import { Check, Monitor, Moon, Sun, ArrowUpRight, Layers3, Zap } from 'lucide-react';
-import { themes } from '../theme';
-import type { ColorMode, ThemeId } from '../theme';
+import { themes, fontSizes } from '../theme';
+import type { ColorMode, ThemeId, FontSize } from '../theme';
 
-type Props = { theme: ThemeId; setTheme: (value: ThemeId) => void; mode: ColorMode; setMode: (value: ColorMode) => void; reducedMotion: boolean; setReducedMotion: (value: boolean) => void };
+type Props = { fontSize: FontSize; setFontSize: (value: FontSize) => void; theme: ThemeId; setTheme: (value: ThemeId) => void; mode: ColorMode; setMode: (value: ColorMode) => void; reducedMotion: boolean; setReducedMotion: (value: boolean) => void };
 export function Appearance(props: Props) {
   return <div className="page-content appearance-page">
     <PageHeading title="外观主题" description="选择主题、显示模式和动效偏好，设置即时生效。" scene="appearance"></PageHeading>
+    <section className="panel font-size-panel" aria-label="字体大小设置"><div><h2>字体大小</h2><p className="muted">调整全站文字大小，立即生效并保存在当前浏览器。</p></div><div className="font-size-options">{fontSizes.map(size => <button type="button" key={size.id} aria-pressed={props.fontSize === size.id} onClick={() => props.setFontSize(size.id)}><strong>{size.label}</strong><span>{size.percent}%</span></button>)}</div><p className="font-size-preview">阅读预览：人员档案、业务记录与办理进度 0123456789</p></section>
     <div className="section-title"><h2>选择你的主题</h2><span className="muted">每套主题均支持明暗模式</span></div>
     <div className="theme-grid">{themes.map(t => <button key={t.id} className={`theme-card ${props.theme === t.id ? 'selected' : ''}`} onClick={() => props.setTheme(t.id)} aria-pressed={props.theme === t.id}>
       <div className="theme-miniature" style={{ background: t.background, '--preview-primary': t.color, '--preview-secondary': t.second } as React.CSSProperties}>
