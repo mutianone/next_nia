@@ -156,6 +156,6 @@ bash scripts/presentation.sh
 
 接口参数依据：[硅基流动对话接口](https://docs.siliconflow.cn/docs/api/chat-completions-post)、[语音转写接口](https://docs.siliconflow.cn/docs/api/audio-transcriptions-post)、[DeepSeek 思考模式](https://api-docs.deepseek.com/guides/thinking_mode/)。Qwen3 混合模型关闭思考以生成结构化 JSON；DeepSeek 显式使用非思考模式。模型是否在账号下可用由模型检查和实际测试确定。
 
-自动测试会使用隔离数据库与协议替身；通过不等同于云端验收。2026-10-25 已用真实硅基流动接口验证 5.4 秒测试录音转写（SenseVoiceSmall）、结构化摘要（Qwen3-8B）、来源要素登记、Word 导出和本地检索引用问答。测试库已删除，真实业务资料未外发。DeepSeek 等待配置独立密钥后验收；长录音、噪声及实际业务质量仍需专门评估；真实 PostgreSQL、手机 HTTPS/麦克风、法定文书模板及可选本地向量模型仍需对应环境或材料。扫描件 OCR、自动说话人识别、电子签章和正式送达不是已实现能力。
+自动测试会使用隔离数据库与协议替身；通过不等同于云端验收。2026-10-25 已用真实硅基流动接口验证 5.4 秒测试录音转写（SenseVoiceSmall）、结构化摘要（Qwen3-8B）、来源要素登记、Word 导出和本地检索引用问答。测试库已删除，真实业务资料未外发。DeepSeek（deepseek-flash）也已使用真实接口完成会议测试文字摘要、结构化要素及引用校验、本地画像登记、Word 导出和检索引用问答联调，使用临时数据库且未修改业务数据；长录音、噪声及实际业务质量仍需专门评估；真实 PostgreSQL、手机 HTTPS/麦克风、法定文书模板及可选本地向量模型仍需对应环境或材料。扫描件 OCR、自动说话人识别、电子签章和正式送达不是已实现能力。
 
 如需恢复开场资料，先停服务，再执行 `bash scripts/presentation.sh --reset`。旧工作空间会整体移至 `backups/presentation-时间戳/`，不会删除原数据或影响 `backend/data/`。不要对正式业务工作空间执行资料重置。
