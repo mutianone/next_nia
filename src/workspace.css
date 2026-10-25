@@ -323,3 +323,6 @@
 @media(max-width:700px){.dashboard-page .officer-art{left:calc(50% - 10px)}}
 .dashboard-page .spatial-corner .dashboard-date{display:flex}
 .dashboard-page .spatial-corner .dashboard-date>span{display:inline}
+/* Compact page titles; business detail metadata remains available in its record. */
+.page-content:not(.dashboard-page) > .page-heading > div > .page-description{display:none}
+.page-content:not(.dashboard-page) .work-heading,.page-content:not(.dashboard-page) > .page-heading{margin-bottom:14px}

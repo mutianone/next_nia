@@ -217,11 +217,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     <PageHeading title="系统设置" description="管理账号权限、运行环境、AI 服务和本地数据。" scene="settings">
       <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '配置已保存'}</div>
     </PageHeading>
-    <div className="settings-runtime-strip">
-      <span className="settings-runtime-icon"><Server size={18} /></span>
-      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine.toLowerCase() === 'sqlite' ? '本地数据库' : runtime.database_engine}</span></div>
-      {runtime.pending_restart && <div className="settings-runtime-status"><span className="settings-status-dot pending" />配置已更新，等待重启</div>}
-    </div>
+
 
     {notice && <div ref={noticeRef} tabIndex={-1} className={`settings-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.kind === 'success' ? <CheckCircle2 size={19} /> : <CircleAlert size={19} />}<span>{notice.text}</span><button type="button" aria-label="关闭提示" onClick={() => setNotice(null)}><X size={17} /></button></div>}
 
@@ -231,9 +227,9 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           {([
             { id: 'accounts' as const, icon: ShieldCheck, title: '账号管理', subtitle: '人员账号与角色权限' },
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与所属组织' },
-            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine.toLowerCase() === 'sqlite' ? '本地数据库' : runtime.database_engine}` },
+            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: '数据库切换' },
             { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'AI' : 'AI'}` : '业务调用已关闭' },
-            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: runtime.sample_workspace ? '资料迁移与备份' : '演示资料、迁移与备份' },
+            { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: '资料迁移与备份' },
           ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
         </nav></TabsList>
 
