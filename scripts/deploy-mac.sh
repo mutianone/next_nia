@@ -55,4 +55,4 @@ scp -o ControlPath="$CONTROL" "$TMP_DEPLOY/release.tar.gz" "$TARGET:$REMOTE_ROOT
 scp -o ControlPath="$CONTROL" scripts/deploy-server.sh "$TARGET:$REMOTE_ROOT/incoming/$RELEASE/deploy-server.sh"
 printf '\n[4/4] 安装服务并执行健康检查…\n'
 ssh -S "$CONTROL" "$TARGET" "bash '$REMOTE_ROOT/incoming/$RELEASE/deploy-server.sh' '$RELEASE'"
-printf '\n部署完成：http://81.70.166.164:8080\n若无法访问，请在云服务器安全组放行 TCP 8080（建议限定访问 IP）。\n首次管理员：18792636900 / 123456，请登录后修改密码。已有账号密码保持不变。\n'
+printf '\n部署完成：http://81.70.166.164:5173\n若无法访问，请在云服务器安全组放行 TCP 5173（建议限定访问 IP）。\n首次管理员：18792636900 / 123456，请登录后修改密码。已有账号密码保持不变。\n'
