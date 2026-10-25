@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Request
-from sqlalchemy import String, Text, Integer, select, func, update
+from sqlalchemy import String, Text, Integer, select, func, delete
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
 from .knowledge import _session, _WRITE_LOCK
@@ -44,6 +44,17 @@ def get_conversation(request: Request, conversation_id: str):
         row = owned(session, request, conversation_id)
         messages = session.scalars(select(AssistantMessage).where(AssistantMessage.conversation_id == row.id).order_by(AssistantMessage.ordinal)).all()
         return {'id':row.id,'title':row.title,'items':[{**json.loads(m.data),'id':m.id,'status':m.status,'streaming':False, **({'error':'上次生成尚未完成，可稍后重新打开会话，或重试。'} if m.status=='pending' else {})} for m in messages]}
+
+@router.delete('/{conversation_id}')
+def delete_conversation(request: Request, conversation_id: str):
+    with _WRITE_LOCK, _session(request, write=True) as session:
+        row = owned(session, request, conversation_id)
+        pending = session.scalar(select(func.count()).select_from(AssistantMessage).where(AssistantMessage.conversation_id == row.id, AssistantMessage.status == 'pending'))
+        if pending:
+            raise HTTPException(409, '该会话仍在生成回答，请完成后再删除。')
+        session.execute(delete(AssistantMessage).where(AssistantMessage.conversation_id == row.id))
+        session.delete(row)
+    return {'ok': True}
 
 def begin_turn(request, body, template_name):
     with _WRITE_LOCK, _session(request, write=True) as session:

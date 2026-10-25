@@ -1,3 +1,4 @@
+import { confirmAction } from '../lib/confirmation';
 import { groupAnswerClaims } from '../lib/answerGroups';
 import { AnalysisTemplates, type AnalysisTemplate } from '../components/AnalysisTemplates';
 import { Dialog } from '../components/Dialog';
@@ -5,7 +6,7 @@ import { streamQuestion } from '../lib/aiStream';
 import { Access } from '../auth/AuthContext';
 import { PageHeading } from '../components/PageHeading';
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, BookOpen, Check, ChevronRight, CircleAlert, Copy, Download, History, Plus, RotateCcw, LoaderCircle, LockKeyhole, MessageSquareText, Send, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, ChevronRight, CircleAlert, Copy, Download, History, Plus, Trash2, RotateCcw, LoaderCircle, LockKeyhole, MessageSquareText, Send, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 import { api } from '../api';
 import type { Answer, Citation } from '../knowledge-types';
 import { errorMessage, today } from '../knowledge-types';
@@ -21,6 +22,7 @@ export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void
   const [history,setHistory] = useState<{id:string;title:string;updated_at:string}[]>([]);
   const [historyOpen,setHistoryOpen] = useState(false);
   const [historyMore,setHistoryMore] = useState(false);
+  const [deletingHistory,setDeletingHistory] = useState<string|null>(null);
   const [historyBusy,setHistoryBusy] = useState(false);
   const [historyError,setHistoryError] = useState('');
   const [loadingConversation,setLoadingConversation] = useState(true);
@@ -56,6 +58,17 @@ export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void
     setLoadingConversation(true);setHistoryError('');
     try { const data=await api<{id:string;items:Turn[]}>('/knowledge/conversations/'+id); if(!Array.isArray(data.items)) throw new Error('无法读取会话记录'); setTurns(data.items);setConversationId(data.id);setTemplateId(data.items.at(-1)?.templateId || '');setAsOf(data.items.at(-1)?.date || today());setHistoryOpen(false);setQuestion(''); }
     catch(e){setHistoryError(errorMessage(e));} finally{setLoadingConversation(false);}
+  }
+  async function deleteHistory(item: {id:string;title:string}) {
+    if (deletingHistory || busy) return;
+    if (!await confirmAction(`删除“${item.title}”及其中全部问答？删除后无法恢复。`, {title:'删除历史会话',confirmLabel:'确认删除',tone:'danger'})) return;
+    setDeletingHistory(item.id);setHistoryError('');
+    try {
+      await api('/knowledge/conversations/'+item.id,{method:'DELETE'});
+      if (conversationId === item.id) newConversation();
+      setHistory(items=>items.filter(row=>row.id!==item.id));
+      await loadHistory();
+    } catch(e) {setHistoryError(errorMessage(e));} finally {setDeletingHistory(null);}
   }
   async function loadHistory(more=false) {
     setHistoryBusy(true);setHistoryError('');
@@ -122,7 +135,7 @@ export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void
         <div className="qa-composer-footer"><span><LockKeyhole size={12}/>人员档案不会自动加入问答<small>{question.length}/1000</small></span><button type="submit" className="btn btn-primary" disabled={loadingConversation || busy || !question.trim() || (!ready || !consent)}>{busy ? <LoaderCircle className="spinning" size={16}/> : <Send size={15}/>} {activeTemplate ? '开始分析' : '生成回答'}</button></div>
       </form>{notice && <p role="status" className="qa-notice">{notice}</p>}<div className="qa-session-note"><span>{busy ? '问题已保存，回答生成完成后自动保存。' : conversationId ? '会话已保存至本地数据库 · 仅当前账号可查看' : '发送后自动保存至数据库，可从历史会话重新打开。'}</span></div>{historyError && <p className="kb-error" role="alert">{historyError}<button className="text-button" onClick={()=>{setHistoryOpen(true);void loadHistory();}}>重新加载</button></p>}</div>
     </section><aside className="qa-sidebar"><section className="panel qa-side-card"><span className="qa-side-number">办理参考</span><h3>先陈述事实，再核对依据</h3><ol className="qa-guidance"><li><strong>选择分析场景</strong><p>通用法规问答，或选用内置分析模板。</p></li><li><strong>说明事实与证据</strong><p>补充时间、行为、许可情况；未知项明确注明。</p></li><li><strong>核对适用条款</strong><p>展开原文依据，检查日期、条件与待核实事项。</p></li></ol><button className="text-button" onClick={onKnowledge}>查看知识库<ArrowRight size={14}/></button></section><section className="qa-side-tips"><ShieldCheck size={20}/><h3>辅助分析 · 人工核对</h3><p>处罚与裁量依据保留原文。AI 会发送本次填写的内容及获准使用的法规，不自动读取人员档案。</p><p>支持复制问题、重试回答，以及导出包含引用的分析结果。</p></section></aside></div>
-    {historyOpen && <Dialog title="历史会话" onClose={()=>setHistoryOpen(false)}><div className="qa-history-list">{historyError && <p className="kb-error">{historyError}</p>}{!history.length && !historyBusy && <p>暂无已保存会话。发送问题后会自动保存在这里。</p>}{history.map(item=><button key={item.id} disabled={loadingConversation} onClick={()=>void openConversation(item.id)}><MessageSquareText size={17}/><span><strong>{item.title}</strong><small>{new Date(item.updated_at).toLocaleString('zh-CN')}</small></span><ChevronRight size={16}/></button>)}{historyBusy && <p>正在加载…</p>}{historyMore && <button disabled={historyBusy} onClick={()=>void loadHistory(true)}>加载更多</button>}</div></Dialog>}
+    {historyOpen && <Dialog title="历史会话" className="qa-history-dialog" onClose={()=>{if(!deletingHistory)setHistoryOpen(false);}}><div className="qa-history-list">{historyError && <p className="kb-error">{historyError}</p>}{!history.length && !historyBusy && <p>暂无已保存会话。发送问题后会自动保存在这里。</p>}{history.map(item=><div className="qa-history-row" key={item.id}><button className="qa-history-open" disabled={loadingConversation || Boolean(deletingHistory)} onClick={()=>void openConversation(item.id)}><MessageSquareText size={17}/><span><strong>{item.title}</strong><small>{new Date(item.updated_at).toLocaleString('zh-CN')}{conversationId === item.id ? ' · 当前会话' : ''}</small></span><ChevronRight size={16}/></button><button className="qa-history-delete" disabled={loadingConversation || Boolean(deletingHistory)} aria-label={`删除会话：${item.title}`} onClick={()=>void deleteHistory(item)}>{deletingHistory === item.id ? <LoaderCircle className="spinning" size={16}/> : <Trash2 size={16}/>}删除</button></div>)}{historyBusy && <p>正在加载…</p>}{historyMore && <button disabled={historyBusy} onClick={()=>void loadHistory(true)}>加载更多</button>}</div></Dialog>}
     {selected && (selected.template_source ? <Dialog title={selected.title} onClose={()=>setSelected(null)}><h3>{selected.article}</h3><p className="analysis-source-text">{selected.text}</p><p>适用起始日期：{selected.effective_from} · {selected.version}</p><a href={selected.source} target="_blank" rel="noreferrer">查看官方来源</a></Dialog> : <DocumentViewer id={selected.document_id} highlight={selected.id} onClose={() => setSelected(null)}/>)}
   </div>;
 }

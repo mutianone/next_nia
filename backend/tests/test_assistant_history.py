@@ -49,3 +49,27 @@ def test_error_and_restart_persist_without_partial_output(client,monkeypatch):
         session.get(AssistantMessage,message['id']).status='pending'
     recover_history(client.app.state.engine)
     assert '服务已重启' in client.get(PATH+'/'+cid).json()['items'][0]['error']
+
+def test_delete_is_owned_atomic_and_blocks_pending(client,monkeypatch):
+    from sqlalchemy import select, func
+    from backend.app.auth import permitted
+    enable_ai(client);fake_answer(monkeypatch)
+    _,events=send(client);cid=events[0]['conversation_id'];mid=events[0]['message_id']
+    assert permitted('business','DELETE',PATH+'/'+cid,{})
+    assert not permitted('viewer','DELETE',PATH+'/'+cid,{})
+    with Session(client.app.state.engine) as session,session.begin():
+        session.get(AssistantConversation,cid).owner_id='another-account'
+    assert client.delete(PATH+'/'+cid).status_code==404
+    # Restore owner from a second independently created conversation.
+    _,second=send(client)
+    with Session(client.app.state.engine) as session,session.begin():
+        session.get(AssistantConversation,cid).owner_id=session.get(AssistantConversation,second[0]['conversation_id']).owner_id
+        session.get(AssistantMessage,mid).status='pending'
+    assert client.delete(PATH+'/'+cid).status_code==409
+    with Session(client.app.state.engine) as session,session.begin():
+        session.get(AssistantMessage,mid).status='complete'
+    assert client.delete(PATH+'/'+cid).status_code==200
+    assert client.get(PATH+'/'+cid).status_code==404
+    with Session(client.app.state.engine) as session:
+        assert session.scalar(select(func.count()).select_from(AssistantMessage).where(AssistantMessage.conversation_id==cid))==0
+    assert len(client.get(PATH).json()['items'])==1

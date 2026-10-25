@@ -25,7 +25,7 @@ describe('real execution in populated workspaces',()=>{
   it('keeps real API configuration and capability tests visible',async()=>{
     vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>url.endsWith('/settings')?settings:url.includes('/knowledge?')?{items:[],total:0}:{counts:{},events:[]}})));
     render(<Settings/>);
-    await screen.findByText('测试版');
+    await screen.findByText('数据库切换');
     fireEvent.click(screen.getByRole('tab',{name:/AI 服务/}));
     expect(await screen.findByText('AI 服务配置')).toBeInTheDocument();
     expect(screen.getAllByRole('button',{name:'实际生成测试'})).toHaveLength(2);

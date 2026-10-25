@@ -52,6 +52,6 @@ it('restores a saved conversation and keeps new conversation separate from histo
   fireEvent.click(screen.getByRole('button',{name:'新会话'}));
   expect(screen.queryByText('数据库中的回答')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'历史会话'}));
-  fireEvent.click(await screen.findByRole('button',{name:/已保存的问题/}));
+  fireEvent.click(await screen.findByRole('button',{name:/^已保存的问题/}));
   expect(await screen.findByText('数据库中的回答')).toBeInTheDocument();
 });
