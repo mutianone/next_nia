@@ -5,7 +5,7 @@ import { Dialog } from '../components/Dialog';
 import { Choice } from '../components/Choice';
 import { confirmAction } from '../lib/confirmation';
 import { roleLabels, useAuth, type Account, type Role } from './AuthContext';
-const roles = [{id:'admin',icon:ShieldCheck,description:'账号管理、系统配置与全部业务'}, {id:'business',icon:BriefcaseBusiness,description:'业务办理、核查审核与资料导出'}, {id:'viewer',icon:Eye,description:'浏览业务资料与统计，禁止修改及导出'}] as const;
+const roles = [{id:'admin',icon:ShieldCheck,description:'账号管理、系统设置与全部业务'}, {id:'business',icon:BriefcaseBusiness,description:'业务办理、核查审核与资料导出'}, {id:'viewer',icon:Eye,description:'浏览业务资料与统计，禁止修改及导出'}] as const;
 const blank = {name:'',department:'',notes:'',phone:'',role:'business' as Role,enabled:true,password:''};
 export function AccountManagement() {
   const {user,refresh}=useAuth(); const [items,setItems]=useState<Account[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [notice,setNotice]=useState(''); const [query,setQuery]=useState('');

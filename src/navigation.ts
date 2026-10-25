@@ -11,7 +11,7 @@ export const navigation = [
   { id: 'profiles', label: '人员画像', en: 'Profiles', icon: Network, stage: 5, group: '分析与管理' },
   { id: 'analytics', label: '统计分析', en: 'Analytics', icon: ChartNoAxesCombined, stage: 5, group: '分析与管理' },
   { id: 'appearance', label: '外观主题', en: 'Appearance', icon: Palette, stage: 1, group: '分析与管理' },
-  { id: 'settings', label: '系统配置', en: 'Settings', icon: Settings2, stage: 1, group: '分析与管理' },
+  { id: 'settings', label: '系统设置', en: 'Settings', icon: Settings2, stage: 1, group: '分析与管理' },
 ] as const;
 export type PageId = typeof navigation[number]['id'];
 export const stages = [

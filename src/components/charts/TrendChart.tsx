@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { chartScale, seriesValue, type SeriesKey, type TrendDatum } from './chartMath';
 const series = [{ key: 'entries', label: '入境', color: 'var(--primary)' }, { key: 'exits', label: '出境', color: 'var(--chart-secondary)' }] as const;
-export function TrendChart({ data, switchable = false, compact = false, barsOnly = false }: { data: TrendDatum[]; switchable?: boolean; compact?: boolean; barsOnly?: boolean }) {
+export function TrendChart({ data, switchable = false, compact = false, barsOnly = false, lineOnly = false }: { data: TrendDatum[]; switchable?: boolean; compact?: boolean; barsOnly?: boolean; lineOnly?: boolean }) {
   const [hidden, setHidden] = useState<SeriesKey[]>([]), [style, setStyle] = useState<'combo'|'area'>('combo');
   const [selected, setSelected] = useState<number | null>(null), [table, setTable] = useState(false);
   const id = useId(), mobile = useMediaQuery('(max-width: 650px)');
@@ -13,7 +13,7 @@ export function TrendChart({ data, switchable = false, compact = false, barsOnly
   const width = mobile ? 420 : compact ? 600 : 900, left = 48, right = width - 35;
   const step = (right-left) / Math.max(1, data.length), x = (i: number) => left + step * (i + .5), bar = Math.min(12, step * .28);
   const point = selected === null ? null : data[selected];
-  const seriesX = (i: number, key: SeriesKey) => x(i) + (style === 'combo' ? (key === 'entries' ? -1 : 1) * (bar / 2 + 1) : 0);
+  const seriesX = (i: number, key: SeriesKey) => x(i) + (!lineOnly && style === 'combo' ? (key === 'entries' ? -1 : 1) * (bar / 2 + 1) : 0);
   const path = (key: SeriesKey) => data.map((d, i) => `${i ? 'L' : 'M'} ${seriesX(i,key)} ${y(seriesValue(d, key))}`).join(' ');
   return <div className="business-trend">
     <div className="chart-toolbar"><div className="chart-series" aria-label="显示统计系列">{series.map(s => <button key={s.key} aria-pressed={!hidden.includes(s.key)} onClick={() => setHidden(v => v.includes(s.key) ? v.filter(k => k !== s.key) : [...v, s.key])}><i style={{ background: s.color }}/>{s.label}</button>)}</div>{switchable && <div className="chart-view-switch" aria-label="趋势图形切换">{(['combo','area'] as const).map(v => <button key={v} aria-pressed={style === v} onClick={() => setStyle(v)}>{v === 'combo' ? '柱线图' : '面积图'}</button>)}</div>}</div>
@@ -21,13 +21,13 @@ export function TrendChart({ data, switchable = false, compact = false, barsOnly
       <defs>{series.map(s => <linearGradient id={`${id}-${s.key}`} key={s.key} x1="0" y1="0" x2="0" y2="1"><stop stopColor={s.color} stopOpacity=".32"/><stop offset="1" stopColor={s.color} stopOpacity=".03"/></linearGradient>)}</defs>
       <text x="16" y="16">人次</text>{scale.ticks.map(t => <g key={t}><line x1={left} x2={right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeDasharray={t === 0 ? undefined : '3 5'}/><text x={left-12} y={y(t)+4} textAnchor="end">{t}</text></g>)}
       {visible.map(s => <g key={s.key} data-series={s.key}>
-        {style === 'combo' ? data.map((d,i) => <rect key={i} x={seriesX(i,s.key)-bar/2} y={y(seriesValue(d,s.key))} width={bar} height={Math.max(0,y(0)-y(seriesValue(d,s.key)))} rx={Math.min(3,bar/3)} fill={s.color} fillOpacity=".55"/>) : <path d={`${path(s.key)} L ${x(data.length-1)} ${y(0)} L ${x(0)} ${y(0)} Z`} fill={`url(#${id}-${s.key})`}/>}
+        {!lineOnly && (style === 'combo' ? data.map((d,i) => <rect key={i} x={seriesX(i,s.key)-bar/2} y={y(seriesValue(d,s.key))} width={bar} height={Math.max(0,y(0)-y(seriesValue(d,s.key)))} rx={Math.min(3,bar/3)} fill={s.color} fillOpacity=".55"/>) : <path d={`${path(s.key)} L ${x(data.length-1)} ${y(0)} L ${x(0)} ${y(0)} Z`} fill={`url(#${id}-${s.key})`}/>)}
         {!barsOnly && <path d={path(s.key)} stroke={s.color} fill="none" strokeWidth="1.1" vectorEffect="non-scaling-stroke" strokeLinejoin="round"/>}
         {!barsOnly && data.map((d,i) => (data.length <= 31 || selected === i) && <circle key={i} cx={seriesX(i,s.key)} cy={y(seriesValue(d,s.key))} r="2.2" fill="var(--surface)" stroke={s.color} strokeWidth="1.1" vectorEffect="non-scaling-stroke"/>)}
         {barsOnly && data.map((d,i) => <text className="bar-value" key={i} x={seriesX(i,s.key)} y={y(seriesValue(d,s.key))-7} textAnchor="middle" fill={s.color}>{seriesValue(d,s.key)}</text>)}
       </g>)}
       {point && selected !== null && <line x1={x(selected)} x2={x(selected)} y1="28" y2="218" stroke="var(--muted)" strokeDasharray="3 4"/>}
       {data.map((d,i) => <g key={i}><rect x={left+i*step} y="28" width={step} height="190" fill="transparent" onPointerEnter={() => setSelected(i)} onClick={() => setSelected(i)}><title>{d.label}：入境 {d.entries}，出境 {d.exits}，净流入 {d.entries-d.exits}</title></rect>{labelIndices.has(i) && <text x={x(i)} y="243" textAnchor="middle">{d.label.length > 7 ? d.label.slice(5) : d.label}</text>}</g>)}
-    </svg><div className="chart-readout"><p aria-live="polite">{point ? `${point.label} · 入境 ${point.entries} · 出境 ${point.exits} · 净流入 ${point.entries-point.exits}` : '悬停、轻触或用方向键查看每日数值'}{!visible.length && ' · 当前系列均已隐藏'}</p><button className="p5-text-button" aria-expanded={table} onClick={() => setTable(v => !v)}>{table ? '收起数据表' : '查看数据表'}</button></div><p className="chart-scope">{barsOnly ? "柱顶为登记人次；净流入可在读数和数据表中查看。" : "折线与同色柱表示同一登记量；净流入（入境 − 出境）保留在读数和数据表中。"}</p>{table && <div className="p5-table-wrap"><table><thead><tr><th>日期</th><th>入境</th><th>出境</th><th>净流入</th></tr></thead><tbody>{data.map((d,i) => <tr key={i}><td>{d.label}</td><td>{d.entries}</td><td>{d.exits}</td><td>{d.entries-d.exits}</td></tr>)}</tbody></table></div>}</>}
+    </svg><div className="chart-readout"><p aria-live="polite">{point ? `${point.label} · 入境 ${point.entries} · 出境 ${point.exits} · 净流入 ${point.entries-point.exits}` : '悬停、轻触或用方向键查看每日数值'}{!visible.length && ' · 当前系列均已隐藏'}</p><button className="p5-text-button" aria-expanded={table} onClick={() => setTable(v => !v)}>{table ? '收起数据表' : '查看数据表'}</button></div><p className="chart-scope">{lineOnly ? "折线表示每日入境、出境登记人次；净流入可在读数和数据表中查看。" : barsOnly ? "柱顶为登记人次；净流入可在读数和数据表中查看。" : "折线与同色柱表示同一登记量；净流入（入境 − 出境）保留在读数和数据表中。"}</p>{table && <div className="p5-table-wrap"><table><thead><tr><th>日期</th><th>入境</th><th>出境</th><th>净流入</th></tr></thead><tbody>{data.map((d,i) => <tr key={i}><td>{d.label}</td><td>{d.entries}</td><td>{d.exits}</td><td>{d.entries-d.exits}</td></tr>)}</tbody></table></div>}</>}
   </div>;
 }

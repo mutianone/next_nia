@@ -31,7 +31,7 @@ it('unmounts protected business content when the session expires',async()=>{
 it('fails closed without a user and hides write/admin controls from viewers',()=>{
   const {rerender}=render(<Access><button>保存业务</button></Access>);
   expect(screen.queryByRole('button')).not.toBeInTheDocument();
-  rerender(<AuthContext.Provider value={{user:{...admin,role:'viewer'},refresh:async()=>{},logout:async()=>{}}}><Access><button>保存业务</button></Access><Access permission="admin"><button>系统配置</button></Access><span>查看业务</span></AuthContext.Provider>);
+  rerender(<AuthContext.Provider value={{user:{...admin,role:'viewer'},refresh:async()=>{},logout:async()=>{}}}><Access><button>保存业务</button></Access><Access permission="admin"><button>系统设置</button></Access><span>查看业务</span></AuthContext.Provider>);
   expect(screen.queryByRole('button')).not.toBeInTheDocument();expect(screen.getByText('查看业务')).toBeInTheDocument();
 });
 it('creates an account with the selected role in a custom dialog',async()=>{

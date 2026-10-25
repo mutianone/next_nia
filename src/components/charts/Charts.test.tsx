@@ -59,3 +59,12 @@ it('shows all bar values without trend lines in dashboard mode', () => {
   expect(container.querySelectorAll('[data-series] path, [data-series] circle')).toHaveLength(0);
   expect(Array.from(container.querySelectorAll('.bar-value')).map(node => node.textContent)).toEqual(['2','4','0','9']);
 });
+
+it('renders analytics as lines without bars while preserving both daily series', () => {
+  const { container } = render(<TrendChart lineOnly data={[{label:'10-24',entries:2,exits:9},{label:'10-25',entries:0,exits:4}]}/>);
+  expect(container.querySelectorAll('[data-series] rect')).toHaveLength(0);
+  expect(container.querySelectorAll('[data-series] path')).toHaveLength(2);
+  expect(container.querySelectorAll('[data-series] circle')).toHaveLength(4);
+  fireEvent.click(screen.getByRole('button',{name:'查看数据表'}));
+  expect(within(screen.getByRole('table')).getByText('-7')).toBeInTheDocument();
+});

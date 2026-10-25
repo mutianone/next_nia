@@ -51,6 +51,6 @@ it('blocks questions when central permission is off and directs users to setting
   fireEvent.change(screen.getByLabelText('法规问题'),{target:{value:'签证延期'}});
   expect(screen.getByRole('button',{name:'生成回答'})).toBeDisabled();
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button',{name:'前往系统配置'}));
+  fireEvent.click(screen.getByRole('button',{name:'前往系统设置'}));
   expect(openSettings).toHaveBeenCalledOnce();
 });
