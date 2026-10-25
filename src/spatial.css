@@ -116,3 +116,18 @@
 .officer-lights i:nth-child(1){left:18%;top:24%}.officer-lights i:nth-child(2){right:18%;top:68%}.officer-lights i:nth-child(3){right:25%;top:15%;width:2px;height:2px}
 .officer-ground{position:absolute;left:50%;bottom:3px;width:180px;height:22px;transform:translateX(-50%) translateX(var(--depth-x));border-radius:50%;background:radial-gradient(ellipse,#08122955,transparent 70%);border-bottom:1px solid color-mix(in srgb,var(--officer-accent) 22%,transparent);opacity:.55}
 .officer-scene[data-framing="portrait"] .officer-ground{display:none}
+
+/* Local layered motion: orbit, particles and scan waves share the pausable scene clock. */
+.officer-depth{perspective:650px}
+.officer-halo{width:350px;height:290px;background:radial-gradient(ellipse,#6bbdff3d,transparent 68%)}
+.officer-orbit{width:310px;height:225px;border:1.5px solid #8bd4ff8c;transform:translate(-50%,-50%) rotateY(var(--orbit-tilt)) rotate(var(--orbit-angle));box-shadow:0 0 18px #55aaff26,inset 0 0 22px #55aaff14}
+.officer-orbit::before{top:50%;left:50%;width:7px;height:7px;background:#e0f5ff;transform:translate(-50%,-50%) rotate(var(--orbit-spin)) translateX(155px);box-shadow:0 0 9px #fff,0 0 24px #57baff}
+.officer-orbit::after{top:50%;left:50%;right:auto;bottom:auto;width:5px;height:5px;transform:translate(-50%,-50%) rotate(calc(var(--orbit-spin) + 180deg)) translateX(155px);background:#82d9ff;box-shadow:0 0 16px #57baff}
+.officer-orbit-secondary{width:350px;height:260px;opacity:.75;border-color:#b4dfff66;border-style:dashed;transform:translate(-50%,-50%) rotateY(calc(var(--orbit-tilt) * -1)) rotate(calc(var(--orbit-angle) * -1))}
+.officer-orbit-secondary::before,.officer-orbit-secondary::after{transform:translate(-50%,-50%) rotate(var(--orbit-counter)) translateX(175px)}
+.officer-orbit-secondary::after{transform:translate(-50%,-50%) rotate(calc(var(--orbit-counter) + 180deg)) translateX(175px)}
+.officer-particles{position:absolute;inset:0;pointer-events:none}.officer-particles i{position:absolute;border-radius:50%;background:#c5eeff;box-shadow:0 0 8px #a7e3ff,0 0 16px #4caaff;will-change:transform,opacity}
+.officer-particles-far{filter:blur(.8px);opacity:.65}.officer-particles-near{opacity:.8}.officer-particles-near i{background:#ebfaff;filter:blur(.3px)}
+.officer-ground,.officer-scene[data-framing="portrait"] .officer-ground{display:block;width:240px;height:40px;bottom:6px;background:radial-gradient(ellipse,#69bfff30,transparent 70%);opacity:.8}
+.officer-ground i{position:absolute;inset:0;border:1px solid #8dd8ff;box-shadow:0 0 12px #64bfff33;border-radius:50%;will-change:transform,opacity}
+@media(max-width:700px){.officer-particle-detail{display:none}.officer-orbit{width:240px;height:185px}.officer-orbit-secondary{width:275px;height:215px}.officer-ground{width:180px}}

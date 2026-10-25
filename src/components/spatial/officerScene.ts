@@ -5,7 +5,17 @@ import type { SceneOptions, SpatialController } from './types';
 export function createOfficerScene(host: HTMLElement, initial: SceneOptions, onFailure: () => void): SpatialController {
   const scene = document.createElement('div');
   scene.className = 'officer-scene';
-  scene.innerHTML = '<div class="officer-depth"><div class="officer-halo"></div><i class="officer-orbit"></i><i class="officer-orbit officer-orbit-secondary"></i><div class="officer-lights"><i></i><i></i><i></i></div></div><div class="officer-ground"></div><div class="officer-portrait"></div>';
+  scene.innerHTML = '<div class="officer-depth"><div class="officer-halo"></div><i class="officer-orbit"></i><i class="officer-orbit officer-orbit-secondary"></i><div class="officer-particles officer-particles-far"></div><div class="officer-particles officer-particles-mid"></div></div><div class="officer-ground"><i></i><i></i><i></i></div><div class="officer-portrait"></div><div class="officer-particles officer-particles-near"></div>';
+  const particles = ['far', 'mid', 'near'].flatMap((layer, depth) => {
+    const container = scene.querySelector(`.officer-particles-${layer}`)!;
+    return Array.from({ length: depth === 2 ? 12 : 20 }, (_, index) => {
+      const node = document.createElement('i');
+      node.style.width = node.style.height = `${depth === 0 ? 2 : 3 + index % 3}px`;
+      if (index % 3 !== 0) node.classList.add('officer-particle-detail');
+      container.appendChild(node);
+      return { node, depth, index };
+    });
+  });
   const portrait = scene.querySelector<HTMLDivElement>('.officer-portrait')!;
   const art = document.createElement('div');
   art.className = 'officer-art';
@@ -38,14 +48,33 @@ export function createOfficerScene(host: HTMLElement, initial: SceneOptions, onF
     x += (clamp(targetX + hoverX, 1) - x) * blend;
     y += (clamp(targetY + hoverY, 1) - y) * blend;
     // Larger breathing motion; expressions use only the original face pixels.
-    const drift = options.animated ? Math.sin(time * .8) * 4.5 : 0;
-    const breath = options.animated ? Math.sin(time * 1.35) * 9 : 0;
+    const drift = options.animated ? Math.sin(time * .8) * 6 : 0;
+    const breath = options.animated ? Math.sin(time * 1.35) * 11 : 0;
     expression?.render(time, options.animated);
     scene.style.setProperty('--portrait-x', `${x * 9 + drift}px`);
     scene.style.setProperty('--portrait-y', `${y * 4 + breath}px`);
     scene.style.setProperty('--depth-x', `${-x * 15 - drift * 2}px`);
     scene.style.setProperty('--depth-y', `${-y * 7 - breath * .5}px`);
-    scene.style.setProperty('--orbit-angle', `${-18 + (options.animated ? Math.sin(time * .35) * 8 : 0) + x * 3}deg`);
+    const motion = options.animated ? time : 0;
+    scene.style.setProperty('--orbit-angle', `${-22 + Math.sin(motion * .6) * 20 + x * 8}deg`);
+    scene.style.setProperty('--orbit-spin', `${motion * 22}deg`);
+    scene.style.setProperty('--orbit-counter', `${-motion * 15}deg`);
+    scene.style.setProperty('--orbit-tilt', `${Math.sin(motion * .45) * 18 + y * 7}deg`);
+    for (const { node, depth, index } of particles) {
+      const phase = index * 2.39996 + motion * (.22 + depth * .13);
+      // Foreground particles stay beside the portrait, never crossing its face.
+      const px = depth === 2 ? (index % 2 ? 81 : 19) + Math.sin(phase) * 9 : 50 + Math.cos(phase) * (30 + index % 5 * 2);
+      const py = 94 - ((index * 19.7 + motion * (5 + depth * 2)) % 88);
+      node.style.left = `${px}%`;
+      node.style.top = `${py}%`;
+      node.style.transform = `translate3d(${Math.sin(phase * .7) * (5 + depth * 5) + x * (depth - 1) * 18}px,${Math.cos(phase) * 8 + y * depth * 6}px,0)`;
+      node.style.opacity = `${.35 + (Math.sin(phase) + 1) * .25}`;
+    }
+    scene.querySelectorAll<HTMLElement>('.officer-ground i').forEach((wave, index) => {
+      const phase = (motion * .35 + index / 3) % 1;
+      wave.style.transform = `scale(${.45 + phase * 1.4})`;
+      wave.style.opacity = `${(1 - phase) * .65}`;
+    });
     scene.style.setProperty('--glow-opacity', `${options.animated ? .65 + Math.sin(time * .65) * .18 : .65}`);
     if (options.animated) frame = requestAnimationFrame(draw);
   }

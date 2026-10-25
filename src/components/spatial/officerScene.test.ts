@@ -39,3 +39,24 @@ it('animates while enabled, cancels on dispose, and reports failed image loading
   scene.dispose(); expect(pending.size).toBe(0);
   image.dispatchEvent(new Event('error')); expect(failure).toHaveBeenCalledOnce();
 });
+
+it('moves depth, particles and orbit without pointer input, and stops when paused', () => {
+  const host = document.createElement('div');
+  const controller = createOfficerScene(host, { ...options, animated: true }, vi.fn());
+  const root = host.querySelector<HTMLElement>('.officer-scene')!;
+  const particle = host.querySelector<HTMLElement>('.officer-particles-near i')!;
+  const now = performance.now();
+  step(now + 100);
+  const depth = root.style.getPropertyValue('--depth-x'), orbit = root.style.getPropertyValue('--orbit-spin'), position = particle.style.transform;
+  step(now + 200);
+  expect(root.style.getPropertyValue('--depth-x')).not.toBe(depth);
+  expect(root.style.getPropertyValue('--orbit-spin')).not.toBe(orbit);
+  expect(particle.style.transform).not.toBe(position);
+  expect(host.querySelectorAll('.officer-particles i')).toHaveLength(52);
+  controller.update(options); step(now + 300);
+  const stopped = particle.style.transform;
+  step(now + 400);
+  expect(particle.style.transform).toBe(stopped);
+  expect(pending.size).toBe(0);
+  controller.dispose();
+});
