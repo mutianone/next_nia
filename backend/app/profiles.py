@@ -152,6 +152,8 @@ def profile(person_id: str, request: Request):
         for fact in result['facts']:
             timeline.append({'id': fact['id'], 'kind': 'fact', 'date': str(fact.get('occurred_on') or fact['created_at']), 'title': fact['label'], 'detail': fact['source'], 'status': '已归档' if fact['archived'] else '已核验' if fact['verified'] else '待核验'})
         result['timeline'] = sorted(timeline, key=lambda item: item['date'][:10]+item['date'][10:], reverse=True)
+        from .profile_insights import build_insights
+        result['insights'] = build_insights(session, person, result)
         return result
 
 

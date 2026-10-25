@@ -216,7 +216,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     </PageHeading>
     <div className="settings-runtime-strip">
       <span className="settings-runtime-icon"><Server size={18} /></span>
-      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine}</span></div>
+      <div><span className="settings-runtime-label">当前运行</span><strong className="environment-pill"><i/>{runtime.active_environment === 'production' ? '正式版' : '测试版'}</strong><span className="settings-runtime-divider">/</span><span>{runtime.database_engine.toLowerCase() === 'sqlite' ? '本地数据库' : runtime.database_engine}</span></div>
       <div className="settings-runtime-status">{runtime.pending_restart ? <><span className="settings-status-dot pending" />配置已更新，等待重启</> : <><span className="settings-status-dot" />本地服务已连接</>}</div>
     </div>
 
@@ -228,7 +228,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           {([
             { id: 'accounts' as const, icon: ShieldCheck, title: '账号管理', subtitle: '人员账号与角色权限' },
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与所属组织' },
-            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine}` },
+            { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: `${runtime.active_environment === 'production' ? '正式环境' : '测试环境'} · ${runtime.database_engine.toLowerCase() === 'sqlite' ? '本地数据库' : runtime.database_engine}` },
             { id: 'ai' as const, icon: Sparkles, title: 'AI 服务', subtitle: saved?.ai.enabled ? `已启用 · ${saved.ai.default_provider === 'deepseek' ? 'DeepSeek' : '硅基流动'}` : '业务调用已关闭' },
             { id: 'data' as const, icon: Database, title: '数据与维护', subtitle: runtime.sample_workspace ? '资料迁移与备份' : '演示资料、迁移与备份' },
           ]).map(item => <TabsTrigger value={item.id} key={item.id} asChild><button type="button" className={section === item.id ? 'is-active' : ''} onClick={() => setSection(item.id)}><item.icon size={20} /><span><strong>{item.title}</strong><small>{item.subtitle}</small></span><ChevronRight size={16} className="settings-nav-chevron" /></button></TabsTrigger>)}
@@ -252,11 +252,11 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
           <div className="settings-card-body">
             <div className="settings-label-line"><span>目标运行环境</span><span className="settings-caption">保存配置后，重启后端生效</span></div>
             <div className="settings-environment-grid" role="radiogroup" aria-label="目标运行环境">
-              {([{ mode: 'test' as const, title: '测试环境', engine: 'SQLite', description: '轻量启动 · 本地单文件数据库', icon: FlaskConical }, { mode: 'production' as const, title: '正式环境', engine: 'PostgreSQL', description: '独立数据库 · 面向业务部署', icon: Server }]).map(item => <button type="button" role="radio" aria-checked={draft.environment.mode === item.mode} key={item.mode} disabled={saving} className={`settings-environment-option ${draft.environment.mode === item.mode ? 'is-selected' : ''}`} onClick={() => { setDraft({ ...draft, environment: { ...draft.environment, mode: item.mode } }); setNotice(null) }}><div className="settings-environment-top"><item.icon size={22} /><span className="settings-radio">{draft.environment.mode === item.mode && <Check size={12} />}</span></div><strong>{item.title}<span>{item.engine}</span></strong><p>{item.description}</p></button>)}
+              {([{ mode: 'test' as const, title: '测试环境', engine: '本地数据库', description: '轻量启动 · 本地单文件数据库', icon: FlaskConical }, { mode: 'production' as const, title: '正式环境', engine: 'PostgreSQL', description: '独立数据库 · 面向业务部署', icon: Server }]).map(item => <button type="button" role="radio" aria-checked={draft.environment.mode === item.mode} key={item.mode} disabled={saving} className={`settings-environment-option ${draft.environment.mode === item.mode ? 'is-selected' : ''}`} onClick={() => { setDraft({ ...draft, environment: { ...draft.environment, mode: item.mode } }); setNotice(null) }}><div className="settings-environment-top"><item.icon size={22} /><span className="settings-radio">{draft.environment.mode === item.mode && <Check size={12} />}</span></div><strong>{item.title}<span>{item.engine}</span></strong><p>{item.description}</p></button>)}
             </div>
             <div className="settings-environment-explanation"><CircleAlert size={18} /><p>切换环境不会复制、合并或覆盖现有数据。当前仍运行在<strong>{runtime.active_environment === 'production' ? '正式环境' : '测试环境'}</strong>，保存后的数据库变更需要重启后端服务。</p></div>
 
-            {draft.environment.mode === 'test' ? <p className="settings-caption settings-sqlite-detail">SQLite 使用本地文件，无需连接凭证。数据目录由服务端部署配置指定。</p> : <>
+            {draft.environment.mode === 'test' ? <p className="settings-caption settings-sqlite-detail">本地数据库使用单文件存储，无需连接凭证。数据目录由服务端部署配置指定。</p> : <>
               <div className="settings-subheading"><h3>PostgreSQL 连接</h3><span><LockKeyhole size={13} />凭证仅保存在服务端</span></div>
               <div className="settings-field-grid settings-database-fields">
                 <label className="field settings-field settings-host-field"><span>数据库地址</span><input className="input" value={draft.environment.postgres.host} disabled={saving} placeholder="127.0.0.1" autoComplete="off" onChange={event => updatePostgres({ host: event.target.value })} /></label>

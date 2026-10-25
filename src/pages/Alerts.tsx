@@ -25,7 +25,7 @@ const daysText = (item: AlertItem) => item.days_remaining === null ? '待核查'
 
 function ErrorBox({ children, retry }: { children: ReactNode; retry?: () => void }) { return <div className="al-error" role="alert"><CircleAlert size={17}/><span>{children}</span>{retry && <button type="button" onClick={retry}>重试</button>}</div>; }
 function StateBadge({ status }: { status: AlertStatus }) { return <span className={`al-state ${status}`}><i/>{statusLabels[status]}</span>; }
-function CategoryBadge({ category }: { category: AlertCategory }) { return <span className={`al-category ${category}`}>{categoryLabels[category]}</span>; }
+function CategoryBadge({ category }: { category: AlertCategory }) { const Icon = category === 'past_due' ? CircleAlert : category === 'needs_review' ? ClipboardCheck : CalendarClock; return <span className={`al-category ${category}`}><Icon size={13}/>{categoryLabels[category]}</span>; }
 function Loading({ children = '正在读取本地记录…' }: { children?: ReactNode }) { return <div className="al-empty" role="status"><LoaderCircle className="spinning" size={25}/><p>{children}</p></div>; }
 function useReportDirty(dirty: boolean, report: (dirty: boolean) => void) { useEffect(() => { report(dirty); return () => report(false); }, [dirty, report]); }
 function ConfirmedField({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) { return <label className={`field al-field ${wide ? 'al-wide' : ''}`}><span>{label}</span>{children}</label>; }
@@ -220,7 +220,7 @@ export function Alerts({ onNavigate, onCreateDocument, initialId, onContextConsu
     { label: '临近登记期限', value: data?.stats.due_soon, icon: CalendarClock, category: 'due_soon', detail: '提前核查，及时跟进', tone: 'warning' },
     { label: '今日届满', value: data?.stats.due_today, icon: Clock3, category: 'due_today', detail: '登记期限为今日', tone: 'warning' },
     { label: '超过登记期限', value: data?.stats.past_due, icon: CircleAlert, category: 'past_due', detail: '核对延期与离境事实', tone: 'danger' },
-    { label: '事实待核查', value: data?.stats.needs_review, icon: ClipboardCheck, category: 'needs_review', detail: '期限或材料仍待确认', tone: 'primary' },
+    { label: '事实待核查', value: data?.stats.needs_review, icon: ClipboardCheck, category: 'needs_review', detail: '期限或材料仍待确认', tone: 'review' },
   ] as const;
   return <div className="page-content alerts-page">
     <PageHeading title="期限核查" description="查看待核查事项，补充事实并记录处理结果。" scene="alerts"><div className="al-heading-actions"><Access permission="write"><button className="btn btn-secondary" disabled={scanning} onClick={() => openFacts()}><Plus size={16}/>补充核查事实</button></Access><Access permission="write"><button className="btn btn-primary" disabled={scanning} onClick={scan}>{scanning ? <LoaderCircle size={16} className="spinning"/> : <Radar size={16}/>} {scanning ? '扫描中…' : '立即扫描'}</button></Access></div></PageHeading>

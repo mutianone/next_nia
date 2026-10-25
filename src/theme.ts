@@ -6,6 +6,7 @@ export const themes = [
   { id: 'space', name: '星舰指挥', description: '冰青光线，探索数字边界', color: '#147d9d', second: '#40c9e8', background: '#e8f4fa', tag: '科幻未来' },
   { id: 'aurora', name: '极光科技', description: '蓝紫流光，与灵感同行', color: '#7060b3', second: '#c1a1df', background: '#f0ecf8', tag: '渐变科技' },
   { id: 'graphite', name: '石墨极简', description: '专注信息本身的力量', color: '#515961', second: '#afb8b6', background: '#eeefef', tag: '纯粹简约' },
+  { id: 'obsidian', name: '曜石金', description: '深石墨与香槟金，沉稳而有分寸', color: '#8c6a29', second: '#c7ad76', background: '#f5f3ee', tag: '典雅质感' },
 ] as const;
 export type ThemeId = typeof themes[number]['id'];
 export type ColorMode = 'light' | 'dark' | 'system';

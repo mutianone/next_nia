@@ -17,6 +17,7 @@ import './spatial.css';
 import './phase5.css';
 import './workspace.css';
 import './profile-studio.css';
+import './business-visuals.css';
 import { ConfirmationHost } from './components/ConfirmationHost';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AuthProvider><App /></AuthProvider><ConfirmationHost /></React.StrictMode>);
