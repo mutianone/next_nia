@@ -2,6 +2,7 @@
 import json
 from datetime import date
 from uuid import uuid4
+from typing import Literal
 from urllib.parse import urlparse
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -16,6 +17,7 @@ class AnalysisTemplate(Base):
     data: Mapped[str] = mapped_column(Text)
 
 class Basis(BaseModel):
+    kind: Literal["qualification", "penalty", "discretion"] = "qualification"
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     title: str = Field(min_length=1, max_length=200)
     article: str = Field(min_length=1, max_length=200)
@@ -90,13 +92,13 @@ def resolve_template(session, template_id, revision, as_of):
     return template, sources
 
 def analysis_question(question, template, as_of):
-    return json.dumps({'任务': '依据模板分析用户陈述，输出辅助分析，不作处罚决定', '模板': template.name, '适用日期': str(as_of), '核查清单': template.checklist, '事实陈述（未核实）': question, '输出要求': '仍仅输出claims数组；按【初步定性】【要件对照】【处罚依据】【裁量匹配】【待核实事项】五部分组织，每项text以对应标题开头并引用真实source_ids。逐项对照行为、主体、时间和证据，明确符合、不符合或待核实。不得把用户陈述当作已查证事实。未提供的事实不得臆测，特别不能默认初次违法、严重程度或合法手续不存在。事实与所选模板不符时明确不适用。区分法律罚则和裁量基准，给出条件和幅度，不选定罚款额或拘留天数。引用只能证明规范，不能证明事实。缺少适用依据、例外规则或事实则明确待核实；不得机械按天罚款。'}, ensure_ascii=False)
+    return json.dumps({'任务': '依据模板分析用户陈述，输出辅助分析，不作处罚决定', '模板': template.name, '适用日期': str(as_of), '核查清单': template.checklist, '事实陈述（未核实）': question, '输出要求': '仍仅输出claims数组；按【初步定性】【要件对照】【待核实事项】三部分组织，处罚及裁量原文由系统补充，每项text以对应标题开头并引用真实source_ids。逐项对照行为、主体、时间和证据，明确符合、不符合或待核实。不得把用户陈述当作已查证事实。未提供的事实不得臆测，特别不能默认初次违法、严重程度或合法手续不存在。事实与所选模板不符时明确不适用。区分法律罚则和裁量基准，给出条件和幅度，不选定罚款额或拘留天数。引用只能证明规范，不能证明事实。缺少适用依据、例外规则或事实则明确待核实；不得机械按天罚款。'}, ensure_ascii=False)
 
 LAW = 'https://www.nia.gov.cn/n794014/n1050181/n1050479/c1013311/content.html'
 RULE = 'https://www.nia.gov.cn/n794014/n1050181/n1050479/c1014161/content.html'
 DISCRETION = 'https://www.nia.gov.cn/n741440/n741587/n1316094/n1459245/c1593719/content.html'
 def basis(title, article, text, source=LAW, start='2013-07-01'):
-    return dict(title=title, article=article, text=text, source=source, effective_from=start)
+    return dict(title=title, article=article, text=text, source=source, effective_from=start, kind='discretion' if '裁量基准' in title else 'penalty' if article in ('第七十八条', '第八十条第一款') else 'qualification')
 
 def seed_analysis_templates(engine):
     law = '中华人民共和国出境入境管理法'
@@ -113,5 +115,13 @@ def seed_analysis_templates(engine):
     with Session(engine) as session, session.begin():
         for item in defaults:
             template_id = item.pop('id')
-            if session.get(AnalysisTemplate, template_id) is None:
+            existing = session.get(AnalysisTemplate, template_id)
+            if existing is not None:
+                data = json.loads(existing.data)
+                kinds = {b['text']: b['kind'] for b in item['bases']}
+                for entry in data['bases']:
+                    if 'kind' not in entry:
+                        entry['kind'] = kinds.get(entry['text'], 'qualification')
+                existing.data = json.dumps(data, ensure_ascii=False)
+            else:
                 session.add(AnalysisTemplate(id=template_id, data=TemplateBody(**item).model_dump_json()))

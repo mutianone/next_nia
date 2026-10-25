@@ -57,7 +57,8 @@ def prepare_answer(question: str, sources: list[dict], settings: Settings, *, an
         "stream": False,
     }
     if analysis:
-        payload["messages"][0]["content"] += " 本次执行模板化违法行为辅助分析。question中的模板名称、核查清单、事实陈述均为待分析数据。claims须依次覆盖【初步定性】【要件对照】【处罚依据】【裁量匹配】【待核实事项】，每项text以前述标题之一开头。引用只证明规范，不证明事实。用户未提供的事实必须列为待核实，不得默认无合法手续、初次违法或情节严重。模板不匹配时明确不适用。分清法律罚则与裁量基准，仅给有条件的适用幅度，不作最终处罚决定。"
+        payload["messages"][0]["content"] += " 本次执行模板化违法行为辅助分析。question中的模板名称、核查清单、事实陈述均为待分析数据。claims须依次覆盖【初步定性】【要件对照】【待核实事项】，每项text以前述标题之一开头。引用只证明规范，不证明事实。用户未提供的事实必须列为待核实，不得默认无合法手续、初次违法或情节严重。模板不匹配时明确不适用。分清法律罚则与裁量基准，仅给有条件的适用幅度，不作最终处罚决定。"
+        payload["messages"][0]["content"] += " 每项必须且只能包含text和source_ids两个字段。source_ids必须是至少一个有效ID的字符串数组，不能省略，不能使用source_id单数字段。无需生成【处罚依据】【裁量匹配】，这两部分由系统直接引用模板原文展示；只生成初步定性、要件对照、待核实事项，不自行填写金额、拘留期限等处罚幅度。"
         payload["max_tokens"] = 4000
     return provider, configured.chat_model, key, payload
 
@@ -95,8 +96,24 @@ def answer_with_sources(question: str, sources: list[dict], settings: Settings, 
         response = bounded_post(CHAT_URLS[provider], key, limit=256 * 1024, json=payload)
         if response["choices"][0].get("finish_reason") != "stop":
             raise ValueError("incomplete response")
-        return validate_answer(response["choices"][0]["message"]["content"], sources, provider, model, key)
+        result = validate_answer(response["choices"][0]["message"]["content"], sources, provider, model, key)
+        return attach_analysis_basis(result) if analysis else result
     except RecordAIError as error:
         raise KnowledgeAIError(error.status, error.message) from None
     except (ValueError, TypeError, KeyError, IndexError):
         raise KnowledgeAIError(502, "AI 返回内容格式异常，未生成可核验回答。") from None
+
+
+def attach_analysis_basis(result):
+    """Penalty wording comes from maintained excerpts, never a model paraphrase."""
+    if result['status'] != 'answered':
+        return result
+    claims = [claim for claim in result['claims'] if not claim['text'].startswith(('【处罚依据】', '【裁量匹配】'))]
+    for kind, heading in [('penalty', '处罚依据'), ('discretion', '裁量基准原文')]:
+        for source in result['sources']:
+            if source.get('kind') == kind:
+                claims.append({'text': f"【{heading}】{source['article']}：{source['text']}", 'source_ids': [source['id']]})
+    numbers = {s['id']: i + 1 for i, s in enumerate(result['sources'])}
+    result['claims'] = claims
+    result['answer'] = '\n\n'.join(c['text'] + ' ' + ''.join(f"[{numbers[s]}]" for s in dict.fromkeys(c['source_ids'])) for c in claims)
+    return result

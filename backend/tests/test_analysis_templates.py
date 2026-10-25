@@ -46,3 +46,10 @@ def test_template_write_permission():
         assert not permitted(role,'POST',PATH,{})
         assert not permitted(role,'PUT',PATH+'/builtin-illegal-stay',{})
         assert permitted(role,'GET',PATH,{})
+
+def test_penalty_wording_is_not_model_paraphrase():
+    from backend.app.knowledge_ai import attach_analysis_basis
+    result={'status':'answered','claims':[{'text':'【裁量匹配】错误的警告或罚款','source_ids':['a']},{'text':'【待核实事项】待核实日期','source_ids':['a']}],'sources':[{'id':'a','kind':'discretion','article':'第十四条','text':'罚款从非法居留第十一日起计算'}]}
+    output=attach_analysis_basis(result)
+    assert '错误的警告' not in output['answer']
+    assert '罚款从非法居留第十一日起计算' in output['answer']

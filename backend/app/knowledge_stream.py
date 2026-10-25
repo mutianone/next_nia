@@ -3,7 +3,7 @@ import json
 import re
 import time
 import httpx
-from .knowledge_ai import CHAT_URLS, KnowledgeAIError, prepare_answer, validate_answer
+from .knowledge_ai import CHAT_URLS, KnowledgeAIError, prepare_answer, validate_answer, attach_analysis_basis
 
 
 def complete_claims(raw):
@@ -67,12 +67,14 @@ def stream_answer(question, sources, settings, *, analysis=False):
                         if len(claims) > emitted:
                             verified = validate_answer(json.dumps({'claims': claims}, ensure_ascii=False), sources, provider, model, key)
                             emitted = len(claims)
+                            if analysis: verified = attach_analysis_basis(verified)
                             yield {'type': 'partial', 'answer': verified}
                     if done:
                         break
                 if not done or finish != 'stop':
                     raise KnowledgeAIError(502, 'AI 回答中断或未完整生成，请重试。')
-                yield {'type': 'complete', 'answer': validate_answer(raw, sources, provider, model, key)}
+                verified = validate_answer(raw, sources, provider, model, key)
+                yield {'type': 'complete', 'answer': attach_analysis_basis(verified) if analysis else verified}
     except KnowledgeAIError:
         raise
     except httpx.TimeoutException:
