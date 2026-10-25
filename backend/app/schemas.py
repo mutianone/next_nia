@@ -129,15 +129,23 @@ class ProvidersUpdate(StrictModel):
     deepseek: DeepSeekUpdate = Field(default_factory=DeepSeekUpdate)
 
 
+class ExternalPermissions(StrictModel):
+    question: bool = True
+    asr: bool = True
+    analysis: bool = True
+
+
 class AISettings(StrictModel):
     enabled: bool = False
     default_provider: ProviderName = "siliconflow"
+    external_permissions: ExternalPermissions = Field(default_factory=ExternalPermissions)
     providers: Providers = Field(default_factory=Providers)
 
 
 class AIUpdate(StrictModel):
     enabled: bool = False
     default_provider: ProviderName = "siliconflow"
+    external_permissions: ExternalPermissions = Field(default_factory=ExternalPermissions)
     providers: ProvidersUpdate = Field(default_factory=ProvidersUpdate)
 
 
@@ -196,6 +204,8 @@ def merge_postgres(update: PostgresUpdate, current: PostgresSettings) -> Postgre
 
 def merge_settings(update: SettingsUpdate, current: Settings) -> Settings:
     data = update.model_dump()
+    if "external_permissions" not in update.ai.model_fields_set:
+        data["ai"]["external_permissions"] = current.ai.external_permissions.model_dump()
     data["environment"]["postgres"] = merge_postgres(update.environment.postgres, current.environment.postgres)
     for name in ("siliconflow", "deepseek"):
         incoming = getattr(update.ai.providers, name)

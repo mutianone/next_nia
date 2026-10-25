@@ -1,3 +1,4 @@
+import { KnowledgePermissions } from '../components/KnowledgePermissions';
 import '../components/interview-fields.css';
 import { AccountManagement } from '../auth/AccountManagement';
 import { useViewState } from '../hooks/useWorkspaceView';
@@ -37,7 +38,7 @@ type PostgresSettings = {
 type AppSettings = {
   general: { system_name: string; organization: string; interview_locations?: string[] }
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
-  ai: { enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
+  ai: { external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
 type Runtime = { sample_workspace?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
@@ -189,7 +190,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim(), interview_locations: draft.general.interview_locations || [] },
         environment: { mode: draft.environment.mode, postgres: postgresPayload() },
         ai: {
-          enabled: draft.ai.enabled, default_provider: draft.ai.default_provider,
+          enabled: draft.ai.enabled, default_provider: draft.ai.default_provider, external_permissions: draft.ai.external_permissions || { question: true, asr: true, analysis: true },
           providers: Object.fromEntries(providers.map(provider => [provider.id, {
             enabled: draft.ai.providers[provider.id].enabled, base_url: provider.url, chat_model: draft.ai.providers[provider.id].chat_model.trim(),
             ...(provider.id === 'siliconflow' ? { asr_model: draft.ai.providers.siliconflow.asr_model?.trim() } : {}),
@@ -275,7 +276,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
 
         {section === 'ai' && <TabsContent value="ai" asChild><section className="settings-ai-section">
           <div className="panel settings-card"><div className="settings-card-heading"><div><h2>AI 服务配置</h2></div></div>
-            <div className="settings-card-body"><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '法规问答、语音转写和摘要可使用已配置的服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
+            <div className="settings-card-body"><div className="settings-external-permissions"><h3>AI 外发许可</h3><p>许可按功能统一生效，实际发送至当前配置的服务商；取消勾选后，对应功能不能发送资料。</p>{([{key:'question',label:'允许法规问答发送至服务商',detail:'当前问题与已获准使用的公开法规片段。'},{key:'asr',label:'允许录音转写发送至硅基流动',detail:'本次选定的音频，原音仍在本地留存。'},{key:'analysis',label:'允许笔录摘要发送至服务商',detail:'已保存的笔录修订文字，用于摘要与要素提取。'}] as const).map(item => <label key={item.key}><input type="checkbox" disabled={saving} checked={draft.ai.external_permissions?.[item.key] ?? true} onChange={e => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:true,asr:true,analysis:true,...draft.ai.external_permissions,[item.key]:e.target.checked}}})}/><span><strong>{item.label}</strong><small>{item.detail}</small></span></label>)}</div><KnowledgePermissions/><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '法规问答、语音转写和摘要可使用已配置的服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
               <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写固定使用硅基流动。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><Choice className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></Choice></label></div>
               {!draft.ai.providers[draft.ai.default_provider].enabled && <div className="settings-inline-warning"><CircleAlert size={16} /><span>默认服务商当前未启用。开启 AI 前，请先启用下方对应服务商。</span></div>}
             </div>

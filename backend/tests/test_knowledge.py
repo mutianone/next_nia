@@ -79,7 +79,7 @@ def test_import_draft_detail_file_and_audit(client):
     response = upload(client)
     assert response.status_code == 201, response.text
     document = response.json()
-    assert document["status"] == "draft" and document["allow_external"] is False
+    assert document["status"] == "draft" and document["allow_external"] is True
     assert document["chunk_count"] == 2
     assert [chunk["article"] for chunk in document["chunks"]] == ["第一条", "第二条"]
     assert all(chunk["parent_id"] and chunk["page"] is None for chunk in document["chunks"])
@@ -244,7 +244,7 @@ def test_grounded_ask_both_providers_and_private_exclusion(client, monkeypatch, 
     public = upload(client).json()
     assert publish(client, public, allow_external=True).status_code == 200
     private = upload(client, title="内部资料", content="第一条 签证延期内部秘密代号 PRIVATE-CONTENT-NEVER-SEND。").json()
-    assert publish(client, private).status_code == 200
+    assert publish(client, private, allow_external=False).status_code == 200
     enable_ai(client, provider)
     captures, factory = fake_ai(monkeypatch)
     response = ask(client)
@@ -382,3 +382,18 @@ def test_truncated_ai_output_cannot_be_used_as_answer(client,monkeypatch):
     fake_ai(monkeypatch,finish_reason='length')
     response=ask(client)
     assert response.status_code==502
+
+
+def test_central_question_permission_blocks_external_call(client, monkeypatch):
+    document = upload(client).json()
+    assert publish(client, document).status_code == 200
+    enable_ai(client)
+    captures, factory = fake_ai(monkeypatch)
+    settings = client.app.state.store.load()
+    settings.ai.external_permissions.question = False
+    client.app.state.store.save(settings)
+    response = ask(client)
+    assert response.status_code == 403
+    assert '系统配置' in response.json()['detail']
+    assert not captures
+    assert client.post('/api/knowledge/search', json={'query': '签证延期'}).status_code == 200

@@ -386,7 +386,7 @@ def capabilities(request: Request):
         name = "siliconflow" if purpose == "asr" else settings.ai.default_provider
         configured = getattr(settings.ai.providers, name)
         providers[purpose] = {"provider": name, "model": configured.asr_model if purpose == "asr" else configured.chat_model,
-                              "ready": settings.ai.enabled and configured.enabled and bool(reveal(configured.api_key))}
+                              "allowed": getattr(settings.ai.external_permissions, purpose), "ready": settings.ai.enabled and configured.enabled and bool(reveal(configured.api_key))}
     available = conversion_available()
     providers["asr"].update({"format_support_verified": False, "local_conversion_available": available,
                             "format_note": "原音本地留存；MP3直接发送，其他格式需本机FFmpeg先转MP3，原件不变。未进行真实在线验证；声明时长不是服务端实测时长。"})
@@ -614,6 +614,8 @@ def confirmed_settings(request, body, purpose):
     if not body.confirmed:
         raise HTTPException(400, "须明确确认将本次选定原音或当前片段文本发送给配置的 AI 服务商；未发送资料。")
     settings = settings_copy(request)
+    if not getattr(settings.ai.external_permissions, purpose):
+        raise HTTPException(403, "请前往系统配置 → AI 服务，勾选允许录音转写或笔录摘要发送至服务商；非管理员请联系管理员。")
     try:
         provider, model, _ = provider_config(settings, purpose)
     except RecordAIError as error:

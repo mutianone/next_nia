@@ -578,3 +578,17 @@ def test_common_locations_available_without_changing_existing_records(client):
     client.app.state.store.save(settings)
     assert client.get('/api/records/capabilities').json()['interview_locations'] == ['第一询问室', '第二询问室']
     assert client.get(f"/api/records/{row['id']}").json()['location'] == '原地点'
+
+
+@pytest.mark.parametrize('purpose', ['asr', 'analysis'])
+def test_central_external_permission_blocks_provider_even_when_confirmed(client, cloud, purpose):
+    enable_ai(client)
+    row = with_audio(client) if purpose == 'asr' else with_segments(client)
+    settings = client.app.state.store.load()
+    setattr(settings.ai.external_permissions, purpose, False)
+    client.app.state.store.save(settings)
+    response = asr(client, row) if purpose == 'asr' else analyze(client, row)
+    assert response.status_code == 403
+    assert '系统配置' in response.json()['detail']
+    assert not cloud.calls
+    assert client.get('/api/records/capabilities').json()['ai'][purpose]['allowed'] is False
