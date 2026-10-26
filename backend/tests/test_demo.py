@@ -117,14 +117,18 @@ def test_confirmations_production_guard_and_stale_cleanup(client):
     assert client.get('/api/demo-data').json()['active']
 
 
-def test_cross_batch_reference_blocks_cleanup_without_partial_deletion(client):
+def test_later_linked_record_and_children_are_deleted(client):
     batch=seed(client)
     p=client.get('/api/people').json()['items'][0]
     record=client.post('/api/records',json={'title':'另行录入的独立笔录','person_id':p['id']}).json()
+    with Session(client.app.state.engine) as session:
+        session.add(RecordSegment(record_id=record['id'],position=99,speaker='unknown',text='关联记录补充',source='manual'))
+        session.commit()
     result=clear(client,batch)
-    assert result.status_code==409,result.text
-    assert client.get('/api/demo-data').json()['counts']==batch['counts']
-    assert client.get('/api/records/'+record['id']).status_code==200
+    assert result.status_code==200,result.text
+    assert client.get('/api/records/'+record['id']).status_code==404
+    with Session(client.app.state.engine) as session:
+        assert session.scalar(select(func.count()).select_from(RecordSegment)) == 0
 
 
 def test_generated_record_lifecycle_children_are_cleaned(client):
@@ -173,3 +177,57 @@ def test_archive_roundtrip_retains_cleanup_ledger_and_accepts_previous_version(c
     restore_empty(legacy_engine,old)
     with Session(legacy_engine) as session:assert session.get(DemoDataset,1) is None
     legacy_engine.dispose()
+
+
+def test_cleanup_follows_copy_source_and_citation_links_without_deleting_unrelated_people(client):
+    from backend.app.documents import DocumentDraft
+    from backend.app.profiles import ProfileFact, ProfileRelation
+    from backend.app.assistant_history import AssistantMessage, AssistantConversation
+    from backend.app.knowledge import KnowledgeDocument
+    batch = seed(client)
+    independent = client.post('/api/people',json={'name':'保留档案','nationality':'中国','document_number':'KEEP-001','source':'人工录入'}).json()
+    with Session(client.app.state.engine) as session:
+        original = session.scalar(select(DocumentDraft))
+        demo_person = original.person_id
+        copy = DocumentDraft(person_id=independent['id'], template_id=original.template_id,
+            copied_from=original.id, title='跨档案关联副本', fields={}, template_snapshot={}, person_snapshot={})
+        session.add(copy); session.flush()
+        second = DocumentDraft(person_id=independent['id'], template_id=original.template_id,
+            copied_from=copy.id, title='二级关联副本', fields={}, template_snapshot={}, person_snapshot={})
+        session.add(second); session.flush()
+        fact = ProfileFact(person_id=independent['id'],kind='purpose',label='关联来源',value='待核实',source_type='document',source_id=second.id,source='文书',source_snapshot={})
+        session.add(fact)
+        law = session.scalar(select(KnowledgeDocument))
+        session.add(AssistantConversation(id='mixed',owner_id='test-owner',title='保留会话',updated_at='2026-10-26'))
+        session.add(AssistantMessage(id='linked-turn',conversation_id='mixed',ordinal=1,data=json.dumps({'answer':{'sources':[{'document_id':law.id}]}}),status='complete'))
+        session.add(AssistantMessage(id='keep-turn',conversation_id='mixed',ordinal=2,data=json.dumps({'question':'独立问题'}),status='complete'))
+        session.commit()
+        copy_id, second_id, fact_id = copy.id, second.id, fact.id
+    assert clear(client,batch).status_code == 200
+    with Session(client.app.state.engine) as session:
+        assert session.get(Person,independent['id']) is not None
+        assert session.get(Person,demo_person) is None
+        assert session.get(DocumentDraft,copy_id) is None
+        assert session.get(DocumentDraft,second_id) is None
+        assert session.get(ProfileFact,fact_id) is None
+        assert session.get(AssistantMessage,'linked-turn') is None
+        assert session.get(AssistantMessage,'keep-turn') is not None
+        assert session.get(AssistantConversation,'mixed') is not None
+
+
+def test_related_cleanup_rolls_back_every_delete_on_failure(client, monkeypatch):
+    batch = seed(client)
+    original_execute = Session.execute
+    deletions = 0
+    def fail_during_delete(self, statement, *args, **kwargs):
+        nonlocal deletions
+        if getattr(statement, 'is_delete', False):
+            deletions += 1
+            if deletions == 2:
+                raise RuntimeError('test cleanup interruption')
+        return original_execute(self, statement, *args, **kwargs)
+    monkeypatch.setattr(Session, 'execute', fail_during_delete)
+    with pytest.raises(RuntimeError, match='test cleanup interruption'):
+        clear(client, batch)
+    assert client.get('/api/demo-data').json()['counts'] == batch['counts']
+    assert client.get('/api/demo-data').json()['active']

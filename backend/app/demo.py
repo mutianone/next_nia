@@ -249,29 +249,49 @@ def generate(body: Confirmation, request: Request):
 
 def cleanup(session, batch):
     owned={name:set(ids) for name,ids in batch.manifest['rows'].items()}
-    # Revisions and attached media belong to their seeded parent, including later edits.
-    dependent={'alert_history':'alert_id','record_versions':'record_id','record_segments':'record_id','record_audio':'record_id','record_transcription_attempts':'record_id','record_analyses':'record_id','document_history':'document_id','knowledge_sections':'document_id','knowledge_chunks':'document_id'}
-    for table in Base.metadata.sorted_tables:
-        if table.name not in dependent:continue
-        pk=list(table.primary_key)[0]
-        for fk in table.foreign_keys:
-            if fk.parent.name != dependent[table.name]:continue
-            parents=owned.get(fk.column.table.name,set())
-            if parents:owned.setdefault(table.name,set()).update(session.scalars(select(pk).where(fk.parent.in_(parents))))
-    # Never remove an independently created business record or leave a dangling reference.
-    for table in Base.metadata.sorted_tables:
-        pk=list(table.primary_key)[0]
-        for fk in table.foreign_keys:
-            parents=owned.get(fk.column.table.name,set())
-            if not parents:continue
-            outside=select(pk).where(fk.parent.in_(parents),pk.not_in(owned.get(table.name,set()))).limit(1)
-            if session.scalar(outside) is not None:
-                raise HTTPException(409,'生成资料已被新增业务记录引用，本次未清理。请先解除这些关联，原有数据不会被删除。')
-    # These two legacy links intentionally have no DB foreign key.
-    for column,parent in [(ProfileFact.source_id,'record_sessions'),(ProfileFact.source_id,'document_drafts'),(ProfileFact.source_id,'person_stays'),(DocumentDraft.alert_id,'alerts'),(DocumentDraft.copied_from,'document_drafts')]:
-        ids=owned.get(parent,set()); table=column.table
-        if ids and session.scalar(select(table.c.id).where(column.in_(ids),table.c.id.not_in(owned.get(table.name,set()))).limit(1)):
-            raise HTTPException(409,'生成资料已被新增来源引用，本次未清理。请先解除关联。')
+    # Follow references only from a removed parent to its dependent rows. Never
+    # traverse back to unrelated people, shared templates, accounts or settings.
+    links = [(fk.parent, fk.column.table.name, None)
+             for table in Base.metadata.sorted_tables for fk in table.foreign_keys]
+    links += [(ProfileFact.source_id, parent, ProfileFact.source_type == kind)
+              for kind, parent in [('record', 'record_sessions'), ('document', 'document_drafts'), ('stay', 'person_stays')]]
+    links += [(DocumentDraft.alert_id, 'alerts', None),
+              (DocumentDraft.copied_from, 'document_drafts', None)]
+    changed = True
+    while changed:
+        changed = False
+        for column, parent, condition in links:
+            parents = owned.get(parent, set())
+            if not parents:
+                continue
+            table = column.table
+            pk = list(table.primary_key)[0]
+            query = select(pk).where(column.in_(parents))
+            if condition is not None:
+                query = query.where(condition)
+            selected = set(session.scalars(query))
+            existing = owned.setdefault(table.name, set())
+            if selected - existing:
+                existing.update(selected)
+                changed = True
+    # Saved answers keep citation snapshots rather than database foreign keys.
+    # Remove only turns citing deleted laws, retaining unrelated conversation turns.
+    from .assistant_history import AssistantConversation, AssistantMessage
+    documents = owned.get('knowledge_documents', set())
+    affected_conversations = set()
+    if documents:
+        for message in session.scalars(select(AssistantMessage)):
+            data = json.loads(message.data)
+            if any(source.get('document_id') in documents
+                   for source in (data.get('answer') or {}).get('sources', [])):
+                owned.setdefault('assistant_messages', set()).add(message.id)
+                affected_conversations.add(message.conversation_id)
+        for conversation_id in affected_conversations:
+            remaining = session.scalar(select(AssistantMessage.id).where(
+                AssistantMessage.conversation_id == conversation_id,
+                AssistantMessage.id.not_in(owned.get('assistant_messages', set()))).limit(1))
+            if remaining is None:
+                owned.setdefault('assistant_conversations', set()).add(conversation_id)
     for table in reversed(Base.metadata.sorted_tables):
         ids=owned.get(table.name)
         if ids:session.execute(delete(table).where(list(table.primary_key)[0].in_(ids)))

@@ -15,14 +15,14 @@ export function DemoDataTools({ onChange, disabled=false }: { onChange:()=>void;
   async function perform(action:'generate'|'clear') {
     const agreed=await confirmAction(action==='generate'
       ? '将在测试数据库中生成一组相互关联的虚构业务资料，覆盖人员、预警、法规、文书、笔录、录音和画像。业务页面使用自然内容，不显示演示标签；已有资料与 AI 配置保持原样。'
-      : '清理当前生成批次及其后续修订、录音和历史记录。原有人员、资料、系统设置与密钥不受影响。如果新增独立业务引用了这些资料，会阻止清理。此操作无法撤销，可先下载完整备份。',
-      {title:action==='generate'?'准备完整演示资料':'清理本批次演示资料',confirmLabel:action==='generate'?'一键生成':'确认清理',tone:action==='clear'?'danger':'info'});
+      : '删除当前演示批次及所有引用它的关联业务记录，包括后来新增的笔录、录音、文书及副本、画像事实与关系、历史修订，以及引用这些法规的助手问答。无关业务数据、账号、系统设置和 API Key 保留。此操作无法撤销，建议先下载完整备份。',
+      {title:action==='generate'?'准备完整演示资料':'删除演示资料及全部关联数据',confirmLabel:action==='generate'?'一键生成':'确认删除关联数据',tone:action==='clear'?'danger':'info'});
     if(!agreed)return;
     setBusy(action);setError('');setMessage('');
     try {
       const result=await api<Dataset>('/demo-data/'+action,{method:'POST',body:JSON.stringify({confirmed:true,batch_id:data?.batch_id})});
       setData(previous=>({...result,enabled:previous?.enabled??false}));
-      setMessage(action==='generate'?'资料已准备好，可以进入各业务页面查看完整效果。':'本批次资料已清理，原有业务数据已保留。');onChange();
+      setMessage(action==='generate'?'资料已准备好，可以进入各业务页面查看完整效果。':'演示资料及全部关联数据已删除，无关业务数据已保留。');onChange();
     } catch(e){setError(e instanceof Error?e.message:'操作未完成，请重试。');await refresh();}
     finally{setBusy('');}
   }
@@ -31,6 +31,6 @@ export function DemoDataTools({ onChange, disabled=false }: { onChange:()=>void;
     <div className="demo-tools-note"><Layers3 size={17}/><p>以当前日期构建关联资料、近期趋势和办理进度。所有内容在本地生成，内部保留批次标识；不调用 AI，不使用真实人员资料。</p></div>
     {error&&<div className="p5-notice error" role="alert">{error}</div>}{message&&<div className="p5-notice" role="status"><CheckCheck size={16}/>{message}</div>}
     <div className="demo-module-grid">{modules.map(([key,label])=><div key={key}><span>{label}</span><strong>{data?.active?data.counts[key]??0:'—'}</strong></div>)}</div>
-    <div className="demo-tools-footer"><div><span className={`demo-state ${data?.active?'ready':''}`}/><span>{data?.active?'资料已就绪':data?.enabled?'尚未生成资料':'仅测试版可用'}{data?.active&&data.created_at&&<small>{new Date(data.created_at).toLocaleString('zh-CN')} · 当前批次</small>}</span></div><div className="p5-actions"><button type="button" className="btn btn-secondary" disabled={!data?.enabled||!data.active||!!busy||disabled} onClick={()=>void perform('clear')}>{busy==='clear'?<LoaderCircle className="spinning" size={15}/>:<Trash2 size={15}/>}清理演示资料</button><button type="button" className="btn btn-primary" disabled={!data?.enabled||data.active||!!busy||disabled} onClick={()=>void perform('generate')}>{busy==='generate'?<LoaderCircle className="spinning" size={15}/>:<DatabaseZap size={15}/>}一键生成演示资料</button></div></div>
+    <div className="demo-tools-footer"><div><span className={`demo-state ${data?.active?'ready':''}`}/><span>{data?.active?'资料已就绪':data?.enabled?'尚未生成资料':'仅测试版可用'}{data?.active&&data.created_at&&<small>{new Date(data.created_at).toLocaleString('zh-CN')} · 当前批次</small>}</span></div><div className="p5-actions"><button type="button" className="btn btn-secondary" disabled={!data?.enabled||!data.active||!!busy||disabled} onClick={()=>void perform('clear')}>{busy==='clear'?<LoaderCircle className="spinning" size={15}/>:<Trash2 size={15}/>}删除演示及关联数据</button><button type="button" className="btn btn-primary" disabled={!data?.enabled||data.active||!!busy||disabled} onClick={()=>void perform('generate')}>{busy==='generate'?<LoaderCircle className="spinning" size={15}/>:<DatabaseZap size={15}/>}一键生成演示资料</button></div></div>
   </section>;
 }
