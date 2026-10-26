@@ -80,12 +80,12 @@ export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void
     catch(e){setHistoryError(errorMessage(e));} finally{setHistoryBusy(false);}
   }
   useEffect(()=>{let active=true;
-    void (async()=>{try {const data=await api<{items:typeof history;has_more:boolean}>('/knowledge/conversations');if(!active)return;if(!Array.isArray(data.items))throw new Error('无法读取历史会话');setHistory(data.items);setHistoryMore(data.has_more);if(data.items[0]){const detail=await api<{id:string;items:Turn[]}>('/knowledge/conversations/'+data.items[0].id);if(active){setTurns(detail.items);setConversationId(detail.id);setTemplateId(detail.items.at(-1)?.templateId || '');setAsOf(detail.items.at(-1)?.date || today());}}}catch(e){if(active)setHistoryError(errorMessage(e));}finally{if(active)setLoadingConversation(false);}})();
+    void (async()=>{try {const data=await api<{items:typeof history;has_more:boolean}>('/knowledge/conversations');if(!active)return;if(!Array.isArray(data.items))throw new Error('无法读取历史会话');setHistory(data.items);setHistoryMore(data.has_more);if(data.items[0]){const detail=await api<{id:string;items:Turn[]}>('/knowledge/conversations/'+data.items[0].id);if(active){setTurns(detail.items);setConversationId(detail.id);setTemplateId(detail.items.at(-1)?.templateId || '');setAsOf(today());}}}catch(e){if(active)setHistoryError(errorMessage(e));}finally{if(active)setLoadingConversation(false);}})();
     return()=>{active=false;};
   },[]);
   useEffect(()=>{const node=scrollRef.current;if(node)node.scrollTop=node.scrollHeight;},[turns,progress,busy]);
   useEffect(()=>{const size=()=>{const node=workspaceRef.current;if(node)node.style.setProperty('--qa-top',Math.max(0,node.getBoundingClientRect().top)+'px');};size();window.addEventListener('resize',size);return()=>window.removeEventListener('resize',size);},[mobileLayout,templatePanelOpen]);
-  function newConversation(){setConversationId(null);setTurns([]);setQuestion('');setNotice('');setHistoryError('');}
+  function newConversation(){setAsOf(today());setConversationId(null);setTurns([]);setQuestion('');setNotice('');setHistoryError('');}
   async function submit(retryIndex?: number) {
     const previous = retryIndex === undefined ? undefined : turns[retryIndex];
     const value = (previous?.question ?? question).trim();
