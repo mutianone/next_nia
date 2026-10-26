@@ -231,3 +231,20 @@ def test_related_cleanup_rolls_back_every_delete_on_failure(client, monkeypatch)
         clear(client, batch)
     assert client.get('/api/demo-data').json()['counts'] == batch['counts']
     assert client.get('/api/demo-data').json()['active']
+
+
+def test_generated_public_laws_are_ready_for_ai_retrieval(client):
+    from backend.app.knowledge import KnowledgeDocument, _search, _missing_sources_message
+    from backend.app.people import business_today
+    seed(client)
+    with Session(client.app.state.engine) as session:
+        documents = session.scalars(select(KnowledgeDocument)).all()
+        assert len(documents) == 4
+        assert all(document.allow_external for document in documents)
+        sources, _ = _search(session, '外国人在中国境内工作需要哪些许可？', business_today(), 8, external_only=True)
+        assert sources
+        for document in documents:
+            document.allow_external = False
+        session.flush()
+        assert '尚未开启 AI 使用许可' in _missing_sources_message(session, business_today())
+        assert not _search(session, '外国人在中国境内工作需要哪些许可？', business_today(), 8, external_only=True)[0]

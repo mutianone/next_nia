@@ -191,7 +191,7 @@ def populate(session, today):
         sections,chunks=_build_chunks(identifier,[(content,None)])
         add(KnowledgeDocument(id=identifier,title=f'中华人民共和国出境入境管理法 · {topic}（节选）', version='2012年公布文本',authority='全国人民代表大会常务委员会',
             doc_number='中华人民共和国主席令第五十七号', category='法律', source=SOURCE, series_key=f'{batch_id}-article-{i}',
-            published_on=date(2012,6,30), effective_from=date(2013,7,1), status='published', allow_external=False,
+            published_on=date(2012,6,30), effective_from=date(2013,7,1), status='published', allow_external=True,
             filename=f'{topic}.txt',file_type='txt',size_bytes=len(raw),raw_file=raw,sha256=hashlib.sha256(raw).hexdigest(),chunk_count=len(chunks),created_at=moment(20-i)))
         for row in sections+chunks:add(row)
 

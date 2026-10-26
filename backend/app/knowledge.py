@@ -446,6 +446,21 @@ def _search(session: Session, query: str, as_of: date, limit: int, external_only
     return rank_sources(query, sources, limit)
 
 
+def _missing_sources_message(session: Session, as_of: date) -> str:
+    if not session.scalar(select(func.count()).select_from(KnowledgeDocument)):
+        return "知识库暂无法规资料，请在法规知识中心导入并发布法规后重试。"
+    published = select(KnowledgeDocument.id).where(KnowledgeDocument.status == 'published')
+    if session.scalar(published.limit(1)) is None:
+        return "知识库暂无已发布法规，请在法规知识中心审核发布资料后重试。"
+    valid = published.where(KnowledgeDocument.effective_from <= as_of,
+        or_(KnowledgeDocument.effective_to.is_(None), KnowledgeDocument.effective_to >= as_of))
+    if session.scalar(valid.limit(1)) is None:
+        return "所选法规检索日期内没有有效的已发布法规，请检查检索日期和法规生效、失效日期。"
+    if session.scalar(valid.where(KnowledgeDocument.allow_external.is_(True)).limit(1)) is None:
+        return "有效法规尚未开启 AI 使用许可，请联系管理员在系统设置 → AI 服务 → 法规资料许可中勾选对应资料。"
+    return "未匹配到与当前问题相关且允许用于 AI 的法规条款。请补充具体行为、许可情况，或导入对应法规；已有资料可能未覆盖该问题。"
+
+
 @router.get("")
 def list_documents(request: Request, q: str = Query(default="", max_length=200), status: Literal["draft", "published", "archived"] | None = None, page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
     with _session(request) as session:
@@ -521,7 +536,7 @@ def ask(request: Request, body: AskRequest):
         if template_sources is not None:
             sources = template_sources + sources[:4]
         if not sources:
-            return {"status": "insufficient", "answer": "没有检索到已发布、有效且允许用于外部 AI 的相关法规。请补充材料、调整问题，或前往系统配置 → AI 服务检查法规资料许可。", "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
+            return {"status": "insufficient", "answer": _missing_sources_message(session, as_of), "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
         if not body.confirm_external:
             raise HTTPException(400, "需要明确确认将本次问题与检索到的公开法规片段发送给已配置的 AI 服务商。")
         try:
@@ -565,10 +580,11 @@ def ask_stream(request: Request, body: AskRequest):
             yield event({"type": "status", "message": "正在检索法规依据…"})
             with _WRITE_LOCK, _session(request) as session:
                 sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
+                missing_message = _missing_sources_message(session, as_of) if not sources else None
             if template_sources is not None:
                 sources = template_sources + sources[:4]
             if not sources:
-                answer = {"status": "insufficient", "answer": "没有检索到可用于 AI 的有效法规，请补充资料或在系统配置中检查法规资料许可。", "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}
+                answer = {"status": "insufficient", "answer": missing_message, "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}
                 persist(answer)
                 yield event({"type":"complete", "answer":answer})
                 return
