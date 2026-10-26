@@ -342,3 +342,6 @@
 .rec-time-sort{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);margin-left:auto}
 .rec-time-sort [role=combobox]{min-width:180px;font-size:.75rem}
 @media(max-width:700px){.rec-time-sort{margin-left:0;width:100%;justify-content:space-between}.rec-time-sort [role=combobox]{flex:1}}
+
+.rec-time-sort{flex-shrink:0}
+.rec-time-sort>span{white-space:nowrap;flex-shrink:0}
