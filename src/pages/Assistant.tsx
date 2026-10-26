@@ -7,7 +7,7 @@ import { streamQuestion } from '../lib/aiStream';
 import { Access } from '../auth/AuthContext';
 import { PageHeading } from '../components/PageHeading';
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, BookOpen, Check, ChevronRight, CircleAlert, Copy, Download, History, Plus, Trash2, RotateCcw, LoaderCircle, LockKeyhole, MessageSquareText, Send, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, CircleAlert, Copy, Download, History, Plus, Trash2, RotateCcw, LoaderCircle, LockKeyhole, MessageSquareText, Send, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 import { api } from '../api';
 import type { Answer, Citation } from '../knowledge-types';
 import { errorMessage, today } from '../knowledge-types';
@@ -21,6 +21,7 @@ const starterQuestions = ['申请延长居留期限，应当何时提出申请�
 export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void; onSettings: () => void }) {
   const mobileLayout = useMediaQuery('(max-width: 850px)');
   const [templatePanelOpen,setTemplatePanelOpen] = useState(false);
+  const [dateHelpOpen, setDateHelpOpen] = useState(false);
   const [conversationId,setConversationId] = useState<string|null>(null);
   const [history,setHistory] = useState<{id:string;title:string;updated_at:string}[]>([]);
   const [historyOpen,setHistoryOpen] = useState(false);
@@ -131,7 +132,7 @@ export function Assistant({ onKnowledge, onSettings }: { onKnowledge: () => void
         </div></article>;
       })}</div>}
       {busy && <div className="qa-working" role="status"><LoaderCircle className="spinning" size={17}/>{progress}<button type="button" className="text-button" onClick={() => requestRef.current?.abort()}>停止生成</button></div>}
-      <form className="qa-composer" onSubmit={e => { e.preventDefault(); void submit(); }}><div className="qa-composer-toolbar"><span className="kb-local-badge"><Sparkles size={14}/>AI 问答</span><label className="qa-date">法规检索日期<input type="date" value={asOf} onChange={e => { setAsOf(e.target.value);  }} disabled={busy} required aria-describedby="qa-date-help"/></label></div><details className="qa-date-help"><summary>法规检索日期是什么意思？</summary><p id="qa-date-help">按所选日期筛选有效法规。涉及历史行为或法规变更时，具体法律适用仍需人工核对。</p></details>
+      <form className="qa-composer" onSubmit={e => { e.preventDefault(); void submit(); }}><div className="qa-composer-toolbar"><span className="kb-local-badge"><Sparkles size={14}/>AI 问答</span><div className="qa-date-controls"><label className="qa-date">法规检索日期<input type="date" value={asOf} onChange={e => { setAsOf(e.target.value);  }} disabled={busy} required aria-describedby={dateHelpOpen ? 'qa-date-help' : undefined}/></label><button type="button" className="qa-date-help-button" aria-label="法规检索日期说明" aria-expanded={dateHelpOpen} aria-controls="qa-date-help" onClick={() => setDateHelpOpen(open => !open)}><CircleHelp size={16}/></button></div></div>{dateHelpOpen && <p className="qa-date-help" id="qa-date-help">按所选日期筛选有效法规。涉及历史行为或法规变更时，具体法律适用仍需人工核对。</p>}
         {!ready && <div className="qa-config-note"><Settings2 size={15}/><span>{settingsError || '请先配置 API 密钥，并启用 AI 和默认服务商。'}</span><Access permission="admin"><button type="button" onClick={onSettings}>去配置<ArrowRight size={13}/></button></Access></div>}
         <textarea id="qa-question" aria-label="法规问题" placeholder={activeTemplate ? '按核查清单描述事实、时间和已有证据，未知项请注明；不必填写姓名、证件号…' : '描述法规问题，请勿填入姓名、证件号等个人信息…'} value={question} maxLength={1000} onChange={e => { setQuestion(e.target.value);  }} disabled={busy} required rows={3} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); void submit(); } }}/>
         {settings && !consent && <div className="qa-consent" role="status"><span>请前往系统设置 → AI 服务，勾选“允许法规问答发送至服务商”。非管理员请联系管理员。</span><Access permission="admin"><button type="button" className="text-button" onClick={onSettings}>前往系统设置</button></Access></div>}
