@@ -394,7 +394,7 @@ def capabilities(request: Request):
 
 
 @router.get("")
-def list_records(request: Request, q: str = Query(default="", max_length=200), status: Literal["all", "draft", "reviewed", "archived"] = "all", page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
+def list_records(request: Request, sort: Literal["updated_desc", "updated_asc", "occurred_desc", "occurred_asc"] = "updated_desc", q: str = Query(default="", max_length=200), status: Literal["all", "draft", "reviewed", "archived"] = "all", page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100)):
     with Session(request.app.state.engine) as session:
         conditions = []
         if status != "all":
@@ -402,7 +402,9 @@ def list_records(request: Request, q: str = Query(default="", max_length=200), s
         if q.strip():
             conditions.append(or_(RecordSession.title.icontains(q.strip(), autoescape=True), RecordSession.person_snapshot["name"].as_string().icontains(q.strip(), autoescape=True)))
         total = session.scalar(select(func.count()).select_from(RecordSession).where(*conditions)) or 0
-        rows = session.scalars(select(RecordSession).where(*conditions).order_by(RecordSession.updated_at.desc(), RecordSession.id).offset((page - 1) * page_size).limit(page_size)).all()
+        column = RecordSession.occurred_at if sort.startswith("occurred") else RecordSession.updated_at
+        ordering = column.asc() if sort.endswith("asc") else column.desc()
+        rows = session.scalars(select(RecordSession).where(*conditions).order_by(ordering.nulls_last(), RecordSession.id).offset((page - 1) * page_size).limit(page_size)).all()
         stats = dict(session.execute(select(RecordSession.status, func.count()).group_by(RecordSession.status)).all())
         return {"items": [record_json(session, row) for row in rows], "total": total, "page": page, "page_size": page_size,
                 "stats": {"total": sum(stats.values()), **{name: stats.get(name, 0) for name in ("draft", "reviewed", "archived")}}}

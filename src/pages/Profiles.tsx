@@ -1,13 +1,13 @@
 import { Access } from '../auth/AuthContext';
 import { useListPosition, useViewState } from '../hooks/useWorkspaceView';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowRight, CheckCheck, ChevronLeft, ChevronRight, Clock3, FileSearch, GitBranch, Network, Pencil, Plus, RefreshCw, Search, ShieldCheck, UsersRound } from 'lucide-react';
 import { ProfileInsights, type ProfileInsightsData } from '../components/profiles/ProfileInsights';
 import { ProfileCandidates } from '../components/profiles/ProfileCandidates';
 import { FactDistribution } from '../components/profiles/FactDistribution';
 import { ProfileTimeline } from '../components/profiles/ProfileTimeline';
-const RelationStudio = lazy(() => import('../components/profiles/RelationStudio').then(module => ({ default: module.RelationStudio })));
+import { RelationPanel } from '../components/profiles/RelationPanel';
 import { api } from '../api';
 import { PageHeading } from '../components/PageHeading';
 import { Dialog } from '../components/Dialog';
@@ -85,7 +85,7 @@ export function Profiles() {
         const fact = event.kind === 'fact' ? profile.facts.find(f => f.id === event.id) : undefined;
         setEvidence({ title: event.title + ' · 关联依据', text: source ? `${source.title}\n${source.detail}\n\n${source.excerpt || ''}` : fact ? `资料来源：${fact.source}\n核验说明：${fact.review_note || '尚未核验'}\n${JSON.stringify(fact.source_snapshot, null, 2)}` : event.detail });
       }}/>}
-      {tab==='relations' && <section className="panel"><div className="section-title"><h2>关系探索</h2><Access permission="write"><button className="btn btn-primary" disabled={profile.person.archived} onClick={()=>edit('relation')}><Plus size={14}/>登记关系</button></Access></div><p className="p5-caption">默认展示已人工核验的直接关系。点击节点查看来源，可拖动节点、缩放画布或切换布局。</p><Suspense fallback={<div className="p5-empty">正在载入关系画布…</div>}><RelationStudio key={profile.person.id} person={profile.person} relations={profile.relations} onOpen={setSelected}/></Suspense><div className="ps-register-heading"><h3>关系登记簿</h3><span>含待核验与归档记录 · {profile.relations.length} 条</span></div><div className="p5-relations">{profile.relations.map(r=><article key={r.id}><span className="p5-avatar">{r.other.name.slice(0,1)}</span><div><strong>{r.other.name} <small>{r.label}</small></strong><p>{r.source}</p><span className="badge">{r.archived||r.other.archived?'已归档':r.verified?'已核验':'待核验'}</span><small> {r.review_note||'尚无核验说明'}</small></div><Access permission="write"><button className="icon-button" aria-label={'编辑关系 '+r.other.name} disabled={r.person_id!==profile.person.id||profile.person.archived} title={r.person_id!==profile.person.id?'请从登记方画像修改':'编辑关系'} onClick={()=>edit('relation',r)}><Pencil size={14}/></button></Access></article>)}</div></section>}
+      {tab==='relations' && <section className="panel"><div className="section-title"><h2>关系探索</h2><Access permission="write"><button className="btn btn-primary" disabled={profile.person.archived} onClick={()=>edit('relation')}><Plus size={14}/>登记关系</button></Access></div><p className="p5-caption">默认展示已人工核验的直接关系。点击节点查看来源，可拖动节点、缩放画布或切换布局。</p><Suspense fallback={<div className="p5-empty">正在载入关系画布…</div>}><RelationPanel key={profile.person.id} person={profile.person} relations={profile.relations} onOpen={setSelected}/></Suspense><div className="ps-register-heading"><h3>关系登记簿</h3><span>含待核验与归档记录 · {profile.relations.length} 条</span></div><div className="p5-relations">{profile.relations.map(r=><article key={r.id}><span className="p5-avatar">{r.other.name.slice(0,1)}</span><div><strong>{r.other.name} <small>{r.label}</small></strong><p>{r.source}</p><span className="badge">{r.archived||r.other.archived?'已归档':r.verified?'已核验':'待核验'}</span><small> {r.review_note||'尚无核验说明'}</small></div><Access permission="write"><button className="icon-button" aria-label={'编辑关系 '+r.other.name} disabled={r.person_id!==profile.person.id||profile.person.archived} title={r.person_id!==profile.person.id?'请从登记方画像修改':'编辑关系'} onClick={()=>edit('relation',r)}><Pencil size={14}/></button></Access></article>)}</div></section>}
       </>}
     </div></div>
     {candidatesFor && <ProfileCandidates personId={candidatesFor} onClose={() => setCandidatesFor('')} onChanged={() => setReload(value => value + 1)}/>}

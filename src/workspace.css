@@ -338,3 +338,7 @@
   .rec-library .rec-record-grid{gap:12px;padding:12px 16px}
   .rec-library .rec-record-card:nth-child(n){padding:20px 16px}
 }
+.rec-library-tools{flex-wrap:wrap}
+.rec-time-sort{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);margin-left:auto}
+.rec-time-sort [role=combobox]{min-width:180px;font-size:.75rem}
+@media(max-width:700px){.rec-time-sort{margin-left:0;width:100%;justify-content:space-between}.rec-time-sort [role=combobox]{flex:1}}

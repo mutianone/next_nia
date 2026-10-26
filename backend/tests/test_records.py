@@ -592,3 +592,14 @@ def test_central_external_permission_blocks_provider_even_when_confirmed(client,
     assert '系统配置' in response.json()['detail']
     assert not cloud.calls
     assert client.get('/api/records/capabilities').json()['ai'][purpose]['allowed'] is False
+
+def test_time_sorting_happens_before_pagination_and_missing_dates_last(client):
+    from datetime import datetime, timezone
+    rows=[create(client,title=title,occurred_at=date) for title,date in [('早','2026-01-01T10:00:00+08:00'),('晚','2026-03-01T10:00:00+08:00'),('无日期',None)]]
+    with Session(client.app.state.engine) as session,session.begin():
+        for i,row in enumerate(rows):
+            session.get(records.RecordSession,row['id']).updated_at=datetime(2026,1,i+1,tzinfo=timezone.utc)
+    for order,expected in [('occurred_asc',['早','晚','无日期']),('occurred_desc',['晚','早','无日期']),('updated_asc',['早','晚','无日期']),('updated_desc',['无日期','晚','早'])]:
+        results=[client.get('/api/records',params={'sort':order,'page':page,'page_size':1}).json()['items'][0]['title'] for page in (1,2,3)]
+        assert results==expected
+    assert client.get('/api/records?sort=unknown').status_code==422
