@@ -76,18 +76,19 @@
 @media(max-width:700px){.desktop-nav-toggle{display:none}}
 
 /* Shared bottom action row in the overview scene. */
-.dashboard-page .spatial-action{position:absolute;left:28px;right:118px;bottom:22px;max-width:390px;margin:0;z-index:4}
-.dashboard-page .work-hero-tasks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.dashboard-page .work-hero-tasks .hero-button{width:100%;height:40px;min-height:40px;padding:0 12px;gap:8px;border:1px solid #c2e9f34d;border-radius:8px;background:#d5eff714;color:#f2f9fc;font-size:.75rem;white-space:nowrap;justify-content:center;box-shadow:inset 0 1px 0 #ffffff0b}
+.dashboard-page .spatial-action{position:absolute;left:28px;right:118px;bottom:26px;max-width:390px;margin:0;z-index:4}
+.dashboard-page .work-hero-tasks{display:flex;flex-wrap:nowrap;gap:8px}
+.dashboard-page .work-hero-tasks .hero-button{width:auto;height:32px;min-height:32px;padding:0 11px;gap:6px;border:1px solid #c2e9f333;border-radius:6px;background:#d5eff70a;color:#f2f9fc;font-size:.75rem;white-space:nowrap;justify-content:center;box-shadow:inset 0 1px 0 #ffffff0b}
 .dashboard-page .work-hero-tasks .hero-button:hover{background:#d5eff72b;border-color:#c2e9f38c}
 .dashboard-page .work-hero-tasks .hero-button:focus-visible{outline:2px solid #a0dfd9;outline-offset:3px}
-.dashboard-page .work-hero-secondary b{font-size:inherit;font-weight:650}
+.dashboard-page .work-hero-tasks .hero-button>svg{width:12px;height:12px}
+.dashboard-page .work-hero-secondary b{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;border-radius:5px;background:#d5eff71c;color:#fff;font-size:.6875rem;font-weight:600;line-height:1}
 .dashboard-page .spatial-tool-actions button{height:40px;min-height:40px}
 .dashboard-page .spatial-copy{padding-bottom:64px}
 @media(max-width:700px){
-  .dashboard-page .spatial-action{left:18px;right:108px;bottom:16px}
+  .dashboard-page .spatial-action{left:18px;right:108px;bottom:19px}
   .dashboard-page .work-hero-tasks{gap:7px}
-  .dashboard-page .work-hero-tasks .hero-button{height:38px;min-height:38px;padding:0 6px;gap:4px;font-size:.625rem}
+  .dashboard-page .work-hero-tasks .hero-button{height:32px;min-height:32px;padding:0 7px;gap:4px;font-size:.625rem}
   .dashboard-page .work-hero-tasks .hero-button>svg{display:none}
   .dashboard-page .spatial-tool-actions button{height:38px;min-height:38px}
   .dashboard-page .spatial-copy{padding-bottom:0}
