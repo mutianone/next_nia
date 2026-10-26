@@ -49,3 +49,14 @@
   .dashboard-page .spatial-copy { position:static; }
   .dashboard-page .spatial-points:empty { display:none; }
 }
+
+/* Keep the overview identity and date on one line, with facts close below. */
+.dashboard-page .spatial-copy { position:static; align-self:start; padding-top:0; }
+.dashboard-page .spatial-eyebrow { position:absolute; left:28px; top:12px; line-height:20px; }
+.dashboard-page .spatial-corner { top:12px; }
+.dashboard-page .spatial-corner .dashboard-date { margin:0; line-height:20px; }
+.dashboard-page .spatial-copy h2 { margin-top:4px; }
+@media(max-width:700px) {
+  .dashboard-page .spatial-eyebrow { left:18px; }
+  .dashboard-page .spatial-hero { padding-top:38px; }
+}
