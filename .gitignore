@@ -39,3 +39,7 @@ backups/
 
 # Isolated presentation workspace
 backend/presentation-data/
+
+# Configuration credentials and SQLite journals
+settings.json
+*.sqlite-*

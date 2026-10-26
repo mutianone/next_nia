@@ -198,6 +198,14 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
                     provider.pop('base_url', None)
             return result
 
+    @application.get("/api/settings/ai-credentials")
+    def get_ai_credentials(request: Request):
+        if request.state.user['role'] != 'admin':
+            raise HTTPException(403, "仅管理员可查看 AI 密钥。")
+        with store.lock:
+            return {name: getattr(store.current.ai.providers, name).api_key.get_secret_value()
+                    for name in ('siliconflow', 'deepseek')}
+
     @application.put("/api/settings")
     def update_settings(update: SettingsUpdate):
         with store.lock:

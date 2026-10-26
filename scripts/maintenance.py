@@ -64,12 +64,12 @@ def main():
             result = restore_empty(engine, args.archive)
             (args.new_data_dir/'test.sqlite3').chmod(0o600)
         elif args.action == 'restore-postgres':
-            if not (args.config_dir/'settings.json').is_file(): raise ValueError('配置目录必须已存在')
+            if not any((args.config_dir/name).is_file() for name in ('settings.sqlite3', 'settings.json')): raise ValueError('配置目录必须已存在')
             settings = SettingsStore(args.config_dir).load()
             if settings.environment.mode != 'production': raise ValueError('必须指定已配置 PostgreSQL 的正式环境配置目录')
             engine = application_engine(settings, args.config_dir); result = restore_empty(engine, args.archive)
         else:
-            if not (args.data_dir/'settings.json').is_file(): raise ValueError('数据目录必须已有配置')
+            if not any((args.data_dir/name).is_file() for name in ('settings.sqlite3', 'settings.json')): raise ValueError('数据目录必须已有配置')
             settings = SettingsStore(args.data_dir).load(); engine = application_engine(settings, args.data_dir)
             # Reserve a private file exclusively; never truncate an existing archive.
             write_new(args.output, b'')

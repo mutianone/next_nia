@@ -94,8 +94,9 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   const mobile = useMediaQuery('(max-width: 700px)')
   const [notice, setNotice] = useState<Notice | null>(null)
   const [keys, setKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
+  const [savedKeys, setSavedKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
   const [clearKeys, setClearKeys] = useState<Record<ProviderId, boolean>>({ siliconflow: false, deepseek: false })
-  const [visibleKeys, setVisibleKeys] = useState<Record<ProviderId, boolean>>({ siliconflow: false, deepseek: false })
+  const [visibleKeys, setVisibleKeys] = useState<Record<ProviderId, boolean>>({ siliconflow: true, deepseek: true })
   const [password, setPassword] = useState('')
   const [clearPassword, setClearPassword] = useState(false)
   const [visiblePassword, setVisiblePassword] = useState(false)
@@ -107,10 +108,11 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     let cancelled = false
     setLoading(true)
     setLoadError('')
-    request<SettingsResponse>('/api/settings').then(result => {
+    Promise.all([request<SettingsResponse>('/api/settings'), request<Record<ProviderId, string>>('/api/settings/ai-credentials')]).then(([result, credentials]) => {
       if (cancelled) return
       if (!result.settings?.environment?.postgres || !result.settings?.ai?.providers?.siliconflow || !result.settings?.ai?.providers?.deepseek || !result.runtime) throw new Error('配置数据不完整，请检查服务版本。')
       setSaved(result.settings)
+      setKeys(credentials); setSavedKeys(credentials)
       setDraft(structuredClone(result.settings))
       setRuntime(result.runtime)
     }).catch(error => { if (!cancelled) setLoadError(error instanceof Error ? error.message : '读取配置失败。') })
@@ -118,7 +120,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     return () => { cancelled = true }
   }, [reload])
 
-  const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || password || clearPassword || keys.siliconflow || keys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
+  const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || password || clearPassword || keys.siliconflow !== savedKeys.siliconflow || keys.deepseek !== savedKeys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
 
   usePageDirty(dirty || saving)
 
@@ -165,10 +167,10 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     } catch (error) { setAiTests(current => ({ ...current, [id]: { status: 'error', message: error instanceof Error ? error.message : '连接验证失败。', fingerprint } })) }
   }
 
-  function resetSecrets() {
-    setKeys({ siliconflow: '', deepseek: '' })
+  function resetSecrets(values = savedKeys) {
+    setKeys(values)
     setClearKeys({ siliconflow: false, deepseek: false })
-    setVisibleKeys({ siliconflow: false, deepseek: false })
+    setVisibleKeys({ siliconflow: true, deepseek: true })
     setPassword(''); setClearPassword(false); setVisiblePassword(false)
   }
 
@@ -203,7 +205,8 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       const result = await request<SettingsResponse>('/api/settings', { method: 'PUT', body: JSON.stringify(payload) })
       if (!result.settings || !result.runtime) throw new Error('保存响应不完整，请重新读取配置确认状态。')
       setSaved(result.settings); setDraft(structuredClone(result.settings)); setRuntime(result.runtime)
-      resetSecrets(); setDatabaseTest(undefined); setAiTests({})
+      const persistedKeys = { siliconflow: clearKeys.siliconflow ? '' : (keys.siliconflow.trim() || savedKeys.siliconflow), deepseek: clearKeys.deepseek ? '' : (keys.deepseek.trim() || savedKeys.deepseek) };
+      setSavedKeys(persistedKeys); resetSecrets(persistedKeys); setDatabaseTest(undefined); setAiTests({})
       showNotice({ kind: 'success', text: result.runtime.pending_restart ? '配置已保存。环境配置将在后端服务重启后生效，当前数据不会自动迁移。' : '配置已保存，基础信息与 AI 设置已生效。' })
       onSaved?.()
     } catch (error) { showNotice({ kind: 'error', text: error instanceof Error ? error.message : '配置保存失败，请重试。' }) }
@@ -287,17 +290,17 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
             return <article className={`panel settings-provider-card ${config.enabled ? 'is-enabled' : ''}`} key={provider.id}>
               <div className="settings-provider-header"><div><h3>{provider.name}{draft.ai.default_provider === provider.id && <span className="settings-default-tag">默认</span>}</h3><p>{provider.description}</p></div><Switch checked={config.enabled} disabled={saving} label={`启用${provider.name}`} onChange={enabled => updateProvider(provider.id, { enabled })} /></div>
               <div className="settings-provider-fields">
-                <label className="field settings-field"><span>服务地址 <LockKeyhole size={12} /></span><input className="input settings-readonly" value="已配置 AI 接口" readOnly aria-label={`${provider.name}固定服务地址`} /><small>固定官方端点，由后端统一访问。</small></label>
-                <label className="field settings-field"><span>对话模型</span><input className="input" type="password" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <details className="nia-model-options"><summary>选择已检测模型 · {test.models.length}</summary><div>{test.models.map((model, index) => <button type="button" key={model} disabled={saving} onClick={() => updateProvider(provider.id, { chat_model: model })}>AI 模型 {index + 1}</button>)}</div></details>}</label>
-                {provider.id === 'siliconflow' && <label className="field settings-field"><span>中文语音转写模型</span><input className="input" type="password" value={config.asr_model || ''} disabled={saving} maxLength={200} placeholder="填写语音模型标识" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { asr_model: event.target.value })} /><small>录音转写独立使用此模型；对话模型用于摘要与法规问答。请使用“语音转写测试”单独验证识别能力。</small></label>}
+                <label className="field settings-field"><span>服务地址 <LockKeyhole size={12} /></span><input className="input settings-readonly" value={config.base_url} readOnly aria-label={`${provider.name}固定服务地址`} /><small>固定官方端点，由后端统一访问。</small></label>
+                <label className="field settings-field"><span>对话模型</span><input className="input" type="text" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <details className="nia-model-options"><summary>选择已检测模型 · {test.models.length}</summary><div>{test.models.map((model) => <button type="button" key={model} disabled={saving} onClick={() => updateProvider(provider.id, { chat_model: model })}>{model}</button>)}</div></details>}</label>
+                {provider.id === 'siliconflow' && <label className="field settings-field"><span>中文语音转写模型</span><input className="input" type="text" value={config.asr_model || ''} disabled={saving} maxLength={200} placeholder="填写语音模型标识" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { asr_model: event.target.value })} /><small>录音转写独立使用此模型；对话模型用于摘要与法规问答。请使用“语音转写测试”单独验证识别能力。</small></label>}
                 {provider.id === 'deepseek' && <p className="settings-caption">用于文字摘要与要素整理。录音转写使用AI的语音接口。</p>}
-                <div className="field settings-field"><div className="settings-label-line"><label htmlFor={`key-${provider.id}`}>API Key</label><span className={`settings-secret-state ${config.api_key_configured && !clearKeys[provider.id] ? 'configured' : ''}`}><KeyRound size={12} />{clearKeys[provider.id] ? '保存后清空' : config.api_key_configured ? '已配置 · 不回显' : '未配置'}</span></div><div className="settings-secret-input"><input className="input" id={`key-${provider.id}`} type={visibleKeys[provider.id] ? 'text' : 'password'} value={keys[provider.id]} disabled={saving || clearKeys[provider.id]} autoComplete="new-password" spellCheck={false} placeholder={config.api_key_configured ? '留空保留，输入以更换密钥' : '粘贴此服务商的 API Key'} onChange={event => { setKeys({ ...keys, [provider.id]: event.target.value }); setNotice(null) }} /><button type="button" disabled={saving || clearKeys[provider.id] || !keys[provider.id]} aria-label={visibleKeys[provider.id] ? `隐藏${provider.name}新密钥` : `显示${provider.name}新密钥`} onClick={() => setVisibleKeys({ ...visibleKeys, [provider.id]: !visibleKeys[provider.id] })}>{visibleKeys[provider.id] ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{config.api_key_configured && <label className="settings-checkbox"><input type="checkbox" checked={clearKeys[provider.id]} disabled={saving} onChange={event => { setClearKeys({ ...clearKeys, [provider.id]: event.target.checked }); setKeys({ ...keys, [provider.id]: '' }); setNotice(null) }} />保存时清空此密钥</label>}</div>
+                <div className="field settings-field"><div className="settings-label-line"><label htmlFor={`key-${provider.id}`}>API Key</label><span className={`settings-secret-state ${config.api_key_configured && !clearKeys[provider.id] ? 'configured' : ''}`}><KeyRound size={12} />{clearKeys[provider.id] ? '保存后清空' : config.api_key_configured ? '已保存至数据库' : '未配置'}</span></div><div className="settings-secret-input"><input className="input" id={`key-${provider.id}`} type={visibleKeys[provider.id] ? 'text' : 'password'} value={keys[provider.id]} disabled={saving || clearKeys[provider.id]} autoComplete="new-password" spellCheck={false} placeholder={config.api_key_configured ? '留空保留，输入以更换密钥' : '粘贴此服务商的 API Key'} onChange={event => { setKeys({ ...keys, [provider.id]: event.target.value }); setNotice(null) }} /><button type="button" disabled={saving || clearKeys[provider.id] || !keys[provider.id]} aria-label={visibleKeys[provider.id] ? `隐藏${provider.name}密钥` : `显示${provider.name}密钥`} onClick={() => setVisibleKeys({ ...visibleKeys, [provider.id]: !visibleKeys[provider.id] })}>{visibleKeys[provider.id] ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{config.api_key_configured && <label className="settings-checkbox"><input type="checkbox" checked={clearKeys[provider.id]} disabled={saving} onChange={event => { setClearKeys({ ...clearKeys, [provider.id]: event.target.checked }); setKeys({ ...keys, [provider.id]: '' }); setNotice(null) }} />保存时清空此密钥</label>}</div>
               </div>
               <div className="settings-provider-footer"><button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.chat_model.trim()} onClick={() => testAi(provider.id)}>{test?.status === 'loading' ? <LoaderCircle size={15} className="settings-spin" /> : <Unplug size={15} />}检测模型</button><button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.chat_model.trim()} onClick={() => testAi(provider.id, 'chat')}>实际生成测试</button>{provider.id === 'siliconflow' && <button type="button" className="btn btn-secondary" disabled={saving || test?.status === 'loading' || !keyAvailable || !config.asr_model?.trim()} onClick={() => testAi(provider.id, 'asr')}>语音转写测试</button>}<span>{clearKeys[provider.id] ? '清空密钥后无法调用' : config.enabled ? '服务商已启用' : '服务商未启用'}</span></div>
               <TestFeedback state={test} fingerprint={fingerprint} />
             </article>
           })}</div>
-          <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>分别验证连接与实际处理能力</strong><p>检测模型只读取模型列表；实际生成测试发送固定会议文字，语音测试发送随系统安装的中文测试录音，会产生服务商调用费用。测试不会读取业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>密钥不回显、不写入浏览器存储，保存后立即清除本页输入。</p></div></div>
+          <div className="settings-service-note"><ShieldCheck size={20} /><div><strong>分别验证连接与实际处理能力</strong><p>检测模型只读取模型列表；实际生成测试发送固定会议文字，语音测试发送随系统安装的中文测试录音，会产生服务商调用费用。测试不会读取业务资料，也不会自动保存配置。后续 AI 业务调用会将必要文本或音频发送至对应服务商；原始资料与处理结果仍保存在本地。</p><p>配置与 API Key 保存至配置数据库，仅管理员可在此查看和编辑，不写入浏览器存储。</p></div></div>
         </section></TabsContent>}
         <TabsContent value="data" forceMount asChild><div hidden={section !== 'data'}><Maintenance sampleWorkspace={runtime.sample_workspace}/></div></TabsContent>
       </motion.div>

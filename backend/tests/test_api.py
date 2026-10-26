@@ -33,7 +33,7 @@ def test_first_start_creates_private_local_configuration(client, tmp_path):
     assert health.json()["active_environment"] == "test"
     assert health.json()["database_engine"] == "SQLite"
     assert health.json()["pending_restart"] is False
-    assert (tmp_path / "settings.json").stat().st_mode & 0o777 == 0o600
+    assert (tmp_path / "settings.sqlite3").stat().st_mode & 0o777 == 0o600
     assert (tmp_path / "test.sqlite3").stat().st_mode & 0o777 == 0o600
     assert health.headers["cache-control"] == "no-store"
     public = client.get("/api/settings").json()["settings"]
@@ -50,7 +50,8 @@ def test_secrets_are_saved_retained_and_cleared_without_response_or_audit_leak(c
     for secret in ("database-secret-123", "sf-secret-123", "ds-secret-123"):
         assert secret not in saved.text
         assert secret not in client.get("/api/settings").text
-    stored = json.loads((tmp_path / "settings.json").read_text())["settings"]
+    with sqlite3.connect(tmp_path / "settings.sqlite3") as connection:
+        stored = json.loads(connection.execute("select payload from configuration").fetchone()[0])["settings"]
     assert stored["ai"]["providers"]["siliconflow"]["api_key"] == "sf-secret-123"
     body = payload(client)
     body["ai"]["providers"]["siliconflow"]["api_key"] = ""
@@ -107,7 +108,7 @@ def test_validation_never_echoes_secret_input(client):
 
 
 def test_invalid_production_database_does_not_save_or_change_runtime(client, tmp_path, monkeypatch):
-    before = (tmp_path / "settings.json").read_bytes()
+    before = (tmp_path / "settings.sqlite3").read_bytes()
     body = payload(client)
     body["environment"]["mode"] = "production"
     body["environment"]["postgres"]["password"] = "private-password"
@@ -119,7 +120,7 @@ def test_invalid_production_database_does_not_save_or_change_runtime(client, tmp
     response = client.put("/api/settings", json=body)
     assert response.status_code == 400
     assert "private-password" not in response.text
-    assert before == (tmp_path / "settings.json").read_bytes()
+    assert before == (tmp_path / "settings.sqlite3").read_bytes()
     assert client.get("/api/health").json()["active_environment"] == "test"
 
 
@@ -153,21 +154,21 @@ def test_environment_switch_validates_then_waits_for_restart(tmp_path, monkeypat
         assert client.put("/api/settings", json=body).json()["runtime"]["pending_restart"] is True
         assert client.get("/api/dashboard").json()["demo"] is False
     with sqlite3.connect(production_file) as connection:
-        assert {row[0] for row in connection.execute("select name from sqlite_master where type='table'")} == {"audit_events", "people", "person_stays", "knowledge_documents", "knowledge_sections", "knowledge_chunks", "alert_rules", "stay_alert_facts", "alerts", "alert_history", "document_templates", "document_drafts", "document_history", "record_sessions", "record_audio", "record_segments", "record_versions", "record_transcription_attempts", "record_analyses", "profile_facts", "profile_relations", "migration_items", "demo_datasets", "accounts", "login_sessions", "login_attempts"}
+        assert {row[0] for row in connection.execute("select name from sqlite_master where type='table'")} == set(main.Base.metadata.tables)
 
 
 def test_database_test_uses_unsaved_fields_preserves_password_and_does_not_save(client, tmp_path, monkeypatch):
     body = payload(client)
     body["environment"]["postgres"]["password"] = "saved-db-pass"
     assert client.put("/api/settings", json=body).status_code == 200
-    before = (tmp_path / "settings.json").read_bytes()
+    before = (tmp_path / "settings.sqlite3").read_bytes()
     calls = []
     monkeypatch.setattr(main, "probe_postgres", lambda config: calls.append(config) or 6)
     response = client.post("/api/settings/test-database", json={"host": "192.168.1.20", "database": "candidate", "password": ""})
     assert response.status_code == 200
     assert calls[0].database == "candidate"
     assert calls[0].password.get_secret_value() == "saved-db-pass"
-    assert before == (tmp_path / "settings.json").read_bytes()
+    assert before == (tmp_path / "settings.sqlite3").read_bytes()
 
 
 def mock_models(monkeypatch, handler):
@@ -278,18 +279,18 @@ def test_invalid_settings_file_is_not_overwritten(tmp_path):
 
 
 def test_failed_atomic_save_keeps_original_settings(client, tmp_path, monkeypatch):
-    original = (tmp_path / "settings.json").read_bytes()
+    original = (tmp_path / "settings.sqlite3").read_bytes()
 
     def fail_replace(*args):
         raise OSError("sensitive file details")
 
-    monkeypatch.setattr(os, "replace", fail_replace)
+    monkeypatch.setattr(client.app.state.store, "_connect", fail_replace)
     body = payload(client)
     body["general"]["system_name"] = "不应保存"
     response = client.put("/api/settings", json=body)
     assert response.status_code == 500
     assert "sensitive file details" not in response.text
-    assert (tmp_path / "settings.json").read_bytes() == original
+    assert (tmp_path / "settings.sqlite3").read_bytes() == original
     assert client.get("/api/settings").json()["settings"]["general"]["system_name"] != "不应保存"
     assert list(tmp_path.glob(".settings-*.tmp")) == []
 
@@ -339,3 +340,33 @@ def test_invalid_asr_model_never_replaces_saved_settings(client, value):
     body["ai"]["providers"]["siliconflow"]["asr_model"] = value
     assert client.put("/api/settings", json=body).status_code == 422
     assert client.get("/api/settings").json()["settings"]["ai"]["providers"]["siliconflow"]["asr_model"] == "FunAudioLLM/SenseVoiceSmall"
+
+
+def test_legacy_configuration_migrates_to_database(tmp_path):
+    from backend.app.schemas import persisted_settings
+    settings = Settings()
+    from pydantic import SecretStr
+    settings.ai.providers.deepseek.api_key = SecretStr("migration-test-key")
+    legacy = tmp_path / "settings.json"
+    legacy.write_text(json.dumps({"schema_version": 1, "settings": persisted_settings(settings)}))
+    store = SettingsStore(tmp_path)
+    assert store.load().ai.providers.deepseek.api_key.get_secret_value() == "migration-test-key"
+    assert not legacy.exists()
+    assert store.path.stat().st_mode & 0o777 == 0o600
+    assert SettingsStore(tmp_path).load().ai.providers.deepseek.api_key.get_secret_value() == "migration-test-key"
+
+
+def test_ai_credentials_are_admin_only(client):
+    body = payload(client)
+    body['ai']['providers']['deepseek']['api_key'] = 'admin-view-test-key'
+    assert client.put('/api/settings', json=body).status_code == 200
+    response = client.get('/api/settings/ai-credentials')
+    assert response.json()['deepseek'] == 'admin-view-test-key'
+    assert response.headers['cache-control'] == 'no-store'
+    assert 'admin-view-test-key' not in client.get('/api/settings').text
+
+    from backend.app.auth import permitted
+    assert not permitted('business', 'GET', '/api/settings/ai-credentials', {})
+    assert not permitted('viewer', 'GET', '/api/settings/ai-credentials', {})
+    client.post('/api/auth/logout')
+    assert client.get('/api/settings/ai-credentials').status_code == 401

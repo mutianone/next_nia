@@ -1,7 +1,8 @@
 import json
+from contextlib import closing
 import os
+import sqlite3
 from pathlib import Path
-import tempfile
 from threading import RLock
 
 from pydantic import ValidationError
@@ -16,45 +17,57 @@ class ConfigurationError(RuntimeError):
 class SettingsStore:
     def __init__(self, directory: Path):
         self.directory = directory
-        self.path = directory / "settings.json"
+        self.path = directory / "settings.sqlite3"
+        self.legacy_path = directory / "settings.json"
         self.lock = RLock()
         self.current = Settings()
+
+    def _connect(self):
+        self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if self.path.is_symlink():
+            raise ConfigurationError("配置数据库无效，请检查服务端配置；未自动覆盖。")
+        descriptor = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
+        os.close(descriptor)
+        self.path.chmod(0o600)
+        return sqlite3.connect(self.path)
 
     def load(self) -> Settings:
         with self.lock:
             try:
-                self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-                if not self.path.exists():
-                    self.save(Settings())
+                if self.path.exists():
+                    with closing(self._connect()) as connection, connection:
+                        row = connection.execute("SELECT payload FROM configuration WHERE id=1").fetchone()
+                    if not row:
+                        raise ConfigurationError("配置数据库内容缺失；未自动覆盖。")
+                    content = json.loads(row[0])
+                elif self.legacy_path.exists():
+                    if self.legacy_path.is_symlink() or self.legacy_path.stat().st_size > 128 * 1024:
+                        raise ConfigurationError("设置文件无效；未自动覆盖。")
+                    content = json.loads(self.legacy_path.read_text(encoding="utf-8"))
                 else:
-                    if self.path.is_symlink() or self.path.stat().st_size > 128 * 1024:
-                        raise ConfigurationError("设置文件无效，请检查服务端配置；未自动覆盖。")
-                    content = json.loads(self.path.read_text(encoding="utf-8"))
-                    if not isinstance(content, dict) or content.get("schema_version") != 1:
-                        raise ConfigurationError("设置文件版本不受支持；未自动覆盖。")
-                    self.current = Settings.model_validate(content["settings"])
-                    self.path.chmod(0o600)
+                    self.save(Settings())
+                    return self.current.model_copy(deep=True)
+                if not isinstance(content, dict) or content.get("schema_version") != 1:
+                    raise ConfigurationError("配置版本不受支持；未自动覆盖。")
+                settings = Settings.model_validate(content["settings"])
+                if not self.path.exists():
+                    self.save(settings)
+                    # Remove the legacy secret-bearing file only after the DB commit succeeds.
+                    self.legacy_path.unlink()
+                self.current = settings
                 return self.current.model_copy(deep=True)
             except ConfigurationError:
                 raise
-            except (OSError, ValueError, KeyError, ValidationError):
-                raise ConfigurationError("无法读取设置文件，请检查文件格式和权限；未自动覆盖。") from None
+            except (OSError, sqlite3.Error, ValueError, KeyError, ValidationError):
+                raise ConfigurationError("无法读取配置数据库，请检查配置格式和权限；未自动覆盖。") from None
 
     def save(self, settings: Settings) -> None:
         with self.lock:
-            temporary = None
             try:
-                self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-                descriptor, temporary = tempfile.mkstemp(prefix=".settings-", suffix=".tmp", dir=self.directory)
-                os.fchmod(descriptor, 0o600)
-                with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-                    json.dump({"schema_version": 1, "settings": persisted_settings(settings)}, stream, ensure_ascii=False, indent=2)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                os.replace(temporary, self.path)
+                payload = json.dumps({"schema_version": 1, "settings": persisted_settings(settings)}, ensure_ascii=False)
+                with closing(self._connect()) as connection, connection:
+                    connection.execute("CREATE TABLE IF NOT EXISTS configuration (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT NOT NULL)")
+                    connection.execute("INSERT INTO configuration(id,payload) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload", (payload,))
                 self.current = settings.model_copy(deep=True)
-            except OSError:
-                raise ConfigurationError("无法保存设置，请检查服务端目录权限和磁盘空间。") from None
-            finally:
-                if temporary and os.path.exists(temporary):
-                    os.unlink(temporary)
+            except (OSError, sqlite3.Error):
+                raise ConfigurationError("无法保存配置数据库，请检查目录权限和磁盘空间。") from None
