@@ -29,3 +29,16 @@
 
 .radar-feature i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .radar-feature span{transform:translateY(22px)}
+
+/* Keep the mobile radar behind the form without taking vertical space. */
+.login-form-stage{display:contents}
+.login-mobile-radar{display:none}
+@media(max-width:720px){
+  .login-story h1{font-size:1.35rem;letter-spacing:2px;margin:12px 0 0}
+  .login-story>.police-radar{display:none}
+  .login-form-stage{display:block;position:relative;isolation:isolate;max-width:440px;margin:22px auto 0}
+  .login-mobile-radar{display:block;position:absolute;inset:-35px -70px;z-index:-1;pointer-events:none;overflow:visible}
+  .login-mobile-radar .police-radar{position:absolute;left:50%;top:50%;right:auto;bottom:auto;width:560px;max-width:none;height:560px;margin:0;transform:translate(-50%,-50%);opacity:.9}
+  .login-mobile-radar .radar-feature,.login-mobile-radar .radar-shield{display:none}
+  .login-form-stage .login-panel{margin:0;background:linear-gradient(145deg,#f9fcffe8,#eaf2fcdc);box-shadow:0 18px 55px #0004,inset 0 1px 0 #fff9}
+}
