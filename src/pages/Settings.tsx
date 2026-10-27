@@ -1,3 +1,4 @@
+import { PublicLaws } from '../components/PublicLaws';
 import { aiLabel } from '../lib/aiLabel';
 import { KnowledgePermissions } from '../components/KnowledgePermissions';
 import '../components/interview-fields.css';
@@ -39,7 +40,7 @@ type PostgresSettings = {
 type AppSettings = {
   general: { system_name: string; organization: string; interview_locations?: string[] }
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
-  ai: { external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
+  ai: { public_laws_enabled?: boolean; external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
 type Runtime = { sample_workspace?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
@@ -193,7 +194,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim(), interview_locations: draft.general.interview_locations || [] },
         environment: { mode: draft.environment.mode, postgres: postgresPayload() },
         ai: {
-          enabled: draft.ai.enabled, default_provider: draft.ai.default_provider, external_permissions: draft.ai.external_permissions || { question: true, asr: true, analysis: true },
+          public_laws_enabled: draft.ai.public_laws_enabled ?? false, enabled: draft.ai.enabled, default_provider: draft.ai.default_provider, external_permissions: draft.ai.external_permissions || { question: true, asr: true, analysis: true },
           providers: Object.fromEntries(providers.map(provider => [provider.id, {
             enabled: draft.ai.providers[provider.id].enabled, base_url: provider.url, chat_model: draft.ai.providers[provider.id].chat_model.trim(),
             ...(provider.id === 'siliconflow' ? { asr_model: draft.ai.providers.siliconflow.asr_model?.trim() } : {}),
@@ -282,6 +283,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
             </div>
           </div>
 
+          <PublicLaws enabled={draft.ai.public_laws_enabled ?? false} disabled={saving} onChange={enabled => setDraft({...draft, ai:{...draft.ai,public_laws_enabled:enabled}})}/>
           <div className="settings-provider-grid">{providers.map(provider => {
             const config = draft.ai.providers[provider.id]
             const fingerprint = providerFingerprint(provider.id)

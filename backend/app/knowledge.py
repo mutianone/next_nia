@@ -515,6 +515,14 @@ def search(request: Request, body: SearchRequest):
     return {"items": items, "retrieval": retrieval, "as_of": as_of}
 
 
+def _public_fallback(request, settings, question, as_of):
+    from .public_laws import search_public
+    # A locally revoked source must not be reintroduced through public fallback.
+    with _session(request) as session:
+        blocked = set(session.scalars(select(KnowledgeDocument.title).where(KnowledgeDocument.allow_external.is_(False))))
+    return search_public(request.app.state.store.directory, question, as_of, blocked)
+
+
 @router.post("/ask")
 def ask(request: Request, body: AskRequest):
     as_of = body.as_of or _today()
@@ -529,14 +537,18 @@ def ask(request: Request, body: AskRequest):
         settings = request.app.state.store.current.model_copy(deep=True)
     if not settings.ai.external_permissions.question:
         raise HTTPException(403, "请前往系统配置 → AI 服务，勾选允许法规问答发送至服务商；非管理员请联系管理员。")
+    if not body.confirm_external:
+        raise HTTPException(400, "AI 外发许可尚未确认。")
     # Keep publication/external-permission checks and the outbound request in one
     # serialized operation. A concurrent revocation cannot slip between them.
     with _WRITE_LOCK, _session(request, write=True) as session:
         sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
         if template_sources is not None:
             sources = template_sources + sources[:4]
+        if not sources and settings.ai.enabled and settings.ai.public_laws_enabled:
+            sources, retrieval = _public_fallback(request, settings, body.question, as_of)
         if not sources:
-            return {"status": "insufficient", "answer": _missing_sources_message(session, as_of), "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
+            return {"status": "insufficient", "answer": retrieval['message'] if retrieval.get('mode') == 'public_catalogue' else _missing_sources_message(session, as_of), "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
         if not body.confirm_external:
             raise HTTPException(400, "需要明确确认将本次问题与检索到的公开法规片段发送给已配置的 AI 服务商。")
         try:
@@ -583,6 +595,10 @@ def ask_stream(request: Request, body: AskRequest):
                 missing_message = _missing_sources_message(session, as_of) if not sources else None
             if template_sources is not None:
                 sources = template_sources + sources[:4]
+            if not sources and settings.ai.enabled and settings.ai.public_laws_enabled:
+                yield event({"type":"status", "message":"本地未命中，正在检索官方法规目录…"})
+                sources, retrieval = _public_fallback(request, settings, body.question, as_of)
+                missing_message = retrieval['message']
             if not sources:
                 answer = {"status": "insufficient", "answer": missing_message, "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}
                 persist(answer)

@@ -136,6 +136,7 @@ class ExternalPermissions(StrictModel):
 
 
 class AISettings(StrictModel):
+    public_laws_enabled: bool = False
     enabled: bool = False
     default_provider: ProviderName = "siliconflow"
     external_permissions: ExternalPermissions = Field(default_factory=ExternalPermissions)
@@ -143,6 +144,7 @@ class AISettings(StrictModel):
 
 
 class AIUpdate(StrictModel):
+    public_laws_enabled: bool = False
     enabled: bool = False
     default_provider: ProviderName = "siliconflow"
     external_permissions: ExternalPermissions = Field(default_factory=ExternalPermissions)
@@ -204,6 +206,8 @@ def merge_postgres(update: PostgresUpdate, current: PostgresSettings) -> Postgre
 
 def merge_settings(update: SettingsUpdate, current: Settings) -> Settings:
     data = update.model_dump()
+    if "public_laws_enabled" not in update.ai.model_fields_set:
+        data["ai"]["public_laws_enabled"] = current.ai.public_laws_enabled
     if "external_permissions" not in update.ai.model_fields_set:
         data["ai"]["external_permissions"] = current.ai.external_permissions.model_dump()
     data["environment"]["postgres"] = merge_postgres(update.environment.postgres, current.environment.postgres)

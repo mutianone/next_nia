@@ -29,6 +29,7 @@ from .analytics import router as analytics_router
 from .migration import router as migration_router
 from .maintenance import router as maintenance_router
 from .demo import router as demo_router
+from .public_laws import router as public_laws_router
 from .schemas import AITestRequest, PostgresUpdate, SettingsUpdate, database_identity, merge_postgres, merge_settings, public_settings
 
 VERSION = "0.5.1"
@@ -265,6 +266,7 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
     application.include_router(migration_router)
     application.include_router(maintenance_router)
     application.include_router(demo_router)
+    application.include_router(public_laws_router)
     if os.environ.get('NEXT_NIA_SERVE_DIST') == '1':
         from fastapi.staticfiles import StaticFiles
         dist = Path(__file__).resolve().parents[2] / 'dist'
