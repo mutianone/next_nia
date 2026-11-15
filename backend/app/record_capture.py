@@ -20,6 +20,7 @@ from pydantic import Field, field_validator
 from sqlalchemy import select, func, Integer, String, JSON, LargeBinary, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, Session
 from . import records as r
+from . import record_asr_results as ar
 from .records_ai import provider_config, transcribe_audio, analyze_segments, RecordAIError
 from .record_candidates import add_candidates, pair_qa, rule_facts
 from types import SimpleNamespace
@@ -287,6 +288,15 @@ def claim(engine):
     return None
 
 
+def batch_origin(batch):
+    return f'capture:{batch.capture_id}:{batch.id}'
+
+
+def batch_inputs(session, capture, batch):
+    run=ar.origin_run(session,capture.record_id,batch_origin(batch))
+    return ar.analysis_inputs(session,run) if run else [{'segment_id':batch.segment_id,'text':batch.text,'speaker':'unknown'}]
+
+
 def process(engine,identifier,token,settings):
     def valid(s):
         b=s.get(Batch,identifier)
@@ -300,17 +310,26 @@ def process(engine,identifier,token,settings):
             provider_config(settings,purpose)
         with Session(engine) as s:
             b,c=valid(s);text=b.text;template=deepcopy(c.template)
-            pcm=None if text else b''.join(x.pcm for x in s.scalars(select(Chunk).where(Chunk.capture_id==c.id,Chunk.sequence>=b.first,Chunk.sequence<=b.last).order_by(Chunk.sequence)))
+            pcm=None
+            if not text:
+                chunks=list(s.scalars(select(Chunk).where(Chunk.capture_id==c.id,Chunk.sequence>=b.first,Chunk.sequence<=b.last).order_by(Chunk.sequence)))
+                offset=s.scalar(select(func.coalesce(func.sum(Chunk.samples),0)).where(Chunk.capture_id==c.id,Chunk.sequence<b.first))
+                if [x.sequence for x in chunks]!=list(range(b.first,b.last+1)) or sum(x.samples for x in chunks)!=b.samples or offset!=b.offset_samples:
+                    raise RecordAIError(409,'识别批次音频区间不完整或偏移不一致，未发送音频。')
+                pcm=b''.join(x.pcm for x in chunks)
         if not text:
             output=transcribe_audio(wav(pcm),'wav','audio/wav',settings);text=output['text'].strip()
             if not text:raise RecordAIError(422,'本段未识别到文字，请试听后重试；未跳过原音。')
             with r.write_session(engine) as s:
-                b,c=valid(s);b.text=text;b.asr_provider,b.asr_model,_=provider_config(settings,'asr');b.state='pending';b.attempts=0;b.retry_at=r.utc_now();b.token=''
+                b,c=valid(s)
+                intervals=[{'batch_start_sample':0,'batch_end_sample':b.samples,'session_start_sample':b.offset_samples,'sample_rate':RATE}]
+                ar.save_result(s,c.record_id,batch_origin(b),output,intervals=intervals)
+                b.text=text;b.asr_provider,b.asr_model,_=provider_config(settings,'asr');b.state='pending';b.attempts=0;b.retry_at=r.utc_now();b.token=''
             return
         with r.write_session(engine) as s:
             b,c=valid(s)
             previous=s.scalar(select(Batch).where(Batch.capture_id==c.id,Batch.first<b.first).order_by(Batch.first.desc()))
-            inputs=([{'segment_id':previous.segment_id,'text':previous.text}] if previous and previous.text else [])+[{'segment_id':b.segment_id,'text':b.text}]
+            inputs=(batch_inputs(s,c,previous) if previous and previous.text else [])+batch_inputs(s,c,b)
             if not b.groups:
                 pairs=pair_qa([SimpleNamespace(id=x['segment_id'],text=x['text'],speaker='unknown') for x in inputs],template)
                 # Carry context for unfinished questions, but do not duplicate an identical answer.
@@ -370,6 +389,10 @@ def finalize(engine,cid,settings):
         start=c.started_at.replace(tzinfo=timezone.utc) if c.started_at.tzinfo is None else c.started_at
         captured=c.captured_at or c.started_at
         captured=captured.replace(tzinfo=timezone.utc) if captured.tzinfo is None else captured
+        sentence_count=sum(len(ar.sentences(s,run)) if (run:=ar.origin_run(s,row.id,batch_origin(b))) else (1 if b.text else 0) for b in batches)
+        if len(existing)+sentence_count>r.LIMITS['max_segments']:
+            c.state='paused';c.error='识别片段超过正文上限，逐句原始结果已保留。';return
+        position=len(existing)
         for i,b in enumerate(batches):
             pcm=b''.join(x.pcm for x in s.scalars(select(Chunk).where(Chunk.capture_id==cid,Chunk.sequence>=b.first,Chunk.sequence<=b.last).order_by(Chunk.sequence)))
             raw=wav(pcm);audio=r.AudioClip(record_id=row.id,filename=f'连续录音-{cid[:8]}-{i+1:03}.wav',format='wav',mime_type='audio/wav',size_bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),duration_ms=round(b.samples/RATE*1000),raw_audio=raw)
@@ -378,7 +401,11 @@ def finalize(engine,cid,settings):
             provider,model=b.asr_provider or 'siliconflow',b.asr_model or '未完成转写'
             attempt=r.TranscriptionAttempt(record_id=row.id,audio_id=audio.id,status='succeeded' if b.text else 'failed',text=b.text,error='用户跳过本段自动处理' if b.state=='skipped' else '',provider=provider,model=model,input_revision=row.revision,finished_at=r.utc_now())
             s.add(attempt);s.flush()
-            if b.text:s.add(r.RecordSegment(id=b.segment_id,record_id=row.id,position=len(existing)+i,audio_id=audio.id,speaker='unknown',text=b.text,source='asr',transcription_id=attempt.id))
+            run=ar.origin_run(s,row.id,batch_origin(b))
+            if run:
+                position+=ar.project(s,run,row,audio.id,attempt.id,position)
+            elif b.text:
+                s.add(r.RecordSegment(id=b.segment_id,record_id=row.id,position=position,audio_id=audio.id,speaker='unknown',text=b.text,source='asr',transcription_id=attempt.id));position+=1
         s.flush();all_segments=r.ordered_segments(s,row.id);valid_ids={x.id for x in all_segments}
         if not all_segments:
             row.occurred_at=r.recording_bounds(s,row.id)[0]

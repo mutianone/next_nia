@@ -29,19 +29,19 @@ def _cache(fingerprint,task=None,delete=False):
     with sqlite3.connect(path,timeout=10) as db:
         path.chmod(0o600)
         db.execute('CREATE TABLE IF NOT EXISTS tasks (fingerprint TEXT PRIMARY KEY,task TEXT NOT NULL,created REAL NOT NULL)')
-        db.execute('DELETE FROM tasks WHERE created < ?', (time.time()-36*3600,))
+        db.execute('DELETE FROM tasks WHERE created < ?', (time.time()-23*3600,))
         if delete:db.execute('DELETE FROM tasks WHERE fingerprint=?',(fingerprint,));return
         if task:db.execute('INSERT OR REPLACE INTO tasks VALUES (?,?,?)',(fingerprint,task,time.time()));return
         row=db.execute('SELECT task FROM tasks WHERE fingerprint=?',(fingerprint,)).fetchone()
         return row[0] if row else None
 
 
-def transcribe(raw,fmt,mime,key,workspace=''):
+def transcribe(raw,fmt,mime,key,workspace='',request_key=''):
     from .records_ai import RecordAIError
-    from .record_speech import normalize_turns
+    from .record_asr_results import normalize_funasr
     from .documents import plain_text
     base=f'https://{workspace}.cn-beijing.maas.aliyuncs.com/api/v1' if workspace else BASE
-    fingerprint=hashlib.sha256(key.encode()+b'\0'+workspace.encode()+b'\0'+raw).hexdigest()
+    fingerprint=hashlib.sha256(key.encode()+b'\0'+workspace.encode()+b'\0'+request_key.encode()+b'\0'+raw).hexdigest()
     deadline=time.monotonic()+MAX_WAIT
     auth={'Authorization':f'Bearer {key}'}
     def request(client,method,url,*,decode=True,**kwargs):
@@ -88,19 +88,8 @@ def transcribe(raw,fmt,mime,key,workspace=''):
             results=output['results']
             if len(results)!=1 or results[0].get('subtask_status')!='SUCCEEDED':raise ValueError()
             data=request(client,'GET',_oss_url(results[0]['transcription_url']))
-            tracks=data['transcripts']
-            if len(tracks)!=1:raise ValueError()
-            parts=[]
-            for sentence in tracks[0]['sentences']:
-                text=sentence['text']
-                if not isinstance(text,str):raise ValueError()
-                plain_text(text)
-                if key in text:raise ValueError()
-                begin,end=sentence['begin_time'],sentence['end_time']
-                if type(begin) is not int or type(end) is not int:raise ValueError()
-                parts.append({'text':text,'speaker':sentence['speaker_id'],'start':begin/1000,'end':end/1000})
-            turns=normalize_turns({'segments':parts})
-            return {'provider':'aliyun','model':'fun-asr','text':'\n'.join(t['text'] for t in turns),'segments':turns}
+            if key in json.dumps(data,ensure_ascii=False):raise ValueError()
+            return normalize_funasr(data, task, hashlib.sha256((key+'\0'+workspace).encode()).hexdigest())
     except RecordAIError:raise
     except httpx.TimeoutException:raise RecordAIError(504,'Fun-ASR请求超时；已提交任务可在重试时继续查询。') from None
     except (httpx.HTTPError,ValueError,KeyError,TypeError,IndexError,sqlite3.Error,OSError):

@@ -40,10 +40,13 @@ def validate_turns(data, sources):
         for item in items:
             end=cursor+len(item['text'])
             voice=re.match(r'^\[说话人 ([A-Za-z0-9_-]{1,32})\]',item['text'])
-            group=f"{source['audio_id'] or source['id']}:{voice[1]}" if voice else None
+            label=source.get('speaker_id') if source.get('recognition_run_id') else (voice[1] if voice else None)
+            group=(f"{source['recognition_run_id']}:{label}" if source.get('recognition_run_id') and label is not None
+                   else f"{source['audio_id'] or source['id']}:{voice[1]}" if voice else None)
+            if len(items)>1:group=None
             turns.append({'source_id':source['id'],'source_start':cursor,'source_end':end,
                           'text':item['text'],'suggested_role':item['suggested_role'], 'speaker':'unknown',
-                          'voice_group':group, 'voice_label':voice[1] if voice else None,
+                          'voice_group':group, 'voice_label':str(label) if label is not None else None,
                           'audio_id':source['audio_id'], 'listen_start_ms':source['start_ms'],
                           'start_ms':source['start_ms'] if len(items)==1 else None,
                           'end_ms':source['end_ms'] if len(items)==1 else None})

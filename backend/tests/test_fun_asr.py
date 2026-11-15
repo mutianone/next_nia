@@ -37,8 +37,12 @@ def test_turns_and_resume(cloud):
     result=run()
     assert result['provider']=='aliyun'
     assert len(result['segments'])==2
-    assert result['segments'][1]=={'speaker':'unknown','text':'[说话人 1] 我叫测试人员。','start_ms':1100,'end_ms':2500}
-    cloud['calls'].clear();run()
+    assert result['segments'][1]['text']=='我叫测试人员。'
+    assert result['segments'][1]['speaker_id']==1
+    assert result['segments'][1]['start_ms']==1100
+    assert result['segments'][1]['end_ms']==2500
+    assert result['segments'][1]['speaker']=='unknown'
+    cloud['calls'].clear();assert run()['recognition_run_id']==result['recognition_run_id']
     assert all(r.method=='GET' for r in cloud['calls'])
     assert not any(r.url.path.endswith('/uploads') for r in cloud['calls'])
 

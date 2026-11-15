@@ -72,7 +72,7 @@ def bounded_post(url, key, *, limit, timeout=90.0, **kwargs):
         raise RecordAIError(502, "AI 响应无法读取，本次结果未应用。") from None
 
 
-def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Settings) -> dict:
+def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Settings, *, request_key: str = '') -> dict:
     provider, model, key = provider_config(settings, "asr")
     try:
         raw, file_format, mime_type = normalize_for_asr(raw, file_format)
@@ -80,7 +80,7 @@ def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Set
         raise RecordAIError(422, str(error)) from None
     if provider == 'aliyun':
         from .record_fun_asr import transcribe
-        return transcribe(raw,file_format,mime_type,key,settings.ai.speech.workspace_id)
+        return transcribe(raw,file_format,mime_type,key,settings.ai.speech.workspace_id,request_key=request_key)
     # Never send the original filename, person details, other clips or metadata.
     payload = bounded_post(ASR_URL, key, limit=128 * 1024,
                            data={"model": model}, files={"file": (f"recording.{file_format}", raw, mime_type)})

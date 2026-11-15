@@ -23,6 +23,7 @@ from .database import AuditEvent, Base
 from .documents import DRAFT_LABEL, REVIEWED_LABEL, make_docx, plain_text
 from .people import Person, timestamp, utc_now
 from .record_media import conversion_available
+from . import record_asr_results as asr_results
 from .records_ai import RecordAIError, analyze_segments, provider_config, transcribe_audio
 from .schemas import reveal
 from .record_word import export_original
@@ -322,6 +323,12 @@ class SegmentsUpdate(Input):
         return value
 
 
+class TranscribeRequest(Input):
+    expected_revision: int = Field(ge=1)
+    confirmed: bool = Field(default=False, strict=True)
+    recognition_request_id: str | None = Field(default=None, pattern=r"^[a-f0-9-]{36}$")
+
+
 class AIRequest(Input):
     expected_revision: int = Field(ge=1)
     confirmed: bool = Field(default=False, strict=True)
@@ -408,7 +415,8 @@ def ordered_segments(session, record_id):
 
 def segment_json(row):
     return {**{key: getattr(row, key) for key in ("id", "audio_id", "start_ms", "end_ms", "speaker", "text", "source", "transcription_id")},
-            "timestamp_source": ("asr" if row.source == "asr" else "manual") if row.start_ms is not None else "none"}
+            "timestamp_source": ("asr" if row.source == "asr" else "manual") if row.start_ms is not None else "none",
+            **asr_results.metadata(row)}
 
 
 def clip_json(row):
@@ -433,7 +441,8 @@ def record_json(session, row):
 
 
 def input_segments(segments):
-    return [{"segment_id": item.id, "text": item.text, "speaker": item.speaker} for item in segments]
+    return [{"segment_id": item.id, "text": item.text, "speaker": item.speaker,
+             **({"speaker_id": meta.get("speaker_id"), "recognition_run_id": meta["recognition_run_id"]} if (meta := asr_results.metadata(item)) else {})} for item in segments]
 
 
 def content_hash(segments):
@@ -872,6 +881,7 @@ def delete_audio(record_id: str, audio_id: str, body: AIRequest, request: Reques
                 raise HTTPException(409, "本笔录正在转写或生成，请等待完成后再删除音频。")
         from .record_capture import purge_audio
         purge_audio(session, record_id, audio_id)
+        asr_results.purge_audio(session, record_id, audio_id)
         attempts = session.scalars(select(TranscriptionAttempt).where(TranscriptionAttempt.record_id == record_id, TranscriptionAttempt.audio_id == audio_id)).all()
         attempt_ids = {item.id for item in attempts}
         histories = session.scalars(select(RecordVersion).where(RecordVersion.record_id == record_id)).all()
@@ -924,7 +934,7 @@ def delete_audio(record_id: str, audio_id: str, body: AIRequest, request: Reques
 
 
 @router.post("/{record_id}/audio/{audio_id}/transcribe")
-def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request):
+def transcribe(record_id: str, audio_id: str, body: TranscribeRequest, request: Request):
     settings, provider, model = confirmed_settings(request, body, "asr")
     engine = request.app.state.engine
     with write_session(engine) as session:
@@ -942,7 +952,7 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
         identifier = attempt.id
         audit(session, "transcription_started", record_id=row.id, attempt_id=identifier, audio_id=audio_id)
     try:
-        output = transcribe_audio(raw, file_format, mime_type, settings)
+        output = transcribe_audio(raw, file_format, mime_type, settings, **({"request_key": body.recognition_request_id} if body.recognition_request_id else {}))
     except RecordAIError as error:
         mark_failed(engine, TranscriptionAttempt, identifier, error.message)
         raise HTTPException(error.status, error.message) from None
@@ -951,6 +961,12 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
         row = get_record(session, record_id, True)
         attempt = session.get(TranscriptionAttempt, identifier)
         attempt.text, attempt.finished_at = output["text"], utc_now()
+        try:
+            recognition = asr_results.save_result(session, record_id, "audio:" + audio_id, output, audio_id)
+        except RecordAIError as error:
+            attempt.status, attempt.error = 'failed', error.message
+            session.commit()
+            raise HTTPException(error.status, error.message) from None
         segments = ordered_segments(session, row.id)
         if row.revision != body.expected_revision or row.status != "draft":
             stale = True
@@ -962,12 +978,7 @@ def transcribe(record_id: str, audio_id: str, body: AIRequest, request: Request)
             audit(session, "ai_failed", record_id=row.id, attempt_id=identifier)
         else:
             attempt.status = "succeeded"
-            parts = output.get("segments", [{"speaker": "unknown", "text": output["text"].strip()}])
-            matching = [item for item in segments if item.audio_id == audio_id]
-            if [(item.speaker, item.text) for item in matching] == [(part["speaker"], part["text"]) for part in parts]:
-                parts = []
-            for offset, part in enumerate(parts):
-                session.add(RecordSegment(record_id=row.id, position=len(segments) + offset, audio_id=audio_id, speaker=part["speaker"], text=part["text"], start_ms=part.get("start_ms"), end_ms=part.get("end_ms"), source="asr", transcription_id=identifier))
+            asr_results.project(session, recognition, row, audio_id, identifier, len(segments))
             session.flush()
             version(session, row, "transcribed")
         session.flush()
@@ -1111,3 +1122,13 @@ def recover_interrupted_attempts(engine):
 
 # Register continuous capture models/endpoints for standalone test apps too.
 from . import record_capture  # noqa: E402,F401
+
+
+@router.get('/{record_id}/recognition-runs')
+def recognition_runs(record_id: str, request: Request):
+    with Session(request.app.state.engine) as session:
+        get_record(session, record_id, True)
+        runs=session.scalars(select(asr_results.RecognitionRun).where(asr_results.RecognitionRun.record_id==record_id)).all()
+        return {'items':[{'id':run.id,'audio_id':run.audio_id,'origin_key':run.origin_key,
+                         'provider':run.provider,'applied':run.applied,'interval_map':run.interval_map,
+                         'sentences':[{'id':item.id,**item.data,'projection':item.projection} for item in asr_results.sentences(session,run)]} for run in runs]}

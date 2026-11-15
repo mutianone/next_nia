@@ -271,7 +271,10 @@ def test_asr_only_sends_selected_original_and_keeps_immutable_attempts(client, c
     revised = segments(client, updated, [editable(segment, text='人工核实后修订。')]).json()
     cloud.respond = lambda request: httpx.Response(200, json={'text': '第二次独立原始转写。'})
     again = asr(client, revised).json()
-    assert [item['text'] for item in again['segments']] == ['人工核实后修订。', '第二次独立原始转写。']
+    assert [item['text'] for item in again['segments']] == ['人工核实后修订。']
+    runs=client.get(f"/api/records/{row['id']}/recognition-runs").json()['items']
+    assert len(runs)==2 and sum(run['applied'] for run in runs)==1
+    assert {s['text'] for run in runs for s in run['sentences']}=={'这是第一次原始转写。','第二次独立原始转写。'}
     assert {item['text'] for item in again['transcription_attempts']} == {'这是第一次原始转写。', '第二次独立原始转写。'}
     assert client.get(again['audio_clips'][0]['playback_url']).content == MP3
 

@@ -16,7 +16,7 @@ def source_units(segments):
             for i,m in enumerate(markers):
                 role='interviewer' if m[1] in ('问','询问人','民警') else 'interpreter' if m[1]=='翻译' else 'interviewee'
                 ranges.append((m.end(),markers[i+1].start() if i+1<len(markers) else len(text),role))
-        else: ranges=[(0,len(text),segment.get('speaker','unknown'))]
+        else: ranges=[(0,len(text),'unconfirmed_voice' if segment.get('speaker_id') is not None and segment.get('speaker','unknown')=='unknown' else segment.get('speaker','unknown'))]
         for begin,finish,role in ranges:
             for match in re.finditer(r'[^。！？!?\n]+[。！？!?\n]*',text[begin:finish]):
                 start,end=begin+match.start(),begin+match.end()
