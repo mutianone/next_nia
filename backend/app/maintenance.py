@@ -62,7 +62,7 @@ def verify_archive(source):
         names = archive.namelist()
         expected = {table.name+'.jsonl' for table in Base.metadata.sorted_tables} | {'manifest.json'}
         # 0.5.0 archives predate the optional presentation-data ledger.
-        for optional in ('record_speaker_role_mappings', 'record_sentence_role_reviews', 'record_speaker_turns', 'record_qa_draft_pairs', 'record_qa_review_issues', 'record_qa_drafts', 'record_recognition_runs', 'record_recognition_sentences', 'record_captures', 'record_capture_chunks', 'record_capture_batches', 'record_template_revisions', 'record_qa_pairs', 'record_field_candidates', 'record_field_reviews', 'demo_datasets', 'accounts', 'login_sessions', 'login_attempts', 'analysis_templates', 'assistant_conversations', 'assistant_messages'):
+        for optional in ('record_fill_batches', 'record_fill_candidates', 'record_fill_reviews', 'record_speaker_role_mappings', 'record_sentence_role_reviews', 'record_speaker_turns', 'record_qa_draft_pairs', 'record_qa_review_issues', 'record_qa_drafts', 'record_recognition_runs', 'record_recognition_sentences', 'record_captures', 'record_capture_chunks', 'record_capture_batches', 'record_template_revisions', 'record_qa_pairs', 'record_field_candidates', 'record_field_reviews', 'demo_datasets', 'accounts', 'login_sessions', 'login_attempts', 'analysis_templates', 'assistant_conversations', 'assistant_messages'):
             if optional+'.jsonl' not in names: expected.discard(optional+'.jsonl')
         if len(names) != len(set(names)) or set(names) != expected: raise ValueError('备份文件条目或表版本不匹配')
         if archive.getinfo('manifest.json').file_size > 128*1024: raise ValueError('备份清单过大')

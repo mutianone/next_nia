@@ -111,6 +111,8 @@ def purge_audio(session,record_id,audio_id):
     sentence_ids=list(session.scalars(select(RecognitionSentence.id).where(RecognitionSentence.run_id.in_(run_ids))))
     for draft in session.scalars(select(QADraft).where(QADraft.record_id==record_id)):
         if set(run_ids)&set(draft.run_ids):
+            from .record_template_fill import purge_draft
+            purge_draft(session,draft.id)
             for model in (QAReviewIssue,QAPair,SpeakerTurn):
                 for row in session.scalars(select(model).where(model.draft_id==draft.id)):session.delete(row)
             session.delete(draft)

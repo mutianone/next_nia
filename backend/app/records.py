@@ -1135,3 +1135,6 @@ def recognition_runs(record_id: str, request: Request):
 
 # Isolated stage-two review endpoints; formal filling remains unchanged.
 from . import record_qa_draft_api  # noqa: E402,F401
+
+# Stage-three sidecar only; never replaces formal fill.
+from . import record_fill_api  # noqa: E402,F401
