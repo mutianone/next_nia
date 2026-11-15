@@ -1132,3 +1132,6 @@ def recognition_runs(record_id: str, request: Request):
         return {'items':[{'id':run.id,'audio_id':run.audio_id,'origin_key':run.origin_key,
                          'provider':run.provider,'applied':run.applied,'interval_map':run.interval_map,
                          'sentences':[{'id':item.id,**item.data,'projection':item.projection} for item in asr_results.sentences(session,run)]} for run in runs]}
+
+# Isolated stage-two review endpoints; formal filling remains unchanged.
+from . import record_qa_draft_api  # noqa: E402,F401

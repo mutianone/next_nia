@@ -43,6 +43,8 @@ def validate_turns(data, sources):
             label=source.get('speaker_id') if source.get('recognition_run_id') else (voice[1] if voice else None)
             group=(f"{source['recognition_run_id']}:{label}" if source.get('recognition_run_id') and label is not None
                    else f"{source['audio_id'] or source['id']}:{voice[1]}" if voice else None)
+            if source.get('recognition_run_id') and source.get('channel_id') is not None and label is not None:
+                group=f"{source['recognition_run_id']}:channel={json.dumps(source['channel_id'])}:{label}"
             if len(items)>1:group=None
             turns.append({'source_id':source['id'],'source_start':cursor,'source_end':end,
                           'text':item['text'],'suggested_role':item['suggested_role'], 'speaker':'unknown',

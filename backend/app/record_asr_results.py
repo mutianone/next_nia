@@ -246,6 +246,8 @@ def metadata(row):
 
 
 def purge_audio(session, record_id, audio_id):
+    from .record_qa_drafts import purge_audio as purge_drafts
+    purge_drafts(session, record_id, audio_id)
     for run in session.scalars(select(RecognitionRun).where(RecognitionRun.record_id == record_id, RecognitionRun.audio_id == audio_id)):
         for item in sentences(session, run):
             session.delete(item)

@@ -5,6 +5,7 @@ import { confirmAction } from '../lib/confirmation';
 import { recordError, speakerLabels } from '../record-types';
 import type { RecordDetail, SegmentInput, Speaker } from '../record-types';
 import './RecordQAReview.css';
+import { RecordQADrafts } from './RecordQADrafts';
 
 type Turn = {voice_group?:string|null;voice_label?:string|null;source_id:string;source_start:number;source_end:number;text:string;suggested_role:Speaker;speaker:Speaker;audio_id:string|null;listen_start_ms:number|null;start_ms:number|null;end_ms:number|null};
 type Proposal = {revision:number;turns:Turn[];issues:{segment_id:string;message:string}[]};
@@ -58,7 +59,7 @@ export function RecordQAReview({record,disabled,onApplied,onPending}:{record:Rec
     }catch(e){setError(recordError(e));}finally{setBusy(false);}
   };
   const clip=record.audio_clips.find(c=>c.id===playing?.id);
-  return <><button type="button" className="btn btn-primary" disabled={disabled||!record.segments.length} onClick={()=>void prepare()}>整理问答</button>
+  return <><RecordQADrafts record={record} disabled={disabled} onPending={onPending}/><button type="button" className="btn btn-primary" disabled={disabled||!record.segments.length} onClick={()=>void prepare()}>整理问答</button>
     {open&&<Dialog title="问答分句与角色核对" onClose={close} className="qa-review-dialog">
       {busy&&!proposal&&<p role="status">正在整理问答…</p>}
       {error&&<p role="alert">{error}</p>}
