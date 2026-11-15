@@ -104,7 +104,7 @@ def analyze(client, row, confirmed=True):
 
 
 def analysis_response(identifier, **changes):
-    output = {'summary': '合成材料的简要整理。', 'key_facts': [{'label': '到达陈述', 'value': '记录含到达陈述，日期待核对。', 'segment_ids': [identifier]}], 'issues': ['具体日期待核对'], **changes}
+    output = {'summary': '合成材料的简要整理。', 'key_facts': [{'label': 'facts', 'value': '记录含到达陈述，日期待核对。', 'segment_ids': [identifier]}], 'issues': ['具体日期待核对'], **changes}
     return httpx.Response(200, json={'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(output, ensure_ascii=False)}}]})
 
 
@@ -134,7 +134,7 @@ def test_crud_person_snapshot_templates_revision_and_pagination(client):
     assert client.patch(f"/api/records/{row['id']}", json={'expected_revision': 2, 'person_id': None}).status_code == 422
     assert client.get('/api/records/missing').status_code == 404
     caps = client.get('/api/records/capabilities').json()
-    assert len(caps['templates']) == 5 and not caps['ai']['asr']['ready']
+    assert [t['id'] for t in caps['templates']] == ['bride','bride_family','border_case'] and not caps['ai']['asr']['ready']
     assert 'api_key' not in json.dumps(caps)
 
 
@@ -327,7 +327,10 @@ def test_analysis_outbound_fields_grounded_snapshot_staleness_and_export(client,
     current = response.json()
     payload = json.loads(cloud.calls[0].read())
     assert str(cloud.calls[0].url) == records_ai.CHAT_URLS['deepseek']
-    assert json.loads(payload['messages'][1]['content']) == [{'segment_id': identifier, 'text': row['segments'][0]['text']}]
+    sent=json.loads(payload['messages'][1]['content'])
+    from backend.app.record_selection import source_units
+    assert sent['source_units'] == [{k:u[k] for k in ('id','segment_id','text')} for u in source_units([{'segment_id': identifier, 'text': row['segments'][0]['text']}])]
+    assert sent['template_fields'] == [{'id':f['id'],'question_or_label':f['label']} for f in row['template_snapshot']['fields']]
     assert '不要外发' not in json.dumps(payload, ensure_ascii=False)
     analysis = current['analysis']
     assert analysis['stale'] is False and analysis['input_revision'] == row['revision']
@@ -341,7 +344,7 @@ def test_analysis_outbound_fields_grounded_snapshot_staleness_and_export(client,
     assert revised['analysis']['input_segments'][0]['text'] == row['segments'][0]['text']
     assert client.get(f"/api/records/{row['id']}/export.txt?include_ai=true").status_code == 409
     plain = client.get(f"/api/records/{row['id']}/export.txt")
-    assert plain.status_code == 200 and 'AI摘要附录' not in plain.text and '人工修订后的新事实。' in plain.text
+    assert plain.status_code == 200 and '转写内容已变化' in plain.text and 'AI摘要附录' not in plain.text  # Legacy text export carries an explicit stale warning.
 
 
 @pytest.mark.parametrize('mode', ['bad_reference', 'length', 'extra_field', 'secret', 'blank_summary'])
@@ -386,7 +389,7 @@ def test_analysis_changed_during_call_is_not_applied(client, cloud):
     assert current['segments'][0]['text'] == '并发修订的新正文。'
 
 
-def test_review_freezes_rendered_body_archive_restore_cannot_unlock_and_exports(client, monkeypatch):
+def test_review_freezes_rendered_body_archive_restore_cannot_unlock_and_exports(client, monkeypatch, cloud):
     empty = create(client)
     request = {'expected_revision': empty['revision'], 'status': 'reviewed', 'confirmed': True, 'review_note': '人工核对'}
     assert client.patch(f"/api/records/{empty['id']}", json=request).status_code == 422
@@ -394,6 +397,11 @@ def test_review_freezes_rendered_body_archive_restore_cannot_unlock_and_exports(
     row = segments(client, row, [{'text': '已人工修订正文。', 'speaker': 'interviewee'}]).json()
     for extra in ({'confirmed': False}, {'review_note': ''}):
         assert client.patch(f"/api/records/{row['id']}", json={**request, 'expected_revision': row['revision'], **extra}).status_code == 422
+    assert client.patch(f"/api/records/{row['id']}", json={**request, 'expected_revision': row['revision']}).status_code == 422
+    enable_ai(client)
+    cloud.respond=lambda _:analysis_response(row['segments'][0]['id'],key_facts=[{'label':'facts','value':'已人工修订正文。','segment_ids':[row['segments'][0]['id']]}])
+    response=analyze(client,row);assert response.status_code==200,response.text
+    row=response.json()
     reviewed = client.patch(f"/api/records/{row['id']}", json={**request, 'expected_revision': row['revision']}).json()
     assert reviewed['status'] == 'reviewed' and reviewed['revision'] == row['revision'] + 1
     frozen = reviewed['rendered_text']
