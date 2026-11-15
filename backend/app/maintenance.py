@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from .database import Base, AuditEvent
 from .people import PeopleRoute, add_audit, timestamp, utc_now
 
-FORMAT = 'nia-data-v1'
+FORMAT = 'crj-data-v1'
 router = APIRouter(prefix='/api/maintenance', tags=['本地维护'], route_class=PeopleRoute)
 
 
@@ -62,12 +62,12 @@ def verify_archive(source):
         names = archive.namelist()
         expected = {table.name+'.jsonl' for table in Base.metadata.sorted_tables} | {'manifest.json'}
         # 0.5.0 archives predate the optional presentation-data ledger.
-        for optional in ('demo_datasets', 'accounts', 'login_sessions', 'login_attempts', 'analysis_templates', 'assistant_conversations', 'assistant_messages'):
+        for optional in ('record_captures', 'record_capture_chunks', 'record_capture_batches', 'record_template_revisions', 'record_qa_pairs', 'record_field_candidates', 'record_field_reviews', 'demo_datasets', 'accounts', 'login_sessions', 'login_attempts', 'analysis_templates', 'assistant_conversations', 'assistant_messages'):
             if optional+'.jsonl' not in names: expected.discard(optional+'.jsonl')
         if len(names) != len(set(names)) or set(names) != expected: raise ValueError('备份文件条目或表版本不匹配')
         if archive.getinfo('manifest.json').file_size > 128*1024: raise ValueError('备份清单过大')
         manifest = json.loads(archive.read('manifest.json'))
-        if manifest.get('format') != FORMAT or {name+'.jsonl' for name in manifest.get('tables', {})} != expected-{'manifest.json'}: raise ValueError('备份格式或表结构不匹配')
+        if manifest.get('format') not in (FORMAT, 'nia-data-v1') or {name+'.jsonl' for name in manifest.get('tables', {})} != expected-{'manifest.json'}: raise ValueError('备份格式或表结构不匹配')
         for table in Base.metadata.sorted_tables:
             if table.name not in manifest['tables']: continue
             metadata = manifest['tables'][table.name]
@@ -131,12 +131,12 @@ def status(request: Request):
 
 @router.post('/backup')
 def backup(request: Request):
-    descriptor, path = tempfile.mkstemp(prefix='nia-backup-', suffix='.zip'); os.close(descriptor)
+    descriptor, path = tempfile.mkstemp(prefix='crj-backup-', suffix='.zip'); os.close(descriptor)
     try:
         manifest = snapshot(request.app.state.engine, path)
         with Session(request.app.state.engine) as session:
             add_audit(session, 'maintenance.exported', tables=len(manifest['tables']), rows=sum(table['rows'] for table in manifest['tables'].values()))
             session.commit()
-        return FileResponse(path, filename=f'nia-data-{utc_now():%Y%m%d-%H%M%S}.zip', media_type='application/zip', background=BackgroundTask(os.unlink, path))
+        return FileResponse(path, filename=f'crj-data-{utc_now():%Y%m%d-%H%M%S}.zip', media_type='application/zip', background=BackgroundTask(os.unlink, path))
     except BaseException:
         Path(path).unlink(missing_ok=True); raise
