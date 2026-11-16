@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
+from .expiry_decisions import router as expiry_decisions_router
 from .auth import router as auth_router, seed_admin, session_user, permitted
 from .ai import AIConnectionError, test_ai_connection
 from .config import ConfigurationError, SettingsStore
@@ -24,7 +25,13 @@ from .assistant_history import router as assistant_history_router, recover_histo
 from .analysis_templates import seed_analysis_templates, router as analysis_templates_router
 from .documents import DocumentDraft, seed_templates, router as documents_router
 from .records import RecordSession, recover_interrupted_attempts, router as records_router
+from .record_jobs import recover as recover_generation_jobs, ThreadPoolExecutor
+from .record_template_config import router as record_template_config_router
+from . import record_capture
+from . import record_qa_review  # Register independent turn proposal endpoint.
+from . import record_candidates  # Register candidate review endpoints before include_router.
 from .profiles import router as profiles_router
+from .profile_analysis import router as profile_analysis_router
 from .analytics import router as analytics_router
 from .migration import router as migration_router
 from .maintenance import router as maintenance_router
@@ -32,7 +39,7 @@ from .demo import router as demo_router
 from .schemas import AITestRequest, PostgresUpdate, SettingsUpdate, database_identity, merge_postgres, merge_settings, public_settings
 
 VERSION = "0.5.1"
-logger = logging.getLogger("next_nia")
+logger = logging.getLogger("Crj")
 
 
 def dashboard_data(engine) -> dict:
@@ -73,8 +80,8 @@ def dashboard_data(engine) -> dict:
 
 
 def create_app(data_dir: Path | str | None = None) -> FastAPI:
-    presentation = os.environ.get("NEXT_NIA_PRESENTATION") == "1"
-    configured_dir = data_dir or os.environ.get("NEXT_NIA_DATA_DIR") or Path(__file__).resolve().parents[1] / ("presentation-data" if presentation else "data")
+    presentation = os.environ.get("CRJ_PRESENTATION") == "1"
+    configured_dir = data_dir or os.environ.get("CRJ_DATA_DIR") or Path(__file__).resolve().parents[1] / ("presentation-data" if presentation else "data")
     directory = Path(configured_dir).expanduser().resolve()
     store = SettingsStore(directory)
 
@@ -89,10 +96,10 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
         try:
             Base.metadata.create_all(engine)
             seed_admin(engine)
-            seed_templates(engine)
             seed_analysis_templates(engine)
             recover_history(engine)
             recover_interrupted_attempts(engine)
+            recover_generation_jobs(engine)
             if presentation and settings.environment.mode == "test":
                 from .demo import DemoDataset, dataset_session, populate
                 from .people import business_today
@@ -115,14 +122,20 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
             logger.error("启动时期限扫描未完成，后台任务将重试。")
         stop_scanner = asyncio.Event()
         scanner = asyncio.create_task(scheduler_loop(application, stop_scanner))
+        application.state.record_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="record-generation")
+        capture_stop, capture_threads = record_capture.start_worker(engine, store)
         try:
             yield
         finally:
+            capture_stop.set()
+            for capture_thread in capture_threads:
+                await asyncio.to_thread(capture_thread.join)
             stop_scanner.set()
             await scanner
+            await asyncio.to_thread(application.state.record_executor.shutdown, wait=True, cancel_futures=True)
             engine.dispose()
 
-    application = FastAPI(title="境智 · 本地业务服务", version=VERSION, lifespan=lifespan, docs_url="/api/docs", redoc_url=None, openapi_url="/api/openapi.json")
+    application = FastAPI(title="智境·出入智境能警务平台", version=VERSION, lifespan=lifespan, docs_url="/api/docs", redoc_url=None, openapi_url="/api/openapi.json")
     application.state.store = store
     application.state.presentation = presentation
 
@@ -258,14 +271,16 @@ def create_app(data_dir: Path | str | None = None) -> FastAPI:
     application.include_router(knowledge_router)
     application.include_router(auth_router)
     application.include_router(alerts_router)
-    application.include_router(documents_router)
+    application.include_router(expiry_decisions_router)
     application.include_router(records_router)
+    application.include_router(record_template_config_router)
     application.include_router(profiles_router)
+    application.include_router(profile_analysis_router)
     application.include_router(analytics_router)
     application.include_router(migration_router)
     application.include_router(maintenance_router)
     application.include_router(demo_router)
-    if os.environ.get('NEXT_NIA_SERVE_DIST') == '1':
+    if os.environ.get('CRJ_SERVE_DIST') == '1':
         from fastapi.staticfiles import StaticFiles
         dist = Path(__file__).resolve().parents[2] / 'dist'
         if not (dist / 'index.html').is_file():

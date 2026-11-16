@@ -61,4 +61,4 @@ ssh -N -L 15173:127.0.0.1:5173 root@81.70.166.164
 
 2026-10-25 已在目标服务器安装隔离版 FFmpeg 7.0.2，入口为 `/root/nia/tools/bin/ffmpeg`。程序与依赖来自服务器已配置软件源的签名 RPM，仅解包到私有目录，没有执行 RPM 安装脚本、注册额外服务或创建全局命令。WAV、WebM 转单声道 16 kHz MP3 已验证。
 
-部署脚本优先检测此入口，并通过 `NEXT_NIA_FFMPEG_BIN` 仅提供给 NIA 服务；不需要修改系统 PATH 或其他服务。请保留 `/root/nia/tools` 目录。
+部署脚本优先检测此入口，并通过 `CRJ_FFMPEG_BIN` 仅提供给 NIA 服务；不需要修改系统 PATH 或其他服务。请保留 `/root/nia/tools` 目录。

@@ -1,8 +1,13 @@
-import { render } from './test/auth';
+import { admin } from './test/auth';
+import { render as baseRender } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { AuthContext } from './auth/AuthContext';
+const render = (ui: ReactElement) => baseRender(<AuthContext.Provider value={{user:{...admin,phone:'root'},refresh:async()=>{},logout:async()=>{}}}>{ui}</AuthContext.Provider>);
 import { screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { App } from './App';
+vi.mock('./pages/Dashboard', () => ({ Dashboard: () => <div>业务概览</div> }));
 import { ConfirmationHost } from './components/ConfirmationHost';
 
 const settings = {
@@ -16,7 +21,7 @@ const settings = {
 beforeEach(() => {
   window.history.replaceState(null, '', '#/settings');
   vi.spyOn(window, 'confirm').mockImplementation(() => { throw new Error('Native confirm forbidden'); });
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/maintenance') ? { counts: {}, events: [], environment: 'test' } : url.endsWith('/health') ? { status: 'ok', version: '0.5.0', stage: 5, active_environment: 'test', database_engine: 'SQLite' } : { settings, runtime: { active_environment: 'test', database_engine: 'SQLite', pending_restart: false } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.includes('/record-templates') ? { items: [] } : url.endsWith('/maintenance') ? { counts: {}, events: [], environment: 'test' } : url.endsWith('/health') ? { status: 'ok', version: '0.5.0', stage: 5, active_environment: 'test', database_engine: 'SQLite' } : { settings, runtime: { active_environment: 'test', database_engine: 'SQLite', pending_restart: false } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -39,7 +44,7 @@ it('rolls back hash navigation while a custom confirmation is pending', async ()
   render(<><App/><ConfirmationHost/></>);
   const name = await screen.findByDisplayValue('合成验收平台');
   await userEvent.type(name, '修改');
-  act(() => { window.history.pushState(null, '', '#/records'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+  act(() => { window.history.pushState(null, '', '#/people'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
   expect(window.location.hash).toBe('#/settings');
   await userEvent.keyboard('{Escape}');
   expect(screen.getByDisplayValue('合成验收平台修改')).toBeInTheDocument();
@@ -70,4 +75,31 @@ it('shows save actions only after a settings change and removes them after disca
   await userEvent.click(screen.getByRole('button', { name: '放弃修改' }));
   expect(screen.queryByRole('button', { name: '保存配置' })).not.toBeInTheDocument();
   expect(screen.getByDisplayValue('合成验收平台')).toBeInTheDocument();
+});
+
+it('shows only management modules for root and supports independent category toggles', async () => {
+  render(<App/>);
+  await screen.findByDisplayValue('合成验收平台');
+  expect(screen.queryByRole('button', { name: '核心业务' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '工作空间' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '业务资料' })).toBeVisible();
+  expect(screen.getByRole('button', { name: '系统管理' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: '业务资料' }));
+  expect(screen.queryByRole('button', { name: '人员档案' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: '搜索功能' }));
+  await userEvent.type(screen.getByRole('textbox', { name: '功能名称' }), '人员档案');
+  await userEvent.click(screen.getByRole('button', { name: /人员档案\s*People/ }));
+  expect(screen.getByRole('button', { name: '业务资料' })).toHaveAttribute('aria-expanded', 'true');
+  expect(window.location.hash).toBe('#/people');
+});
+
+it('hides workspace navigation and search entries for business accounts', async () => {
+  window.history.replaceState(null, '', '#/dashboard');
+  baseRender(<AuthContext.Provider value={{user:{...admin,phone:'15210451737'},refresh:async()=>{},logout:async()=>{}}}><App/></AuthContext.Provider>);
+  expect(screen.queryByRole('button', { name: '工作空间' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '总览工作台' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '核心业务' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: '搜索功能' }));
+  expect(screen.queryByRole('button', { name: /总览工作台.*Workspace/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /统计分析.*Analytics/ })).not.toBeInTheDocument();
 });

@@ -79,3 +79,15 @@ def test_claim_limit_remains_bounded():
     from backend.app.knowledge_ai import MAX_CLAIMS
     raw=json.dumps({'claims':[{'text':'结论','source_ids':['source-1']} for _ in range(MAX_CLAIMS+1)]})
     with pytest.raises(KnowledgeAIError):complete_claims(raw)
+
+@pytest.mark.parametrize('claim',[
+    {'text':'【法律依据】应提交材料。','source_id':'source-1'},
+    {'text':'【法律依据】应提交材料。','source_ids':'source-1'},
+])
+def test_compatible_reference_shape_still_validates_actual_ids(claim):
+    from backend.app.knowledge_ai import validate_answer
+    raw='```json\n'+json.dumps({'claims':[claim]},ensure_ascii=False)+'\n```'
+    result=validate_answer(raw,SOURCES,'siliconflow','test','secret')
+    assert result['claims'][0]['source_ids']==['source-1']
+    with pytest.raises(KnowledgeAIError):
+        validate_answer(raw.replace('source-1','invented'),SOURCES,'siliconflow','test','secret')

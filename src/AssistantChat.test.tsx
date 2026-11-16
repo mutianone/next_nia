@@ -18,9 +18,11 @@ it('retries the original question and date, copies messages and exports a comple
   await waitFor(()=>expect(screen.getByRole('button',{name:'生成回答'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'生成回答'}));
   await screen.findByText('请求失败');
+  expect(mock.mock.calls[0][0]).toMatchObject({mode:'auto'});
+  expect(screen.queryByRole('button',{name:'法规依据问答'})).not.toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'导出第2个回答'})).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('法规问题'),{target:{value:'尚未发送的新问题'}});
-  fireEvent.change(screen.getByLabelText('适用日期'),{target:{value:'2020-01-01'}});
+  fireEvent.change(screen.getByLabelText('法规检索日期'),{target:{value:'2020-01-01'}});
   fireEvent.click(screen.getByRole('button',{name:'重试第1个问题'}));
   await screen.findByText('核查结论');
   expect(mock.mock.calls[1][0]).toEqual(mock.mock.calls[0][0]);
@@ -47,7 +49,7 @@ it('restores a saved conversation and keeps new conversation separate from histo
   }})));
   render(<Assistant onKnowledge={vi.fn()} onSettings={vi.fn()}/>);
   expect(await screen.findByText('数据库中的回答')).toBeInTheDocument();
-  expect(screen.getByLabelText('适用日期')).toHaveValue('2026-10-20');
+  expect(screen.getByLabelText('法规检索日期')).toBeInTheDocument();
   expect(streamQuestion).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button',{name:'新会话'}));
   expect(screen.queryByText('数据库中的回答')).not.toBeInTheDocument();

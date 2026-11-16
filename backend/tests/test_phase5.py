@@ -209,7 +209,7 @@ def test_cli_restore_requires_new_directory_and_verifies_without_starting_servic
 
 
 def test_static_build_serve_mode_and_health_version(tmp_path,monkeypatch):
-    monkeypatch.setenv('NEXT_NIA_SERVE_DIST','1')
+    monkeypatch.setenv('CRJ_SERVE_DIST','1')
     with TestClient(create_app(tmp_path)) as client:
         assert client.get('/').status_code==200
         assert client.get('/api/health').json()['version']=='0.5.1'

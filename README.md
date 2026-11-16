@@ -1,4 +1,4 @@
-# 境智 · 出入境业务智能辅助平台
+# 智境·出入智境能警务平台
 
 当前版本为 **0.5.1，第五阶段：关联分析与交付**。系统支持 macOS 和 Linux，提供本机可运行的前后端、五套主题及明暗模式、响应式布局、环境与 AI 配置、人员与法规管理、期限核查、模板文书、询问笔录、事实画像和业务统计。
 
@@ -80,7 +80,7 @@ bash scripts/dev.sh
 需要指定其他数据目录时，在启动前设置绝对路径：
 
 ```bash
-export NEXT_NIA_DATA_DIR="/absolute/path/to/next-nia-data"
+export CRJ_DATA_DIR="/absolute/path/to/crj-data"
 bash scripts/dev.sh
 ```
 
@@ -98,7 +98,7 @@ bash scripts/dev.sh
 
 原始转写、人工修订和 AI 摘要分别保存。当前不提供流式转写、可靠的自动逐字时间戳或自动说话人识别；角色和时间位置由人工填写。片段文字、角色、音频关联、时间位置或顺序发生实质修改后，旧摘要显示过期并禁止附入当前导出。
 
-默认检索为本地词法检索，不要求向量模型。可选的 SentenceTransformer 本地语义检索通过 `NEXT_NIA_EMBEDDING_MODEL_DIR` 配置，需另装可选依赖并提前准备完整模型目录。**默认安装没有这些重型依赖或模型，也没有完成本地语义模型运行验收；程序不会自动下载模型。** 详见 [部署说明](docs/deployment.md)。
+默认检索为本地词法检索，不要求向量模型。可选的 SentenceTransformer 本地语义检索通过 `CRJ_EMBEDDING_MODEL_DIR` 配置，需另装可选依赖并提前准备完整模型目录。**默认安装没有这些重型依赖或模型，也没有完成本地语义模型运行验收；程序不会自动下载模型。** 详见 [部署说明](docs/deployment.md)。
 
 普通配置接口不返回密钥原文；管理员配置页通过专用鉴权接口回显 API Key，可编辑或隐藏。留空保留已存密钥，清除需独立操作。`settings.sqlite3` 权限为 `0600`，API Key 和数据库密码仍是**本地明文存储**，未实现密钥加密或密钥管理服务。首次启动会迁移旧 `settings.json`，数据库提交成功后移除旧文件。备份或搬迁时需同时保留配置数据库和业务数据库。配置、数据库、虚拟环境和依赖目录均忽略提交。
 
@@ -140,7 +140,7 @@ bash -n scripts/common.sh scripts/setup.sh scripts/dev.sh
 bash scripts/presentation.sh
 ```
 
-兼容启动脚本继续使用 `backend/presentation-data/`，保留现有账号、业务数据及配置。`NEXT_NIA_PRESENTATION=1` 只控制独立 SQLite 工作空间首次准备资料和录音资料库入口；不再改变 AI 执行方式。PostgreSQL 不自动填充示例资料。普通 `bash scripts/dev.sh` 使用 `backend/data/`，避免误以为换启动方式会自动迁移数据。
+兼容启动脚本继续使用 `backend/presentation-data/`，保留现有账号、业务数据及配置。`CRJ_PRESENTATION=1` 只控制独立 SQLite 工作空间首次准备资料和录音资料库入口；不再改变 AI 执行方式。PostgreSQL 不自动填充示例资料。普通 `bash scripts/dev.sh` 使用 `backend/data/`，避免误以为换启动方式会自动迁移数据。
 
 **所有启动方式使用同一套真实 AI 适配器。** 已删除录音哈希匹配文字、预设本地问答、摘录代替 AI 摘要和定时假进度。没有密钥、服务商失败、输出被截断或来源引用不合法时，返回错误/依据不足，不能生成成功结果。现有历史文字整理资料保留，页面注明其来源；新建资料批次不再预填 AI 成功记录。
 
@@ -166,12 +166,12 @@ bash scripts/presentation.sh
 当前已使用的工作空间可通过以下命令启动局域网预览（保留原账号、数据和 AI 配置）：
 
 ```bash
-NEXT_NIA_HOST=0.0.0.0 bash scripts/presentation.sh
+CRJ_HOST=0.0.0.0 bash scripts/presentation.sh
 ```
 
-同一局域网设备访问 `http://服务器局域网IPv4:5173`；本机仍可访问 `http://127.0.0.1:5173`。前端代理同源 `/api`，后端 8000 端口继续只监听本机，登录与跨站请求保护保持生效。启动前先停止本项目旧服务；无需修改密钥或数据库。不设置 `NEXT_NIA_HOST` 时仍默认仅本机访问。
+同一局域网设备访问 `http://服务器局域网IPv4:5173`；本机仍可访问 `http://127.0.0.1:5173`。前端代理同源 `/api`，后端 8000 端口继续只监听本机，登录与跨站请求保护保持生效。启动前先停止本项目旧服务；无需修改密钥或数据库。不设置 `CRJ_HOST` 时仍默认仅本机访问。
 
-构建后的单端口服务也支持 `NEXT_NIA_HOST=0.0.0.0 bash scripts/serve.sh`（默认 8080）；使用当前工作空间时同时设置 `NEXT_NIA_DATA_DIR="$PWD/backend/presentation-data"`。局域网普通 HTTP 可浏览页面及上传录音，浏览器现场录音需要 HTTPS 安全上下文。
+构建后的单端口服务也支持 `CRJ_HOST=0.0.0.0 bash scripts/serve.sh`（默认 8080）；使用当前工作空间时同时设置 `CRJ_DATA_DIR="$PWD/backend/presentation-data"`。局域网普通 HTTP 可浏览页面及上传录音，浏览器现场录音需要 HTTPS 安全上下文。
 
 ## Mac 一键部署到云服务器
 

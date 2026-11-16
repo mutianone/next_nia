@@ -25,10 +25,10 @@ export function ConfirmationHost() {
   const Icon = request.alertOnly ? Info : request.confirmLabel?.includes('归档') ? Archive : tone === 'danger' ? TriangleAlert : ShieldCheck;
   const finish = (value: boolean) => settleConfirmation(request.id, value);
   return <AlertDialog open onOpenChange={open => { if (!open) finish(false); }}>
-    <AlertDialogContent className={`nia-confirm tone-${tone}`} onCloseAutoFocus={event => { event.preventDefault(); const target = request.returnFocus || request.trigger; if (target?.isConnected) target.focus(); }}>
-      <div className="nia-confirm-top"><span className="nia-confirm-icon"><Icon size={26} strokeWidth={1.6}/></span><span className="nia-dialog-eyebrow">{request.alertOnly ? '温馨提示' : '操作确认'}</span></div>
-      <div className="nia-confirm-copy"><AlertDialogTitle>{request.title || '确认此操作？'}</AlertDialogTitle><AlertDialogDescription>{request.description}</AlertDialogDescription></div>
-      <div className="nia-confirm-footer">
+    <AlertDialogContent className={`crj-confirm tone-${tone}`} onCloseAutoFocus={event => { event.preventDefault(); const target = request.returnFocus || request.trigger; if (target?.isConnected) target.focus(); }}>
+      <div className="crj-confirm-top"><span className="crj-confirm-icon"><Icon size={26} strokeWidth={1.6}/></span><span className="crj-dialog-eyebrow">{request.alertOnly ? '温馨提示' : '操作确认'}</span></div>
+      <div className="crj-confirm-copy"><AlertDialogTitle>{request.title || '确认此操作？'}</AlertDialogTitle><AlertDialogDescription>{request.description}</AlertDialogDescription></div>
+      <div className="crj-confirm-footer">
         {!request.alertOnly && <AlertDialogCancel onClick={() => finish(false)}>{request.cancelLabel || '取消'}</AlertDialogCancel>}
         <AlertDialogAction variant={tone === 'danger' ? 'destructive' : 'default'} onClick={() => finish(true)}>{request.confirmLabel || '确认继续'}<ArrowRight size={15}/></AlertDialogAction>
       </div>

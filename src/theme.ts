@@ -13,28 +13,28 @@ export const fontSizes = [{ id: 'standard', label: '标准', percent: 100 }, { i
 export type FontSize = number;
 export type ColorMode = 'light' | 'dark' | 'system';
 
-function stored(key: string, fallback: string) { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } }
+function stored(key: string, fallback: string) { try { return localStorage.getItem(key) || localStorage.getItem(key.replace(/^crj-/, 'nia-')) || fallback; } catch { return fallback; } }
 export function useTheme() {
-  const [theme, setTheme] = useState<ThemeId>(() => { const value = stored('nia-theme', 'government'); return themes.some(t => t.id === value) ? value as ThemeId : 'government'; });
-  const [mode, setMode] = useState<ColorMode>(() => { const value = stored('nia-mode', 'light'); return ['light', 'dark', 'system'].includes(value) ? value as ColorMode : 'light'; });
+  const [theme, setTheme] = useState<ThemeId>(() => { const value = stored('crj-theme', 'government'); return themes.some(t => t.id === value) ? value as ThemeId : 'government'; });
+  const [mode, setMode] = useState<ColorMode>(() => { const value = stored('crj-mode', 'light'); return ['light', 'dark', 'system'].includes(value) ? value as ColorMode : 'light'; });
   const [fontSize, setFontSize] = useState<FontSize>(() => {
-    const value = stored('nia-font-size', '100');
+    const value = stored('crj-font-size', '100');
     const preset = fontSizes.find(size => size.id === value);
     const percent = preset?.percent ?? Number(value);
     return Number.isFinite(percent) && percent >= 80 && percent <= 160 ? percent : 100;
   });
   useEffect(() => {
     document.documentElement.style.setProperty('--reading-font-size', `${16 * fontSize / 100}px`);
-    try { localStorage.setItem('nia-font-size', String(fontSize)); } catch { /* Session only. */ }
+    try { localStorage.setItem('crj-font-size', String(fontSize)); } catch { /* Session only. */ }
   }, [fontSize]);
-  const [reducedMotion, setReducedMotion] = useState(() => stored('nia-reduced-motion', 'false') === 'true');
+  const [reducedMotion, setReducedMotion] = useState(() => stored('crj-reduced-motion', 'false') === 'true');
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => { document.documentElement.dataset.theme = theme; document.documentElement.dataset.mode = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode; };
     apply(); media.addEventListener('change', apply);
-    try { localStorage.setItem('nia-theme', theme); localStorage.setItem('nia-mode', mode); } catch { /* Theme still works for this session. */ }
+    try { localStorage.setItem('crj-theme', theme); localStorage.setItem('crj-mode', mode); } catch { /* Theme still works for this session. */ }
     return () => media.removeEventListener('change', apply);
   }, [theme, mode]);
-  useEffect(() => { document.documentElement.dataset.reducedMotion = String(reducedMotion); try { localStorage.setItem('nia-reduced-motion', String(reducedMotion)); } catch { /* Session only. */ } }, [reducedMotion]);
+  useEffect(() => { document.documentElement.dataset.reducedMotion = String(reducedMotion); try { localStorage.setItem('crj-reduced-motion', String(reducedMotion)); } catch { /* Session only. */ } }, [reducedMotion]);
   return { fontSize, setFontSize, theme, setTheme, mode, setMode, reducedMotion, setReducedMotion };
 }

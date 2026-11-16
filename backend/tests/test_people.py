@@ -49,7 +49,7 @@ def csv_text(rows, fields=None):
 def test_create_edit_stay_archive_and_restart_preserve_factual_data(tmp_path):
     with TestClient(application(tmp_path)) as client:
         person = create(client, document_number=" test p 001 ", birth_date="1990-01-01")
-        assert person["code"].startswith("NIA-")
+        assert person["code"].startswith("CRJ-")
         assert person["document_number"] == "TESTP001"
         assert person["stays"] == []
         assert person["created_at"].endswith("+00:00")
@@ -219,7 +219,7 @@ def test_csv_template_is_read_only_and_export_respects_filter_and_formula_safety
     assert template.status_code == 200
     assert template.content.startswith(b"\xef\xbb\xbf")
     assert "示例" in template.text
-    assert "__nia_csv_format" not in template.text
+    assert "__crj_csv_format" not in template.text
     assert client.get("/api/people").json()["total"] == 0
     create(client, name="=FORMULA()", phone="+123456", document_number="EXPORT-1", notes="  @formula()", address="line 1,\nline 2")
     person = create(client, document_number="EXPORT-2")
@@ -233,7 +233,7 @@ def test_csv_template_is_read_only_and_export_respects_filter_and_formula_safety
     assert rows[0]["phone"] == "'+123456"
     assert rows[0]["notes"].startswith("'")
     assert rows[0]["address"] == "line 1,\nline 2"
-    assert rows[0]["__nia_csv_format"] == "safe-v1"
+    assert rows[0]["__crj_csv_format"] == "safe-v1"
     archived = list(csv.DictReader(StringIO(client.get("/api/people/export.csv?archived=true").content.decode("utf-8-sig"))))
     assert [row["document_number"] for row in archived] == ["EXPORT-2"]
 
@@ -269,9 +269,9 @@ def test_unmarked_csv_preserves_original_apostrophes(client, original):
 
 @pytest.mark.parametrize("marker", ["", "safe-v2", " safe-v1", "safe-v1 "])
 def test_csv_invalid_safety_marker_rejects_whole_import(client, marker):
-    fields = ["name", "nationality", "document_number", "source", "__nia_csv_format"]
-    text = csv_text([person_payload(document_number="VALID", __nia_csv_format="safe-v1"),
-                     person_payload(document_number="INVALID", __nia_csv_format=marker)], fields)
+    fields = ["name", "nationality", "document_number", "source", "__crj_csv_format"]
+    text = csv_text([person_payload(document_number="VALID", __crj_csv_format="safe-v1"),
+                     person_payload(document_number="INVALID", __crj_csv_format=marker)], fields)
     preview = client.post("/api/people/import/preview", json={"csv_text": text}).json()
     assert preview["errors"][0]["row"] == 3
     assert "安全格式标记无效" in preview["errors"][0]["message"]
@@ -281,8 +281,8 @@ def test_csv_invalid_safety_marker_rejects_whole_import(client, marker):
 
 @pytest.mark.parametrize("edited", ["'普通姓名", "+FORMULA()", "=FORMULA()", "@FORMULA()", "-FORMULA()", "\t=FORMULA()"])
 def test_marked_csv_rejects_noncanonical_edited_cells(client, edited):
-    fields = ["name", "nationality", "document_number", "source", "__nia_csv_format"]
-    text = csv_text([person_payload(name=edited, __nia_csv_format="safe-v1")], fields)
+    fields = ["name", "nationality", "document_number", "source", "__crj_csv_format"]
+    text = csv_text([person_payload(name=edited, __crj_csv_format="safe-v1")], fields)
     preview = client.post("/api/people/import/preview", json={"csv_text": text}).json()
     assert preview["errors"][0]["row"] == 2
     assert "安全编码不完整" in preview["errors"][0]["message"]

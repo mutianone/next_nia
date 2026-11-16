@@ -12,7 +12,7 @@ export function SettingsHub({ theme, initialSection, onSaved }: { theme: Appeara
   const admin = user?.role === 'admin';
   const [section, setSection] = useState(initialSection || (admin ? 'configuration' : 'appearance'));
   return <div className="page-content settings-container settings-hub">
-    <PageHeading title="系统设置" description="集中管理系统、外观偏好，查阅各功能操作步骤。" scene="settings"/>
+    <PageHeading title="系统设置" description="集中管理系统、外观偏好，查阅各功能操作步骤。"/>
     <Tabs value={section} onValueChange={setSection}>
       <TabsList className="settings-hub-tabs" aria-label="系统设置分类">
         {admin && <TabsTrigger value="configuration">系统管理</TabsTrigger>}

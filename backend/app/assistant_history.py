@@ -65,7 +65,7 @@ def begin_turn(request, body, template_name):
             session.add(row)
         count = session.scalar(select(func.count()).select_from(AssistantMessage).where(AssistantMessage.conversation_id==row.id))
         if count >= 200: raise HTTPException(409, '当前会话已满，请新建会话继续。')
-        data = {'question':body.question,'date':str(body.as_of),'templateId':body.template_id,'templateRevision':body.template_revision,'templateName':template_name}
+        data = {'mode':body.mode,'question':body.question,'date':str(body.as_of),'templateId':body.template_id,'templateRevision':body.template_revision,'templateName':template_name}
         message = AssistantMessage(id=str(uuid4()),conversation_id=row.id,ordinal=count+1,data=json.dumps(data,ensure_ascii=False),status='pending')
         row.updated_at = now()
         session.add(message)

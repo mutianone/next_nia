@@ -1,0 +1,14 @@
+export type CaptureCache = { key:string; captureId:string; count:number; startedAt:string; capturedAt?:string; endedAt?:string; incomplete?:boolean };
+type Part = {key:string; owner:string; sequence:number; pcm:ArrayBuffer};
+async function database():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const q=indexedDB.open('crj-continuous-audio',1);q.onupgradeneeded=()=>{q.result.createObjectStore('sessions',{keyPath:'key'});q.result.createObjectStore('parts',{keyPath:'key'}).createIndex('owner','owner');};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});}
+async function transaction<T>(stores:string[],work:(tx:IDBTransaction,set:(v:T)=>void)=>void):Promise<T>{const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction(stores,'readwrite');let value:T;tx.oncomplete=()=>{db.close();resolve(value);};tx.onerror=()=>{db.close();reject(tx.error);};tx.onabort=()=>{db.close();reject(tx.error||new Error('本地录音缓存事务中断'));};work(tx,v=>{value=v;});});}
+export const captureStore={
+  get:(key:string)=>transaction<CaptureCache|undefined>(['sessions'],(tx,set)=>{const q=tx.objectStore('sessions').get(key);q.onsuccess=()=>set(q.result);}),
+  save:(value:CaptureCache)=>transaction<void>(['sessions'],tx=>{tx.objectStore('sessions').put(value);}),
+  append:(value:CaptureCache,sequence:number,pcm:ArrayBuffer)=>transaction<void>(['sessions','parts'],tx=>{tx.objectStore('parts').put({key:`${value.key}:${String(sequence).padStart(6,'0')}`,owner:value.key,sequence,pcm});tx.objectStore('sessions').put(value);}),
+  parts:(key:string,limit=20)=>transaction<Part[]>(['parts'],(tx,set)=>{const q=tx.objectStore('parts').index('owner').getAll(key,limit);q.onsuccess=()=>set((q.result as Part[]).sort((a,b)=>a.sequence-b.sequence));}),
+  count:(key:string)=>transaction<number>(['parts'],(tx,set)=>{const q=tx.objectStore('parts').index('owner').count(key);q.onsuccess=()=>set(q.result);}),
+  remove:(key:string,sequence:number)=>transaction<void>(['parts'],tx=>{tx.objectStore('parts').delete(`${key}:${String(sequence).padStart(6,'0')}`);}),
+  clear:(key:string)=>transaction<void>(['sessions','parts'],tx=>{tx.objectStore('sessions').delete(key);const q=tx.objectStore('parts').index('owner').openCursor(key);q.onsuccess=()=>{const c=q.result;if(c){c.delete();c.continue();}};}),
+};
+export function pcmWav(parts:ArrayBuffer[]):Blob{const length=parts.reduce((n,p)=>n+p.byteLength,0);const buffer=new ArrayBuffer(44);const v=new DataView(buffer);const text=(p:number,s:string)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i));};text(0,'RIFF');v.setUint32(4,36+length,true);text(8,'WAVE');text(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,16000,true);v.setUint32(28,32000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);text(36,'data');v.setUint32(40,length,true);return new Blob([buffer,...parts],{type:'audio/wav'});}

@@ -50,7 +50,7 @@ SQLite 与 PostgreSQL 数据保持独立；切换不迁移、不合并、不复�
 默认数据目录为 `backend/data/`。如需更换，在启动前设置：
 
 ```bash
-export NEXT_NIA_DATA_DIR="/absolute/path/to/next-nia-data"
+export CRJ_DATA_DIR="/absolute/path/to/crj-data"
 bash scripts/dev.sh
 ```
 
@@ -85,7 +85,7 @@ bash scripts/dev.sh
 部署前准备支持相应解码器及 `libmp3lame` 编码器的本地 FFmpeg。默认从服务进程的 `PATH` 查找 `ffmpeg`；也可在启动前指定绝对路径：
 
 ```bash
-export NEXT_NIA_FFMPEG_BIN="/absolute/path/to/ffmpeg"
+export CRJ_FFMPEG_BIN="/absolute/path/to/ffmpeg"
 bash scripts/dev.sh
 ```
 
@@ -107,7 +107,7 @@ FFmpeg 不可用时，非 MP3 转写会在外发前返回明确错误；本地�
 
 ```bash
 backend/.venv/bin/python -m pip install -r backend/requirements-semantic.txt
-export NEXT_NIA_EMBEDDING_MODEL_DIR="/absolute/path/to/local-embedding-model"
+export CRJ_EMBEDDING_MODEL_DIR="/absolute/path/to/local-embedding-model"
 bash scripts/dev.sh
 ```
 

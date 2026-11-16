@@ -1,0 +1,16 @@
+import { useEffect, useState } from 'react';
+import { api } from '../api';
+import { Dialog } from './Dialog';
+import { Choice } from './Choice';
+import { recordError, recordTime } from '../record-types';
+import type { RecordDetail } from '../record-types';
+type Snapshot={title?:string;location?:string;interviewers?:string;occurred_at?:string;status?:string;template_id?:string;rendered_text?:string;template_snapshot?:{fields?:{id:string;label:string}[];values?:Record<string,string>}};
+export function RecordVersionCompare({record,onClose}:{record:RecordDetail;onClose:()=>void}){
+ const revisions=record.history.map(h=>h.revision);const [left,setLeft]=useState(revisions.at(-2)||revisions[0]);const [right,setRight]=useState(revisions.at(-1)||revisions[0]);const [data,setData]=useState<[Snapshot,Snapshot]|null>(null);const [error,setError]=useState('');
+ useEffect(()=>{let cancelled=false;setData(null);setError('');Promise.all([left,right].map(revision=>api<{snapshot:Snapshot}>(`/records/${record.id}/revisions/${revision}`))).then(values=>{if(!cancelled)setData([values[0].snapshot,values[1].snapshot]);}).catch(e=>!cancelled&&setError(recordError(e)));return()=>{cancelled=true;};},[record.id,left,right]);
+ const entries=(s:Snapshot)=>({...Object.fromEntries(['title','location','interviewers','occurred_at','status','template_id'].map(k=>[k,String(s[k as keyof Snapshot]||'')])),...Object.fromEntries(Object.entries(s.template_snapshot?.values||{}).map(([k,v])=>['field:'+k,v]))});
+ const before=data?entries(data[0]):{};const after=data?entries(data[1]):{};const changed=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(k=>(before[k]||'')!==(after[k]||''));
+ const labels:Record<string,string>={title:'笔录标题',location:'询问地点',interviewers:'询问人员',occurred_at:'询问时间',status:'状态',template_id:'模板'};
+ const label=(key:string)=>key.startsWith('field:')?[...(data?.[1].template_snapshot?.fields||[]),...(data?.[0].template_snapshot?.fields||[])].find(f=>f.id===key.slice(6))?.label||key.slice(6):labels[key]||key;
+ return <Dialog title="笔录版本对比" onClose={onClose} className="rec-snapshot-dialog"><div className="rec-form-grid">{[['对比前版本',left,setLeft],['对比后版本',right,setRight]].map(([name,value,set])=><label className="field" key={String(name)}><span>{String(name)}</span><Choice className="select" value={Number(value)} onChange={e=>(set as (n:number)=>void)(Number(e.target.value))}>{record.history.map(h=><option key={h.revision} value={h.revision}>v{h.revision} · {recordTime(h.created_at)}</option>)}</Choice></label>)}</div>{error&&<p role="alert">{error}</p>}{!data&&!error&&<p>正在读取版本…</p>}{data&&<><p className="rec-muted">以下比较保存时的内容，只读查看。关联音频删除后，已清除的历史内容不会恢复显示。</p><h3>字段变化 · {changed.length} 项</h3>{changed.map(key=><article className="candidate-card" key={key}><strong>{label(key)}</strong><div className="rec-form-grid"><div><small>v{left}</small><p>{before[key]||'（空）'}</p></div><div><small>v{right}</small><p>{after[key]||'（空）'}</p></div></div></article>)}<details><summary>查看两版完整成文</summary><div className="rec-form-grid"><pre className="rec-verbatim">{data[0].rendered_text}</pre><pre className="rec-verbatim">{data[1].rendered_text}</pre></div></details></>}</Dialog>;
+}

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from .database import AuditEvent, Base
 from .people import Person, PersonStay
 
-logger = logging.getLogger("next_nia.alerts")
+logger = logging.getLogger("Crj.alerts")
 LOCK_ID = 731984206
 SCAN_FAILURE = "自动扫描未完成，请检查数据库可用性；上次成功扫描时间未变更。"
 
@@ -64,10 +64,10 @@ class StayFacts(Base):
 
 
 class Alert(Base):
-    __tablename__ = "alerts"
+    __tablename__ = "document_expiry_alerts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    person_id: Mapped[str] = mapped_column(ForeignKey("people.id"), index=True)
-    stay_id: Mapped[str] = mapped_column(ForeignKey("person_stays.id"), unique=True)
+    person_id: Mapped[str] = mapped_column(ForeignKey("people.id"), unique=True, index=True)
+    stay_id: Mapped[str | None] = mapped_column(ForeignKey("person_stays.id"), nullable=True)
     category: Mapped[str] = mapped_column(String(20), index=True)
     status: Mapped[str] = mapped_column(String(16), default="open", index=True)
     priority: Mapped[str] = mapped_column(String(12), default="normal")
@@ -83,10 +83,20 @@ class Alert(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class ExpiryDocumentTask(Base):
+    __tablename__ = "expiry_document_tasks"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    person_id: Mapped[str] = mapped_column(ForeignKey("people.id"), index=True)
+    expiry: Mapped[date] = mapped_column(Date)
+    title: Mapped[str] = mapped_column(String(200), default="责令限期出境决定书")
+    status: Mapped[str] = mapped_column(String(32), default="awaiting_template")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class AlertHistory(Base):
-    __tablename__ = "alert_history"
+    __tablename__ = "document_expiry_alert_history"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    alert_id: Mapped[str] = mapped_column(ForeignKey("alerts.id"), index=True)
+    alert_id: Mapped[str] = mapped_column(ForeignKey("document_expiry_alerts.id"), index=True)
     action: Mapped[str] = mapped_column(String(30))
     note: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
@@ -212,6 +222,7 @@ def rule_for_write(session: Session) -> AlertRule:
 
 def rule_values(rule: AlertRule | None, fallback_error: str | None = None) -> dict:
     values = RulesInput().model_dump() if rule is None else {key: getattr(rule, key) for key in RulesInput.model_fields}
+    values.update(upcoming_days=3, urgent_days=3, scan_interval_minutes=1)
     last_scan = aware(rule.last_scan_at) if rule and rule.last_scan_at else None
     next_scan = (last_scan + timedelta(minutes=values["scan_interval_minutes"]) if last_scan else utc_now()) if values["enabled"] else None
     return {**values, "last_scan_at": last_scan.isoformat() if last_scan else None,
@@ -331,60 +342,67 @@ def assess(person: Person, stay: PersonStay, facts: StayFacts | None, peers: lis
 
 
 def scan_alerts(engine, today: date | None = None, automatic: bool = False, now: datetime | None = None) -> dict | None:
-    """Scan one active database. Internal date override is only for deterministic tests."""
     now = aware(now or utc_now())
     today = today or now.astimezone(ZoneInfo("Asia/Shanghai")).date()
     with locked_session(engine) as session:
         rule = rule_for_write(session)
-        if automatic and (not rule.enabled or (rule.last_scan_at and now < aware(rule.last_scan_at) + timedelta(minutes=rule.scan_interval_minutes))):
+        # The document-expiry policy is fixed: warn within 3 days, draft after 7.
+        rule.upcoming_days = rule.urgent_days = 3
+        rule.scan_interval_minutes = 1
+        if automatic and (not rule.enabled or (rule.last_scan_at and now < aware(rule.last_scan_at) + timedelta(minutes=1))):
             return None
-        records = session.execute(select(PersonStay, Person).join(Person, Person.id == PersonStay.person_id)).all()
-        supplements = {facts.stay_id: facts for facts in session.scalars(select(StayFacts)).all()}
-        existing = {item.stay_id: item for item in session.scalars(select(Alert)).all()}
-        peers = defaultdict(list)
-        for stay, person in records:
-            if not exclusion_reason(person, stay, today):
-                peers[person.id].append(stay.id)
-        result = {"created": 0, "updated": 0, "closed": 0, "scanned": len(records), "scanned_at": now.isoformat()}
-        for stay, person in records:
-            candidate = assess(person, stay, supplements.get(stay.id), peers[person.id], rule, today)
-            previous = existing.get(stay.id)
-            if candidate is None:
-                if previous and (previous.status != "closed" or not previous.auto_closed):
-                    note = exclusion_reason(person, stay, today) or "登记期限已超出当前提前提醒窗口，当前提醒条件已消失。"
-                    was_closed = previous.status == "closed"
+        people = session.scalars(select(Person)).all()
+        existing = {row.person_id: row for row in session.scalars(select(Alert)).all()}
+        result = {"created":0, "updated":0, "closed":0, "scanned":len(people), "scanned_at":now.isoformat()}
+        for person in people:
+            days = (person.document_expiry - today).days if person.document_expiry else None
+            active = not person.archived and days is not None and days <= 3
+            previous = existing.get(person.id)
+            for task in session.scalars(select(ExpiryDocumentTask).where(ExpiryDocumentTask.person_id == person.id)):
+                if person.archived or task.expiry != person.document_expiry or days is None or days > -7:
+                    task.status = "cancelled"
+            if not active:
+                if previous and previous.status != "closed":
                     previous.status, previous.auto_closed, previous.updated_at = "closed", True, now
-                    previous.reason = note
-                    # A manual closure suppresses only the same continuously
-                    # present condition. Remember an intervening disappearance
-                    # so that restoring identical facts still starts a new review.
-                    history(session, previous, "auto_close", ("此前已人工关闭；" if was_closed else "") + note, now)
-                    result["updated" if was_closed else "closed"] += 1
+                    history(session, previous, "auto_close", "证件到期提醒条件已消失。", now)
+                    result["closed"] += 1
                 continue
+            category = "past_due" if days < 0 else "due_today" if days == 0 else "due_soon"
+            reason = f"证件已过期 {-days} 天。" if days < 0 else "证件今日到期。" if days == 0 else f"证件将在 {days} 天后到期。"
+            task = None
+            if days <= -7:
+                key = hashlib.sha256(f"{person.id}:{person.document_type}:{person.document_number}:{person.document_expiry}".encode()).hexdigest()
+                task = session.get(ExpiryDocumentTask, key)
+                if task is None:
+                    task = ExpiryDocumentTask(id=key, person_id=person.id, expiry=person.document_expiry, created_at=now)
+                    session.add(task)
+                    audit(session, "alerts.document_task_created", person_id=person.id)
+                elif task.status == "cancelled":
+                    task.status = "awaiting_template"
+                reason += "已自动创建责令限期出境决定书草稿，点击预警中的文书按钮直接编辑；未签发。"
+            fingerprint = hashlib.sha256(f"{person.document_type}:{person.document_number}:{person.document_expiry}:{category}".encode()).hexdigest()
+            candidate = dict(category=category, priority="urgent", deadline=person.document_expiry, days_remaining=days,
+                             visa_valid_until=None, reason=reason, source_summary=f"人员档案证件有效期；来源：{person.source}", fingerprint=fingerprint)
             if previous is None:
-                previous = Alert(id=str(uuid4()), person_id=person.id, stay_id=stay.id, status="open", auto_closed=False,
+                previous = Alert(id=str(uuid4()), person_id=person.id, stay_id=None, status="open", auto_closed=False,
                                  last_seen_at=now, created_at=now, updated_at=now, **candidate)
-                session.add(previous)
-                session.flush()
-                history(session, previous, "created", candidate["reason"], now)
-                result["created"] += 1
-                continue
-            material = previous.fingerprint != candidate["fingerprint"]
-            reopen = previous.status == "closed" and (previous.auto_closed or material)
-            changed = any(getattr(previous, key) != value for key, value in candidate.items()) or reopen
-            for key, value in candidate.items():
-                setattr(previous, key, value)
-            previous.last_seen_at = now
-            if reopen:
-                previous.status, previous.auto_closed = "open", False
-                history(session, previous, "auto_reopen", "提醒条件再次出现或关键事实、类别、期限发生变化，重新进入待核查。", now)
-            elif material:
-                history(session, previous, "facts_changed", "关键事实、提醒类别或适用期限发生变化，请重新核查。", now)
-            if changed:
-                previous.updated_at = now
-                result["updated"] += 1
+                session.add(previous); session.flush()
+                history(session, previous, "created", reason, now); result["created"] += 1
+            else:
+                reopen = previous.status == "closed" and (previous.auto_closed or previous.fingerprint != fingerprint)
+                changed = any(getattr(previous,k) != v for k,v in candidate.items()) or reopen
+                for key,value in candidate.items(): setattr(previous,key,value)
+                previous.last_seen_at = now
+                if reopen:
+                    previous.status, previous.auto_closed = "open", False
+                    history(session, previous, "auto_reopen", "证件到期条件发生变化，重新提醒。", now)
+                if changed:
+                    previous.updated_at = now; result["updated"] += 1
+            if task is not None:
+                from .expiry_decisions import ensure_draft
+                ensure_draft(session, task, person, previous, now)
         rule.last_scan_at, rule.last_error = now, None
-        audit(session, "alerts.scanned", created_count=result["created"], updated_count=result["updated"], closed_count=result["closed"], scanned_count=result["scanned"])
+        audit(session, "alerts.scanned", scanned_count=len(people))
         session.flush()
         return result
 
@@ -502,6 +520,13 @@ def list_alerts(request: Request, q: str = Query(default="", max_length=200),
         rule = session.get(AlertRule, 1)
         return {"items": [alert_values(alert, person) for alert, person in rows], "total": total, "page": page, "page_size": page_size,
                 "stats": stats, "last_scan_at": aware(rule.last_scan_at).isoformat() if rule and rule.last_scan_at else None}
+
+
+@router.get("/document-tasks")
+def document_tasks(request: Request):
+    with Session(request.app.state.engine) as session:
+        rows = session.scalars(select(ExpiryDocumentTask).order_by(ExpiryDocumentTask.created_at.desc())).all()
+        return {"items": [{"id": row.id, "person_id": row.person_id, "expiry": row.expiry, "title": row.title, "status": row.status} for row in rows]}
 
 
 @router.get("/{alert_id}")

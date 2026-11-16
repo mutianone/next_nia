@@ -72,4 +72,4 @@ def export_report(request: Request, start: date | None = None, end: date | None 
         writer.writerow(['入境', item['date'], item['entries'], '已登记实际日期'])
         writer.writerow(['离境', item['date'], item['exits'], '已登记实际日期'])
     for definition in data['definitions']: writer.writerow(['口径', definition, '', ''])
-    return Response(b'\xef\xbb\xbf'+stream.getvalue().encode(), media_type='text/csv; charset=utf-8', headers={'Content-Disposition': 'attachment; filename="nia-analytics.csv"'})
+    return Response(b'\xef\xbb\xbf'+stream.getvalue().encode(), media_type='text/csv; charset=utf-8', headers={'Content-Disposition': 'attachment; filename="crj-analytics.csv"'})

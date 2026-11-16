@@ -44,7 +44,7 @@ def write_new(path, content):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='境智本地数据维护（不覆盖既有数据）')
+    parser = argparse.ArgumentParser(description='智境本地数据维护（不覆盖既有数据）')
     sub = parser.add_subparsers(dest='action', required=True)
     backup = sub.add_parser('backup'); backup.add_argument('--data-dir', type=Path, required=True); backup.add_argument('--output', type=Path, required=True)
     verify = sub.add_parser('verify'); verify.add_argument('archive', type=Path)

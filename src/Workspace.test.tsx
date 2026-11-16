@@ -14,18 +14,13 @@ vi.mock('./api', () => ({ api: vi.fn() }));
 vi.mock('./components/SpatialHero', () => ({ SpatialHero: () => <div>可交互三维场景</div> }));
 beforeEach(() => vi.clearAllMocks());
 
-it('opens the optional scene without blocking business actions and restores focus on close', async () => {
+it('shows business actions without a three-dimensional view entry', async () => {
   const create = vi.fn();
-  render(<PageHeading title="文书中心" description="管理草稿" scene="documents"><button onClick={create}>制作文书</button></PageHeading>);
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  render(<PageHeading title="文书中心" description="管理草稿"><button onClick={create}>制作文书</button></PageHeading>);
   await userEvent.click(screen.getByRole('button', { name: '制作文书' }));
   expect(create).toHaveBeenCalledOnce();
-  const view = screen.getByRole('button', { name: '查看文书中心三维视图' });
-  await userEvent.click(view);
-  expect(screen.getByRole('dialog', { name: '文书中心 · 三维视图' })).toBeInTheDocument();
-  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByText('三维视图')).not.toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  await waitFor(() => expect(view).toHaveFocus());
 });
 
 it('switches the catalogue from article search to a selected publication state', async () => {

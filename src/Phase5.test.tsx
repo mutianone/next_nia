@@ -3,7 +3,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { Maintenance } from './components/Maintenance';
-import { Profiles } from './pages/Profiles';
+import { LegacyProfiles as Profiles } from './pages/LegacyProfiles';
 import { ConfirmationHost } from './components/ConfirmationHost';
 import { api } from './api';
 vi.mock('./api',()=>({api:vi.fn()}));
@@ -27,7 +27,7 @@ it('reports malformed migration JSON locally and never submits it',async()=>{
 });
 it('requires evidence and a review note before a fact may be saved as verified',async()=>{
   render(<Profiles/>);await userEvent.click(await screen.findByRole('button',{name:'查看画像 合成测试甲'}));
-  await userEvent.click(await screen.findByRole('tab',{name:'事实与来源'}));await userEvent.click(await screen.findByRole('button',{name:'登记事实'}));
+  await userEvent.click(await screen.findByRole('tab',{name:'信息核对'}));await userEvent.click(await screen.findByRole('button',{name:'登记事实'}));
   fireEvent.change(screen.getByLabelText('事实标签'),{target:{value:'来华事由'}});
   fireEvent.change(screen.getByLabelText('事实内容'),{target:{value:'合成陈述'}});
   fireEvent.change(screen.getByLabelText('来源说明'),{target:{value:'合成材料第1页'}});
@@ -39,7 +39,7 @@ it('requires evidence and a review note before a fact may be saved as verified',
   await waitFor(()=>expect(vi.mocked(api)).toHaveBeenCalledWith('/profiles/p1/facts',expect.objectContaining({method:'POST'})));
 });
 it('uses the custom confirmation to preserve a fact draft when closing is cancelled',async()=>{
-  render(<><Profiles/><ConfirmationHost/></>);await userEvent.click(await screen.findByRole('button',{name:'查看画像 合成测试甲'}));await userEvent.click(await screen.findByRole('tab',{name:'事实与来源'}));await userEvent.click(await screen.findByRole('button',{name:'登记事实'}));
+  render(<><Profiles/><ConfirmationHost/></>);await userEvent.click(await screen.findByRole('button',{name:'查看画像 合成测试甲'}));await userEvent.click(await screen.findByRole('tab',{name:'信息核对'}));await userEvent.click(await screen.findByRole('button',{name:'登记事实'}));
   fireEvent.change(screen.getByLabelText('事实标签'),{target:{value:'尚未保存'}});await userEvent.click(screen.getByRole('button',{name:'取消'}));
   expect(screen.getByRole('alertdialog')).toBeInTheDocument();await userEvent.click(screen.getByRole('button',{name:'继续编辑'}));
   expect(screen.getByDisplayValue('尚未保存')).toBeInTheDocument();expect(window.confirm).not.toHaveBeenCalled();

@@ -99,7 +99,7 @@ function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported
   </form></Dialog>;
 }
 
-export function Knowledge({ onAsk }: { onAsk: () => void }) {
+export function Knowledge({ onAsk }: { onAsk?: () => void }) {
   const [data, setData] = useState<KnowledgeList | null>(null);
   const [status, setStatus] = useViewState('knowledge.status', '');
   const [query, setQuery] = useViewState('knowledge.query', '');
@@ -123,7 +123,7 @@ export function Knowledge({ onAsk }: { onAsk: () => void }) {
   const listView = useListPosition(`knowledge:${JSON.stringify([tab,status,listQuery,page])}`, !selected && !importing, !loading && !searching);
   const openDoc = (id: string, chunk?: string) => { listView.remember(chunk || id); setSelected(id); setHighlight(chunk); };
   if(selected) return <DocumentViewer workspace id={selected} highlight={highlight} onClose={() => setSelected(null)} onChanged={() => { setResult(null); void load(); }}/>;
-  return <div className="page-content knowledge-page"><PageHeading title="法规知识中心" description="管理法规版本，按适用日期检索条款并查阅原文。" scene="knowledge"><Access permission="admin"><button className="btn btn-primary" onClick={() => setImporting(true)}><Plus size={17}/>导入法规资料</button></Access></PageHeading>
+  return <div className="page-content knowledge-page"><PageHeading title="法规知识中心" description="管理法规版本，按适用日期检索条款并查阅原文。"><Access permission="admin"><button className="btn btn-primary" onClick={() => setImporting(true)}><Plus size={17}/>导入法规资料</button></Access></PageHeading>
     <div className="kb-main-grid">
       <aside className="kb-directory" aria-label="法规资料目录"><h2><BookOpen size={17}/>资料目录</h2>
         <nav aria-label="按发布状态浏览">{[
@@ -133,7 +133,7 @@ export function Knowledge({ onAsk }: { onAsk: () => void }) {
           {value:'archived',label:'已归档',count:data ? data.stats.documents-data.stats.published-data.stats.drafts : undefined},
         ].map(item=><button key={item.value} aria-pressed={tab==='library'&&status===item.value} onClick={()=>{setTab('library');setStatus(item.value);setPage(1);setError('');}}><span>{item.label}</span><b>{item.count??'—'}</b></button>)}</nav>
         <div className="kb-directory-note"><ShieldCheck size={16}/><p>审核发布后，资料进入检索范围。引用时同时核对版本和施行日期。</p></div>
-        <Access permission="write"><button className="text-button kb-ask-link" onClick={onAsk}>前往法规问答<ArrowRight size={14}/></button></Access>
+        {onAsk && <Access permission="write"><button className="text-button kb-ask-link" onClick={onAsk}>前往法规问答<ArrowRight size={14}/></button></Access>}
         <details className="kb-engine-note"><summary>检索说明</summary><p>{data?.retrieval.message||'正在读取检索状态…'}</p><span>已提取 {data?.stats.chunks??'—'} 段原文</span></details>
       </aside>
       <section className="panel kb-library"><div className="kb-tabs" role="tablist" aria-label="知识库视图"><button role="tab" aria-selected={tab === 'library'} onClick={() => { setTab('library'); setError(''); }}><BookOpen size={17}/>资料库</button><button role="tab" aria-selected={tab === 'search'} onClick={() => { setTab('search'); setError(''); }}><Search size={17}/>条款检索</button></div>

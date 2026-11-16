@@ -26,7 +26,7 @@ OLD="$(readlink -f "$ROOT/current" 2>/dev/null || true)"
 SWITCHED=0
 STOPPED=0
 UNIT=/etc/systemd/system/nia.service
-UNIT_BACKUP="$ROOT/backups/nia-service-$ID"
+UNIT_BACKUP="$ROOT/backups/crj-service-$ID"
 [ ! -f "$UNIT" ] || cp -p "$UNIT" "$UNIT_BACKUP"
 rollback() {
   code=$?
@@ -84,7 +84,7 @@ tar -xzf "$ROOT/incoming/$ID/release.tar.gz" -C "$RELEASE" --no-same-owner
 "$PYTHON" -m venv "$RELEASE/backend/.venv"
 "$RELEASE/backend/.venv/bin/python" -m pip install --disable-pip-version-check -r "$RELEASE/backend/requirements.txt"
 # Import/start against an isolated empty database before touching the running service.
-NEXT_NIA_DATA_DIR="$RELEASE/.preflight-data" NEXT_NIA_SERVE_DIST=1 "$RELEASE/backend/.venv/bin/python" -c "import sys; sys.path.insert(0, '$RELEASE'); from backend.app.main import app; assert app"
+CRJ_DATA_DIR="$RELEASE/.preflight-data" CRJ_SERVE_DIST=1 "$RELEASE/backend/.venv/bin/python" -c "import sys; sys.path.insert(0, '$RELEASE'); from backend.app.main import app; assert app"
 rm -rf "$RELEASE/.preflight-data"
 # Check port before stopping anything. Never kill an unrelated service.
 if ! systemctl is-active --quiet nia.service; then
@@ -96,15 +96,15 @@ STOPPED=1
 tar -czf "$ROOT/backups/data-$ID.tar.gz" -C "$ROOT" data
 cat > "$UNIT" <<UNIT
 [Unit]
-Description=NIA web application
+Description=Crj web application
 After=network-online.target
 Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=$ROOT/current
-Environment=NEXT_NIA_DATA_DIR=$ROOT/data
-Environment=NEXT_NIA_SERVE_DIST=1
-Environment=NEXT_NIA_FFMPEG_BIN=$FFMPEG_BIN
+Environment=CRJ_DATA_DIR=$ROOT/data
+Environment=CRJ_SERVE_DIST=1
+Environment=CRJ_FFMPEG_BIN=$FFMPEG_BIN
 Environment=PYTHONUNBUFFERED=1
 Environment=TZ=Asia/Shanghai
 ExecStart=$ROOT/current/backend/.venv/bin/python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 5173 --workers 1

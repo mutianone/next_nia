@@ -10,7 +10,7 @@ class StrictModel(BaseModel):
 
 
 class GeneralSettings(StrictModel):
-    system_name: str = Field(default="境智 · 出入境业务平台", min_length=1, max_length=80)
+    system_name: str = Field(default="智境·出入智境能警务平台", min_length=1, max_length=80)
     organization: str = Field(default="出入境业务中心", min_length=1, max_length=100)
 
     interview_locations: list[str] = Field(default_factory=list, max_length=100)
@@ -38,7 +38,7 @@ class GeneralSettings(StrictModel):
 class PostgresSettings(StrictModel):
     host: str = Field(default="127.0.0.1", min_length=1, max_length=253)
     port: int = Field(default=5432, ge=1, le=65535)
-    database: str = Field(default="next_nia", min_length=1, max_length=63)
+    database: str = Field(default="Crj", min_length=1, max_length=63)
     username: str = Field(default="postgres", min_length=1, max_length=63)
     password: SecretStr = SecretStr("")
 
@@ -135,7 +135,24 @@ class ExternalPermissions(StrictModel):
     analysis: bool = True
 
 
+class SpeechSettings(StrictModel):
+    provider: Literal["siliconflow", "aliyun"] = "siliconflow"
+    api_key: SecretStr = SecretStr("")
+    workspace_id: str = Field(default="", max_length=100, pattern=r"^[A-Za-z0-9-]*$")
+    model: Literal["fun-asr"] = "fun-asr"
+
+    @field_validator("api_key")
+    @classmethod
+    def validate_key(cls, value: SecretStr) -> SecretStr:
+        return ProviderSettings.valid_api_key(value)
+
+
+class SpeechUpdate(SpeechSettings):
+    clear_api_key: bool = False
+
+
 class AISettings(StrictModel):
+    speech: SpeechSettings = Field(default_factory=SpeechSettings)
     enabled: bool = False
     default_provider: ProviderName = "siliconflow"
     external_permissions: ExternalPermissions = Field(default_factory=ExternalPermissions)
@@ -143,6 +160,7 @@ class AISettings(StrictModel):
 
 
 class AIUpdate(StrictModel):
+    speech: SpeechUpdate = Field(default_factory=SpeechUpdate)
     enabled: bool = False
     default_provider: ProviderName = "siliconflow"
     external_permissions: ExternalPermissions = Field(default_factory=ExternalPermissions)
@@ -176,6 +194,7 @@ def reveal(secret: SecretStr) -> str:
 def persisted_settings(settings: Settings) -> dict:
     value = settings.model_dump(mode="json")
     value["environment"]["postgres"]["password"] = reveal(settings.environment.postgres.password)
+    value["ai"]["speech"]["api_key"] = reveal(settings.ai.speech.api_key)
     for name in ("siliconflow", "deepseek"):
         value["ai"]["providers"][name]["api_key"] = reveal(getattr(settings.ai.providers, name).api_key)
     return value
@@ -183,6 +202,8 @@ def persisted_settings(settings: Settings) -> dict:
 
 def public_settings(settings: Settings) -> dict:
     value = settings.model_dump(mode="json")
+    value["ai"]["speech"].pop("api_key")
+    value["ai"]["speech"]["api_key_configured"] = bool(reveal(settings.ai.speech.api_key))
     postgres = value["environment"]["postgres"]
     postgres.pop("password")
     postgres["password_configured"] = bool(reveal(settings.environment.postgres.password))
@@ -204,6 +225,12 @@ def merge_postgres(update: PostgresUpdate, current: PostgresSettings) -> Postgre
 
 def merge_settings(update: SettingsUpdate, current: Settings) -> Settings:
     data = update.model_dump()
+    if "speech" not in update.ai.model_fields_set:
+        data['ai']['speech']=current.ai.speech.model_dump()
+    else:
+        speech=data['ai']['speech'];speech.pop('clear_api_key',None)
+        if update.ai.speech.clear_api_key:speech['api_key']=''
+        elif not reveal(update.ai.speech.api_key):speech['api_key']=current.ai.speech.api_key
     if "external_permissions" not in update.ai.model_fields_set:
         data["ai"]["external_permissions"] = current.ai.external_permissions.model_dump()
     data["environment"]["postgres"] = merge_postgres(update.environment.postgres, current.environment.postgres)

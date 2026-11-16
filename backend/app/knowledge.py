@@ -23,9 +23,9 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .database import AuditEvent, Base
-from .knowledge_ai import KnowledgeAIError, answer_with_sources
+from .knowledge_ai import KnowledgeAIError, answer_with_sources, answer_consultation
 from .knowledge_stream import stream_answer
-from .retrieval import rank_sources, retrieval_status
+from .retrieval import rank_sources, retrieval_status, compact_sources
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 MAX_TEXT = 1_000_000
@@ -174,6 +174,7 @@ class SearchRequest(BaseModel):
 class AskRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     question: str = Field(min_length=1, max_length=1000)
+    mode: Literal["grounded", "consultation", "auto"] = "grounded"
     as_of: date | None = None
     confirm_external: bool = False
     conversation_id: str | None = Field(default=None, max_length=36)
@@ -443,7 +444,10 @@ def _search(session: Session, query: str, as_of: date, limit: int, external_only
                         "effective_from": document.effective_from.isoformat() if document.effective_from else None,
                         "effective_to": document.effective_to.isoformat() if document.effective_to else None,
                         "allow_external": document.allow_external})
-    return rank_sources(query, sources, limit)
+    ranked, status = rank_sources(query, sources, limit * 4 if external_only else limit)
+    if external_only:
+        ranked = compact_sources(ranked, limit)
+    return ranked, status
 
 
 def _missing_sources_message(session: Session, as_of: date) -> str:
@@ -518,6 +522,8 @@ def search(request: Request, body: SearchRequest):
 @router.post("/ask")
 def ask(request: Request, body: AskRequest):
     as_of = body.as_of or _today()
+    if body.mode == "consultation" and body.template_id:
+        raise HTTPException(422, "分析模板仅适用于法规依据问答。")
     question = body.question
     template_sources = None
     if body.template_id:
@@ -529,12 +535,31 @@ def ask(request: Request, body: AskRequest):
         settings = request.app.state.store.current.model_copy(deep=True)
     if not settings.ai.external_permissions.question:
         raise HTTPException(403, "请前往系统配置 → AI 服务，勾选允许法规问答发送至服务商；非管理员请联系管理员。")
+    if body.mode == "consultation":
+        if not body.confirm_external:
+            raise HTTPException(400, "AI 外发许可尚未确认。")
+        try:
+            result = answer_consultation(body.question, settings, as_of)
+        except KnowledgeAIError as error:
+            raise HTTPException(error.status, error.message) from None
+        with _session(request, write=True) as session:
+            _audit(session, "knowledge.consulted", count=0)
+        return result
     # Keep publication/external-permission checks and the outbound request in one
     # serialized operation. A concurrent revocation cannot slip between them.
     with _WRITE_LOCK, _session(request, write=True) as session:
         sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
         if template_sources is not None:
-            sources = template_sources + sources[:4]
+            sources = compact_sources(template_sources + sources[:4], len(template_sources) + 4)
+        if not sources and body.mode == "auto":
+            if not body.confirm_external:
+                raise HTTPException(400, "AI 外发许可尚未确认。")
+            try:
+                result = answer_consultation(body.question, settings, as_of)
+            except KnowledgeAIError as error:
+                raise HTTPException(error.status, error.message) from None
+            _audit(session, "knowledge.consulted", count=0)
+            return result
         if not sources:
             return {"status": "insufficient", "answer": _missing_sources_message(session, as_of), "sources": [], "provider": None, "model": None, "claims": [], "as_of": as_of, "retrieval": retrieval}
         if not body.confirm_external:
@@ -544,13 +569,15 @@ def ask(request: Request, body: AskRequest):
         except KnowledgeAIError as error:
             raise HTTPException(error.status, error.message) from None
         _audit(session, "knowledge.asked", count=len(sources))
-    return {**result, "as_of": as_of, "retrieval": retrieval}
+    return {**result, "as_of": as_of, "retrieval": retrieval, "mode": "grounded"}
 
 
 @router.post("/ask/stream")
 def ask_stream(request: Request, body: AskRequest):
     from .assistant_history import begin_turn, finish_turn
     as_of = body.as_of or _today()
+    if body.mode == "consultation" and body.template_id:
+        raise HTTPException(422, "分析模板仅适用于法规依据问答。")
     question = body.question
     template_sources = None
     template_name = None
@@ -577,12 +604,28 @@ def ask_stream(request: Request, body: AskRequest):
             completed = True
         try:
             yield event({'type':'saved','conversation_id':conversation_id,'message_id':message_id})
+            if body.mode == "consultation":
+                yield event({'type': 'status', 'message': 'AI 正在分析问题，无需本地法规资料…'})
+                answer = answer_consultation(body.question, settings, as_of)
+                persist(answer)
+                with _session(request, write=True) as session:
+                    _audit(session, "knowledge.consulted", count=0)
+                yield event({'type': 'complete', 'answer': answer})
+                return
             yield event({"type": "status", "message": "正在检索法规依据…"})
             with _WRITE_LOCK, _session(request) as session:
                 sources, retrieval = _search(session, body.question, as_of, 8, external_only=True)
                 missing_message = _missing_sources_message(session, as_of) if not sources else None
             if template_sources is not None:
-                sources = template_sources + sources[:4]
+                sources = compact_sources(template_sources + sources[:4], len(template_sources) + 4)
+            if not sources and body.mode == "auto":
+                yield event({'type': 'status', 'message': '未找到相关可用法规，AI 正在直接分析…'})
+                answer = answer_consultation(body.question, settings, as_of)
+                persist(answer)
+                with _session(request, write=True) as session:
+                    _audit(session, "knowledge.consulted", count=0)
+                yield event({'type': 'complete', 'answer': answer})
+                return
             if not sources:
                 answer = {"status": "insufficient", "answer": missing_message, "sources": [], "claims": [], "provider": None, "model": None, "as_of": as_of, "retrieval": retrieval}
                 persist(answer)
@@ -590,7 +633,7 @@ def ask_stream(request: Request, body: AskRequest):
                 return
             yield event({"type": "status", "message": "已找到法规依据，AI 正在生成回答…"})
             for result in stream_answer(question, sources, settings, **({"analysis": True} if template_sources is not None else {})):
-                result['answer'].update({'as_of': as_of, 'retrieval': retrieval})
+                result['answer'].update({'as_of': as_of, 'retrieval': retrieval, 'mode': 'grounded'})
                 if result['type'] == 'complete':
                     persist(result['answer'])
                     with _session(request, write=True) as session:

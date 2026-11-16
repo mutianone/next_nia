@@ -88,3 +88,13 @@ def test_multiple_unclosed_stays_never_get_a_confirmed_countdown(client):
     assert data['unclosed']==2
     assert all(d['category']=='needs_review' and d['days_remaining'] is None for d in data['deadlines'])
     assert any(c['kind']=='open_stays' for c in data['checks'])
+
+
+def test_portrait_expiry_filter_boundaries(client, monkeypatch):
+    monkeypatch.setattr('backend.app.alerts.business_today', lambda: date(2026, 10, 25))
+    for i, expiry in enumerate(['2026-10-24','2026-10-25','2026-10-28','2026-10-29',None]):
+        person(client, number=f'EXP-{i}', document_expiry=expiry)
+    for status, count in [('expired',1),('soon',2),('valid',1),('unknown',1)]:
+        response=client.get('/api/people',params={'expiry_status':status})
+        assert response.status_code==200
+        assert response.json()['total']==count

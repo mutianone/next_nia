@@ -19,7 +19,7 @@ from backend.app.main import create_app
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    monkeypatch.delenv("NEXT_NIA_EMBEDDING_MODEL_DIR", raising=False)
+    monkeypatch.delenv("CRJ_EMBEDDING_MODEL_DIR", raising=False)
     app = create_app(tmp_path / "library")
     if not any(route.path == "/api/knowledge" for route in app.routes):
         app.include_router(knowledge.router)
@@ -305,9 +305,9 @@ def test_database_isolation(client, tmp_path):
 
 
 def test_semantic_not_configured_and_invalid_directory_are_honest(monkeypatch):
-    monkeypatch.delenv("NEXT_NIA_EMBEDDING_MODEL_DIR", raising=False)
+    monkeypatch.delenv("CRJ_EMBEDDING_MODEL_DIR", raising=False)
     assert retrieval.retrieval_status()["mode"] == "lexical"
-    monkeypatch.setenv("NEXT_NIA_EMBEDDING_MODEL_DIR", "/nonexistent/local/model")
+    monkeypatch.setenv("CRJ_EMBEDDING_MODEL_DIR", "/nonexistent/local/model")
     assert retrieval.retrieval_status()["mode"] == "lexical"
     assert "未联网下载" in retrieval.retrieval_status()["message"]
 
@@ -320,7 +320,7 @@ def test_local_model_loader_forbids_downloads_and_custom_code(monkeypatch, tmp_p
     retrieval._load_local_model.cache_clear()
     directory = tmp_path / "local-model"
     directory.mkdir()
-    monkeypatch.setenv("NEXT_NIA_EMBEDDING_MODEL_DIR", str(directory))
+    monkeypatch.setenv("CRJ_EMBEDDING_MODEL_DIR", str(directory))
     assert retrieval.retrieval_status()["mode"] == "hybrid"
     assert constructor.call_args.kwargs == {"local_files_only": True, "trust_remote_code": False}
     retrieval._load_local_model.cache_clear()

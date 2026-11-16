@@ -10,7 +10,7 @@ from backend.app import records_ai
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    monkeypatch.setenv('NEXT_NIA_PRESENTATION', '1')
+    monkeypatch.setenv('CRJ_PRESENTATION', '1')
     with TestClient(create_app(tmp_path)) as instance:
         yield instance
 
@@ -121,7 +121,7 @@ def test_unapproved_seed_laws_cannot_be_sent(client,monkeypatch):
 
 
 def test_restart_preserves_work_without_duplicate_seed(tmp_path,monkeypatch):
-    monkeypatch.setenv('NEXT_NIA_PRESENTATION','1')
+    monkeypatch.setenv('CRJ_PRESENTATION','1')
     with TestClient(create_app(tmp_path)) as client:
         count=client.get('/api/dashboard').json()['stats']['people']
     with TestClient(create_app(tmp_path)) as client:
@@ -129,11 +129,11 @@ def test_restart_preserves_work_without_duplicate_seed(tmp_path,monkeypatch):
 
 
 def test_existing_business_directory_is_never_seeded(tmp_path,monkeypatch):
-    monkeypatch.delenv('NEXT_NIA_PRESENTATION',raising=False)
+    monkeypatch.delenv('CRJ_PRESENTATION',raising=False)
     with TestClient(create_app(tmp_path)):
         pass
     original=(tmp_path/'test.sqlite3').read_bytes()
-    monkeypatch.setenv('NEXT_NIA_PRESENTATION','1')
+    monkeypatch.setenv('CRJ_PRESENTATION','1')
     from backend.app.config import ConfigurationError
     with pytest.raises(ConfigurationError,match='独立'):
         with TestClient(create_app(tmp_path)):

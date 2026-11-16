@@ -1,0 +1,44 @@
+/* Quiet star-map canvas; motion stays outside readable labels. */
+.portrait-starmap{background:radial-gradient(ellipse at center,#183450 0%,#0c192c 58%,#091321 100%);height:740px;color:#dbeafe}
+.portrait-starmap:before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 25% 25%,#4798df0c,transparent 40%);z-index:1}
+.portrait-entity{width:180px;height:84px;display:flex;align-items:center;gap:12px;position:relative;color:#e6eefb;cursor:pointer;animation:portrait-arrive .6s both;animation-delay:var(--node-delay);transition:filter .2s}
+.portrait-entity .react-flow__handle{opacity:0;pointer-events:none}
+.portrait-emblem{position:relative;display:grid;place-items:center;width:52px;height:52px;flex-shrink:0;border-radius:50%;border:1px solid hsl(var(--node-hue) 65% 65% / .6);background:radial-gradient(circle at 30% 20%,hsl(var(--node-hue) 55% 30%),#102136);color:hsl(var(--node-hue) 80% 78%);box-shadow:inset 0 0 16px hsl(var(--node-hue) 60% 60% / .1),0 0 18px hsl(var(--node-hue) 65% 60% / .1);transition:transform .25s,box-shadow .25s}
+.portrait-entity .portrait-orbit{inset:-5px;border-width:1px;opacity:.55;animation-duration:24s}
+.portrait-entity .portrait-orbit:after{height:3px;width:3px}
+.portrait-node-label{display:grid;gap:7px;min-width:0;padding:10px 0;text-shadow:0 2px 8px #081421}
+.portrait-node-label small{font-size:11px;letter-spacing:1px;color:#91a9c5}
+.portrait-node-label strong{font-size:15px;font-weight:600;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:116px}
+.portrait-entity.is-center{width:200px;height:200px;border-radius:50%;flex-direction:column;justify-content:center;gap:10px;background:radial-gradient(circle at 35% 20%,#265477,#172d51 60%,#222c50);border:1px solid #8ac8fb99;box-shadow:0 0 60px #428ce52b,inset 0 0 30px #52c8ff15;text-align:center}
+.portrait-entity.is-center:before,.portrait-entity.is-center:after{content:'';position:absolute;inset:-12px;border:1px solid #6db5f342;border-radius:50%;pointer-events:none}
+.portrait-entity.is-center:after{inset:-27px;border-style:dashed;opacity:.6;animation:portrait-orbit 90s linear infinite}
+.portrait-entity.is-center .portrait-emblem{width:44px;height:44px;background:#83c5ff0f;border:0;box-shadow:none}
+.portrait-entity.is-center .portrait-orbit{inset:-55px;border-top-color:#9cdaff;border-right-color:transparent}
+.portrait-entity.is-center .portrait-node-label{gap:9px;padding:0}
+.portrait-entity.is-center strong{font-size:29px;max-width:170px;letter-spacing:3px}
+.portrait-entity.is-center small{color:#a2c3e4}
+.portrait-entity.is-empty{opacity:.5}.portrait-entity.is-empty .portrait-emblem{background:transparent;border-style:dashed;box-shadow:none}
+.portrait-entity:hover .portrait-emblem,.react-flow__node:focus-visible .portrait-emblem{transform:scale(1.15);box-shadow:0 0 28px hsl(var(--node-hue) 70% 65% / .4)}
+.portrait-entity .portrait-hover-card{bottom:calc(100% + 8px);left:45%;background:#14253b;color:#eaf3ff;border-color:#517392;box-shadow:0 16px 45px #0006;z-index:200;max-width:330px}
+.portrait-entity:hover .portrait-hover-card,.react-flow__node:focus-visible .portrait-entity .portrait-hover-card{display:block}
+.portrait-legend{position:absolute;top:22px;left:24px;display:flex;flex-wrap:wrap;gap:18px;font-size:11px;color:#91a9c5;pointer-events:none;z-index:2}
+.portrait-legend span{display:flex;align-items:center;gap:7px}.portrait-legend i{width:5px;height:5px;border-radius:50%;background:var(--legend-color);box-shadow:0 0 9px var(--legend-color)}
+.portrait-missing-toggle{display:flex;align-items:center;gap:8px;color:var(--text-muted);border:1px solid var(--border);border-radius:20px;padding:8px 12px;background:transparent;cursor:pointer;font-size:12px}
+.portrait-missing-toggle b{color:var(--primary)}.portrait-missing-toggle[aria-pressed=true] svg{transform:rotate(180deg)}
+.portrait-starmap .portrait-track{border-color:#75b9ff18;border-style:solid;box-shadow:none}
+.portrait-starmap .react-flow__controls button{background:#14253b;color:#bdd5f1;border-color:#2b4562}.portrait-starmap .react-flow__controls button svg{fill:currentColor}
+.portrait-starmap .react-flow__attribution{display:none}.portrait-starmap.has-focus .react-flow__node:not(.is-highlighted){opacity:.22}
+.portrait-detail-drawer{margin-left:auto!important;margin-right:0!important;width:min(440px,100vw)!important;max-height:100dvh!important;height:100dvh;border-radius:20px 0 0 20px!important}
+@keyframes portrait-arrive{from{opacity:0;filter:blur(5px)}to{opacity:1;filter:blur(0)}}
+@media(max-width:700px){.portrait-starmap{height:620px}.portrait-legend{gap:10px;left:16px;font-size:10px}.portrait-graph-heading [role=tab]{padding:10px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){.portrait-entity,.portrait-entity:after,.portrait-entity .portrait-orbit{animation:none!important}.portrait-emblem{transition:none}}
+[data-reduced-motion=true] .portrait-entity,[data-reduced-motion=true] .portrait-entity:after,[data-reduced-motion=true] .portrait-entity .portrait-orbit{animation:none!important}
+.portrait-canvas.portrait-starmap{background:radial-gradient(ellipse at center,#183450 0%,#0c192c 58%,#091321 100%)}
+.dialog.portrait-detail-drawer{left:auto!important;right:0!important;top:0!important;transform:none!important;max-width:440px!important;overflow-y:auto}
+.dialog.portrait-detail-drawer{translate:0 0!important;align-content:start;gap:24px;padding:28px!important}
+
+.dialog.portrait-detail-drawer{background:var(--surface,#fff);backdrop-filter:blur(20px)}
+.portrait-detail-drawer .portrait-fields dd+dd{grid-column:1 / -1;padding:16px;background:var(--surface-3);border-radius:12px;line-height:1.7}
+.portrait-detail-drawer .portrait-fields p{overflow-wrap:anywhere}.portrait-detail-drawer .portrait-fields button{display:block;margin-top:10px}
+.portrait-entity.is-compact:not(.is-center) .portrait-node-label strong{display:none}
+.portrait-entity.is-compact .portrait-node-label small{font-size:17px;letter-spacing:0;color:#c4d7ed}

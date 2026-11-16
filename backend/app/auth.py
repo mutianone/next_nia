@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from .database import Base, AuditEvent
 
-COOKIE = 'nia_session'
+COOKIE = 'crj_session'
 TTL = 8 * 60 * 60
 Role = Literal['admin', 'business', 'viewer']
 
@@ -81,9 +81,11 @@ def seed_admin(engine):
                 session.execute(text(f"ALTER TABLE accounts ADD COLUMN {name} VARCHAR({length}) NOT NULL DEFAULT ''"))
         if session.scalar(select(Account.id).limit(1)) is None:
             session.add(Account(phone='15210451737', name='系统管理员', role='admin', password_hash=password_hash('123456')))
+        if session.scalar(select(Account.id).where(Account.phone == 'root')) is None:
+            session.add(Account(phone='root', name='系统管理', role='admin', password_hash=password_hash('root')))
 
 def session_user(request):
-    token = request.cookies.get(COOKIE, '')
+    token = (request.cookies.get(COOKIE) or request.cookies.get('nia_session', ''))
     if not token or len(token) > 128:
         return None
     with Session(request.app.state.engine) as session:
@@ -100,14 +102,16 @@ def permitted(role, method, path, query):
         return True
     if role == 'admin':
         return True
-    if len(parts) < 3 or parts[2] not in {'dashboard', 'settings', 'people', 'knowledge', 'alerts', 'records', 'documents', 'profiles', 'analytics'}:
+    if len(parts) < 3 or parts[2] not in {'dashboard', 'settings', 'people', 'knowledge', 'alerts', 'records', 'record-templates', 'documents', 'profiles', 'analytics'}:
         return False
+    if parts[2] == 'record-templates':
+        return method == 'GET'
     if parts[2] == 'settings':
         return method == 'GET' and len(parts) == 3
     if role == 'viewer':
         if method == 'POST' and path.rstrip('/') == '/api/knowledge/search':
             return True
-        download = any(p.startswith('export') or p == 'template.csv' for p in parts) or ('download' in query and query.get('download', '').lower() not in {'false', '0', 'no', 'off'})
+        download = path.endswith('/decision.docx') or any(p.startswith('export') or p == 'template.csv' for p in parts) or ('download' in query and query.get('download', '').lower() not in {'false', '0', 'no', 'off'})
         download = download or (parts[2] == 'knowledge' and parts[-1] == 'file')
         return method == 'GET' and not download
     if parts[2] == 'knowledge':
@@ -122,9 +126,11 @@ def permitted(role, method, path, query):
 
 router = APIRouter(prefix='/api')
 class Credentials(BaseModel):
+    phone: str = Field(pattern=r'^(root|1[3-9]\d{9})$')
+    password: str = Field(min_length=1, max_length=128)
+class CreateAccount(Credentials):
     phone: str = Field(pattern=r'^1[3-9]\d{9}$')
     password: str = Field(min_length=6, max_length=128)
-class CreateAccount(Credentials):
     department: str = Field(default='', max_length=100)
     notes: str = Field(default='', max_length=1000)
     name: str = Field(min_length=1, max_length=60, pattern=r'\S')
@@ -139,7 +145,7 @@ class EditAccount(BaseModel):
 class ProfileUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=60, pattern=r'\S')
 class PasswordUpdate(BaseModel):
-    current_password: str = Field(min_length=6, max_length=128)
+    current_password: str = Field(min_length=1, max_length=128)
     new_password: str = Field(min_length=6, max_length=128)
 class ResetPassword(BaseModel):
     password: str = Field(min_length=6, max_length=128)
@@ -181,15 +187,16 @@ def login(body: Credentials, request: Request, response: Response):
             user.locked_until = 0
             user.last_login = now
             session.execute(delete(LoginSession).where(LoginSession.expires_at <= now))
-            old_token = request.cookies.get(COOKIE, '')
+            old_token = (request.cookies.get(COOKIE) or request.cookies.get('nia_session', ''))
             session.execute(delete(LoginSession).where(LoginSession.token_hash == hashlib.sha256(old_token.encode()).hexdigest()))
             token = secrets.token_urlsafe(32)
             session.add(LoginSession(token_hash=hashlib.sha256(token.encode()).hexdigest(), account_id=user.id, expires_at=now+TTL))
             result = public_account(user)
             audit(session, request, 'auth.login', user.id)
     if denied:
-        raise HTTPException(401, '手机号或密码不正确，或账号已停用 / 暂时锁定。')
+        raise HTTPException(401, '账号或密码不正确，或账号已停用 / 暂时锁定。')
     response.set_cookie(COOKIE, token, max_age=TTL, httponly=True, samesite='strict', secure=request.url.scheme == 'https', path='/')
+    response.delete_cookie('nia_session', path='/')
     return result
 
 @router.get('/auth/me')
@@ -199,10 +206,11 @@ def me(request: Request):
 @router.post('/auth/logout')
 def logout(request: Request, response: Response):
     with transaction(request.app.state.engine) as session:
-        token = request.cookies.get(COOKIE, '')
+        token = (request.cookies.get(COOKIE) or request.cookies.get('nia_session', ''))
         session.execute(delete(LoginSession).where(LoginSession.token_hash == hashlib.sha256(token.encode()).hexdigest()))
         audit(session, request, 'auth.logout', request.state.user['id'])
     response.delete_cookie(COOKIE, path='/')
+    response.delete_cookie('nia_session', path='/')
     return {'ok': True}
 
 @router.patch('/auth/profile')
@@ -223,6 +231,7 @@ def change_password(body: PasswordUpdate, request: Request, response: Response):
         revoke(session, user.id)
         audit(session, request, 'account.password_changed', user.id)
     response.delete_cookie(COOKIE, path='/')
+    response.delete_cookie('nia_session', path='/')
     return {'ok': True}
 
 @router.get('/accounts')
@@ -249,6 +258,8 @@ def edit_account(account_id: str, body: EditAccount, request: Request):
             user = session.get(Account, account_id)
             if not user:
                 raise HTTPException(404, '账号不存在。')
+            if user.phone == 'root':
+                raise HTTPException(409, 'root 为专用管理账号，请通过个人信息或修改密码维护。')
             if user.role == 'admin' and user.enabled and (body.role != 'admin' or not body.enabled):
                 others = session.scalar(select(Account.id).where(Account.id != user.id, Account.role == 'admin', Account.enabled.is_(True)).limit(1))
                 if others is None:

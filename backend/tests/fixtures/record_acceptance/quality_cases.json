@@ -1,0 +1,96 @@
+[
+  {
+    "id": "bride-valid",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我父亲叫张三。",
+    "expected": true
+  },
+  {
+    "id": "bride_family-valid",
+    "template_id": "bride_family",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我没有兄弟姐妹。",
+    "expected": true
+  },
+  {
+    "id": "border_case-valid",
+    "template_id": "border_case",
+    "field": "q003",
+    "question": "你是否申请我们回避？",
+    "answer": "我不申请回避。",
+    "expected": true
+  },
+  {
+    "id": "negation-removed",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我没有兄弟姐妹。",
+    "value": "我有兄弟姐妹。",
+    "expected": false
+  },
+  {
+    "id": "uncertainty-removed",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我好像有一个姐姐，但我不确定。",
+    "value": "我有一个姐姐。",
+    "expected": false
+  },
+  {
+    "id": "legal-strengthening",
+    "template_id": "bride",
+    "field": "q014",
+    "question": "你在中国居留有没有合法证件？",
+    "answer": "我带了护照，但有效期需要核查。",
+    "value": "我有合法居留证件。",
+    "expected": false
+  },
+  {
+    "id": "question-used-as-answer",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "你是否有姐姐？",
+    "expected": false
+  },
+  {
+    "id": "mismatched-question",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你是否申请回避？",
+    "answer": "不申请。",
+    "expected": false
+  },
+  {
+    "id": "unknown-role-no-evidence",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我父亲叫张三。",
+    "no_evidence": true,
+    "expected": false
+  },
+  {
+    "id": "partial-negation",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我没有姐姐。",
+    "quote": "有姐姐。",
+    "expected": false
+  },
+  {
+    "id": "missing-condition",
+    "template_id": "bride",
+    "field": "q004",
+    "question": "你的家庭情况？",
+    "answer": "我有一个姐姐，但我记不清她的姓名。",
+    "quote": "我有一个姐姐",
+    "expected": false
+  }
+]

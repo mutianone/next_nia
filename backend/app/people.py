@@ -142,8 +142,6 @@ class StayInput(InputModel):
 
     @model_validator(mode="after")
     def valid_dates(self):
-        if self.permitted_until and self.permitted_until < self.entry_date:
-            raise ValueError("允许停留截止日期不能早于入境日期")
         if self.exit_date and self.exit_date < self.entry_date:
             raise ValueError("离境日期不能早于入境日期")
         # Departure after a recorded permitted date is a fact, not an automatic
@@ -222,7 +220,7 @@ class PeopleRoute(APIRoute):
 router = APIRouter(prefix="/api/people", tags=["人员事实档案"], route_class=PeopleRoute)
 CSV_COLUMNS = list(PersonInput.model_fields)
 CSV_REQUIRED = {"name", "nationality", "document_number", "source"}
-CSV_FORMAT_COLUMN = "__nia_csv_format"
+CSV_FORMAT_COLUMN = "__crj_csv_format"
 CSV_FORMAT_VERSION = "safe-v1"
 
 
@@ -261,7 +259,7 @@ def add_audit(session: Session, action: str, **identifiers_or_counts) -> None:
 
 def new_person(data: PersonInput) -> Person:
     identifier = uuid4()
-    return Person(id=str(identifier), code=f"NIA-{business_today():%Y%m%d}-{identifier.hex[:10].upper()}", **data.model_dump())
+    return Person(id=str(identifier), code=f"CRJ-{business_today():%Y%m%d}-{identifier.hex[:10].upper()}", **data.model_dump())
 
 
 def check_duplicate(session: Session, data: PersonInput, exclude_id: str | None = None):
@@ -325,7 +323,7 @@ def parse_csv(csv_text: str, session: Session) -> tuple[list[dict], list[dict], 
         header = next(reader, None)
         if not header:
             return [], [{"row": 1, "message": "CSV 为空，请使用导入模板。"}], 0, False
-        header = [name.strip() for name in header]
+        header = [CSV_FORMAT_COLUMN if name.strip() == "__nia_csv_format" else name.strip() for name in header]
         if len(set(header)) != len(header) or not CSV_REQUIRED.issubset(header) or any(name not in CSV_COLUMNS and name != CSV_FORMAT_COLUMN for name in header):
             return [], [{"row": 1, "message": "CSV 表头无效：姓名 name、国籍 nationality、证件号码 document_number 和来源 source 为必需列；请使用下载的模板。"}], 0, False
         while True:
@@ -389,7 +387,8 @@ def list_people(request: Request, q: str = Query(default="", max_length=200), ar
                 page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1, le=100),
                 nationality: str = Query(default="", max_length=100),
                 gender: Literal["all", "male", "female", "unknown"] = "all",
-                verification: Literal["all", "verified", "pending"] = "all"):
+                verification: Literal["all", "verified", "pending"] = "all",
+                expiry_status: Literal["all", "soon", "expired", "valid", "unknown"] = "all"):
     with Session(request.app.state.engine) as session:
         conditions = filters(q, archived)
         if nationality.strip():
@@ -398,6 +397,13 @@ def list_people(request: Request, q: str = Query(default="", max_length=200), ar
             conditions.append(Person.gender == gender)
         if verification != "all":
             conditions.append(Person.verification == verification)
+        from .alerts import business_today
+        from datetime import timedelta
+        today = business_today()
+        if expiry_status == "soon": conditions.extend([Person.document_expiry >= today, Person.document_expiry <= today + timedelta(days=3)])
+        elif expiry_status == "expired": conditions.append(Person.document_expiry < today)
+        elif expiry_status == "valid": conditions.append(Person.document_expiry > today + timedelta(days=3))
+        elif expiry_status == "unknown": conditions.append(Person.document_expiry.is_(None))
         total = session.scalar(select(func.count()).select_from(Person).where(*conditions)) or 0
         people = session.scalars(select(Person).where(*conditions).order_by(Person.updated_at.desc(), Person.id).offset((page - 1) * page_size).limit(page_size)).all()
         counts = session.execute(select(func.count(Person.id),

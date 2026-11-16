@@ -33,6 +33,8 @@ VARIABLES = [
     ("legal_basis", "人工核对的法律依据", "manual"), ("decision", "人工填写的处理内容", "manual"),
     ("officer", "承办人员", "manual"), ("review_note", "正文中的复核说明", "manual"),
 ]
+from .departure_documents import EXTRA_FIELDS
+VARIABLES.extend((key, label, "manual") for key, label in EXTRA_FIELDS)
 VARIABLE_NAMES = {item[0] for item in VARIABLES}
 MANUAL_NAMES = {item[0] for item in VARIABLES if item[2] == "manual"}
 PLACEHOLDER = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
@@ -318,6 +320,8 @@ def complete_document(row):
 def seed_templates(engine):
     """Create one explicitly internal worksheet; never overwrite an existing row."""
     with write_session(engine) as session:
+        from .departure_documents import ensure_template
+        ensure_template(session)
         if session.scalar(select(DocumentTemplate.id).where(or_(DocumentTemplate.id == INTERNAL_ID, (DocumentTemplate.name == INTERNAL_NAME) & (DocumentTemplate.version == "1.0")))):
             return
         session.add(DocumentTemplate(id=INTERNAL_ID, name=INTERNAL_NAME, version="1.0", kind="internal", status="approved",
@@ -510,7 +514,8 @@ def export_document(document_id, request, format):
         body = complete_document(row)
         label = REVIEWED_LABEL if row.status == "reviewed" else DRAFT_LABEL
         if format == "docx":
-            content = make_docx(row.title, body, label)
+            from .departure_documents import TEMPLATE_ID, export_layout, template_body
+            content = export_layout(row, label) if row.template_id == TEMPLATE_ID and row.template_snapshot["body"] == template_body() else make_docx(row.title, body, label)
             content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         else:
             content = (label + "\n\n" + row.title + "\n\n" + body + "\n\n" + label + "\n").encode("utf-8-sig")

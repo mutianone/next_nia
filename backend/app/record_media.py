@@ -16,7 +16,7 @@ class RecordMediaError(Exception):
 
 
 def conversion_binary() -> str | None:
-    configured = os.environ.get("NEXT_NIA_FFMPEG_BIN", "ffmpeg")
+    configured = os.environ.get("CRJ_FFMPEG_BIN", "ffmpeg")
     binary = shutil.which(configured)
     return str(Path(binary).resolve()) if binary else None
 
@@ -41,7 +41,7 @@ def normalize_for_asr(raw: bytes, file_format: str) -> tuple[bytes, str, str]:
         # Temp directories are private; names, metadata and filesystem paths
         # never become API inputs. Explicit demuxers and protocols prevent URLs
         # or playlists from being resolved by FFmpeg.
-        with tempfile.TemporaryDirectory(prefix="nia-audio-") as directory:
+        with tempfile.TemporaryDirectory(prefix="crj-audio-") as directory:
             source, output = Path(directory) / "input", Path(directory) / "output.mp3"
             descriptor = os.open(source, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
             with os.fdopen(descriptor, "wb") as stream:
@@ -80,3 +80,26 @@ def normalize_for_asr(raw: bytes, file_format: str) -> tuple[bytes, str, str]:
         raise RecordMediaError("本地音频转换超时，请拆分或重新导出音频；原件未修改，尚未发送。") from None
     except (OSError, ValueError):
         raise RecordMediaError("本地音频转换无法完成，请检查 FFmpeg、临时目录权限与磁盘空间；尚未发送。") from None
+
+
+def extract_speech_window(raw: bytes, file_format: str, start_ms: int, end_ms: int) -> bytes:
+    """Decode a bounded original-audio window; never overwrite the source file."""
+    if not raw or len(raw)>MAX_OUTPUT_BYTES or not 0<=start_ms<end_ms or end_ms-start_ms>60000:
+        raise RecordMediaError('补转写片段必须在60秒以内。')
+    demuxer='mp3' if file_format=='mp3' else DEMUXERS.get(file_format)
+    binary=conversion_binary()
+    if not binary or not demuxer:raise RecordMediaError('无法解码此原音，请检查FFmpeg和音频格式。')
+    try:
+        with tempfile.TemporaryDirectory(prefix='crj-repair-') as directory:
+            source=Path(directory)/'source';source.write_bytes(raw);source.chmod(0o600)
+            command=[binary,'-nostdin','-v','error','-xerror','-protocol_whitelist','file,pipe','-f',demuxer,'-i',str(source),
+                '-ss',str(start_ms/1000),'-t',str((end_ms-start_ms)/1000),'-map','0:a','-vn','-sn','-dn',
+                '-ac','1','-ar','16000','-c:a','pcm_s16le','-f','s16le','pipe:1']
+            result=subprocess.run(command,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=30,check=False)
+            if result.returncode or len(result.stdout)<128:raise RecordMediaError('原音片段解码失败，原文未修改。')
+            import io,wave
+            buffer=io.BytesIO()
+            with wave.open(buffer,'wb') as target:
+                target.setnchannels(1);target.setsampwidth(2);target.setframerate(16000);target.writeframes(result.stdout)
+            return buffer.getvalue()
+    except (OSError,subprocess.TimeoutExpired):raise RecordMediaError('原音片段处理失败，原文未修改。') from None

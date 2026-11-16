@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export type LocalRecording = { blob: Blob; url: string; filename: string; duration: number };
+export type LocalRecording = { blob: Blob; url: string; filename: string; duration: number; startedAt: string; endedAt: string };
 const MAX_SECONDS = 300;
 const MAX_BYTES = 20 * 1024 * 1024;
 
@@ -18,8 +18,9 @@ export function useRecorder() {
   const mounted = useRef(true);
   const objectURL = useRef('');
   const startLock = useRef(false);
+  const stoppedAt = useRef<string | null>(null);
   const stop = useCallback(() => {
-    if (recorder.current?.state === 'recording') { setStopping(true); recorder.current.stop(); }
+    if (recorder.current?.state === 'recording') { stoppedAt.current = new Date().toISOString(); setStopping(true); recorder.current.stop(); }
     if (timer.current !== null) { window.clearInterval(timer.current); timer.current = null; }
     stream.current?.getTracks().forEach(track => track.stop());
     stream.current = null;
@@ -42,6 +43,8 @@ export function useRecorder() {
     if (startLock.current || recording || stopping || local) return;
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { setError('当前页面无法使用麦克风。请通过 localhost 或受信任的 HTTPS 地址访问，也可以上传已有音频。'); return; }
     if (typeof MediaRecorder === 'undefined') { setError('当前浏览器不支持网页录音，请使用支持 MediaRecorder 的浏览器，或上传本地音频。'); return; }
+    const clickedAt = new Date().toISOString();
+    stoppedAt.current = null;
     startLock.current = true; setStarting(true); setError(''); setNotice('');
     try {
       const media = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -69,7 +72,7 @@ export function useRecorder() {
         const extension = blob.type.includes('mp4') ? 'm4a' : blob.type.includes('ogg') ? 'ogg' : blob.type.includes('wav') ? 'wav' : blob.type.includes('mpeg') || blob.type.includes('mp3') ? 'mp3' : blob.type.includes('flac') ? 'flac' : 'webm';
         if (objectURL.current) URL.revokeObjectURL(objectURL.current);
         objectURL.current = URL.createObjectURL(blob);
-        setLocal({ blob, url: objectURL.current, filename: `录音-${new Date().toISOString().replace(/[:.]/g, '-')}.${extension}`, duration });
+        setLocal({ blob, url: objectURL.current, filename: `录音-${new Date().toISOString().replace(/[:.]/g, '-')}.${extension}`, duration, startedAt: clickedAt, endedAt: stoppedAt.current || new Date().toISOString() });
         if (duration > MAX_SECONDS + 2) setNotice('浏览器后台或设备暂停可能延迟停止。已保留实际经过时间，请试听核实音频后保存；长询问建议保持页面前台并分段录制。');
         if (blob.size > MAX_BYTES) setError('录音停止时文件超过 20 MiB，暂不能上传。请下载保留本段，再分成较短音频上传。');
       };

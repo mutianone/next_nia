@@ -66,12 +66,12 @@ def review(client, value, **updates):
 def test_internal_seed_is_unique_approved_and_not_official(client):
     seed_templates(client.app.state.engine)
     rows = client.get("/api/documents/templates").json()["items"]
-    assert len(rows) == 1
-    item = rows[0]
+    assert len(rows) == 2
+    item = next(row for row in rows if row["id"] == INTERNAL_ID)
     assert item["id"] == INTERNAL_ID and item["kind"] == "internal" and item["status"] == "approved"
     assert "不是法定文书" in item["source"] and "非执法决定" in item["body"]
     variables = client.get("/api/documents/templates/variables").json()["items"]
-    assert len(variables) == 16
+    assert {"english_name", "evidence", "rights_notice", "approver"} <= {item["name"] for item in variables}
     assert next(item for item in variables if item["name"] == "organization")["source"] == "manual"
     archived = client.patch(f"/api/documents/templates/{INTERNAL_ID}", json={"expected_revision": 1, "status": "archived"})
     assert archived.status_code == 200
@@ -100,7 +100,7 @@ def test_template_approval_requires_source_note_confirmation_and_freezes_content
 def test_template_rejects_unknown_variables_expressions_and_controls(client, body):
     response = client.post("/api/documents/templates", json={"name": "不安全模板", "version": "1", "kind": "internal", "body": body})
     assert response.status_code == 422
-    assert len(client.get("/api/documents/templates").json()["items"]) == 1
+    assert len(client.get("/api/documents/templates").json()["items"]) == 2
 
 
 def test_snapshots_are_stable_and_unapproved_or_changed_template_cannot_be_reviewed(client):

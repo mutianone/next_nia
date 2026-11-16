@@ -139,10 +139,15 @@ def profile(person_id: str, request: Request):
         for model, kind, title in [(RecordSession, 'record', '询问笔录'), (DocumentDraft, 'document', '业务文书')]:
             for row in session.scalars(select(model).where(model.person_id == person_id).order_by(model.created_at.desc())):
                 # Archived sources remain traceable; no AI summaries become verified facts implicitly.
-                source = {'id': row.id, 'type': kind, 'title': row.title, 'detail': f'版本 {row.revision} · {row.status}', 'revision': row.revision}
+                source = {'id': row.id, 'type': kind, 'title': row.title, 'detail': f'版本 {row.revision} · {row.status}', 'revision': row.revision, 'status': row.status}
                 if kind == 'record':
                     segments = session.scalars(select(RecordSegment).where(RecordSegment.record_id == row.id).order_by(RecordSegment.position)).all()
-                    source['excerpt'] = '\n'.join(s.text for s in segments)[:12000]
+                    source['excerpt'] = '\n'.join(s.text for s in segments)
+                    from .records import segment_hash
+                    template = row.template_snapshot or {}
+                    if template.get('generated') and template.get('source_hash') == segment_hash(segments):
+                        source['template_values'] = template.get('values', {})
+                    source['occurred_at'] = timestamp(row.occurred_at) if row.occurred_at else None
                 else:
                     source['excerpt'] = str(row.review_note or '文书快照保留在文书中心')
                 result['sources'].append(source)
@@ -154,6 +159,8 @@ def profile(person_id: str, request: Request):
         result['timeline'] = sorted(timeline, key=lambda item: item['date'][:10]+item['date'][10:], reverse=True)
         from .profile_insights import build_insights
         result['insights'] = build_insights(session, person, result)
+        from .profile_radial import build_radial
+        result['radial'] = build_radial(session, result)
         return result
 
 

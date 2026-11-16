@@ -12,7 +12,7 @@ from backend.app.database import application_engine
 ADMIN = {'phone':'15210451737','password':'123456'}
 @pytest.fixture
 def app(tmp_path, monkeypatch):
-    monkeypatch.delenv('NEXT_NIA_PRESENTATION', raising=False)
+    monkeypatch.delenv('CRJ_PRESENTATION', raising=False)
     with TestClient(create_app(tmp_path)) as client:
         yield client
 
@@ -38,7 +38,7 @@ def test_requires_login_and_seeds_hashed_admin(app):
     with Session(app.app.state.engine) as session:
         user=session.scalar(select(Account))
         assert user.password_hash!='123456' and verify_password('123456',user.password_hash)
-        token=app.cookies.get('nia_session')
+        token=app.cookies.get('crj_session')
         assert session.get(LoginSession,hashlib.sha256(token.encode()).hexdigest())
     assert app.get('/api/dashboard').status_code==200
     assert app.post('/api/auth/logout').status_code==200
@@ -113,7 +113,7 @@ def test_backup_never_contains_live_sessions(app,tmp_path):
     verify_archive(archive)
 
 def test_admin_password_not_reset_on_restart(tmp_path,monkeypatch):
-    monkeypatch.delenv('NEXT_NIA_PRESENTATION',raising=False)
+    monkeypatch.delenv('CRJ_PRESENTATION',raising=False)
     with TestClient(create_app(tmp_path)) as first:
         login(first);first.post('/api/auth/password',json={'current_password':'123456','new_password':'changed123'})
     with TestClient(create_app(tmp_path)) as second:
@@ -143,7 +143,7 @@ def test_account_department_notes_roundtrip_and_validation(app):
 
 def test_existing_database_adds_account_fields_without_reset(tmp_path, monkeypatch):
     from sqlalchemy import create_engine, text
-    monkeypatch.delenv('NEXT_NIA_PRESENTATION', raising=False)
+    monkeypatch.delenv('CRJ_PRESENTATION', raising=False)
     with TestClient(create_app(tmp_path)) as client:
         original = login(client).json()
         client.patch('/api/auth/profile',json={'name':'原管理员'})

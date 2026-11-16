@@ -31,7 +31,7 @@ def _load_local_model(directory: str):
 
 
 def _semantic_model():
-    configured = os.environ.get("NEXT_NIA_EMBEDDING_MODEL_DIR", "").strip()
+    configured = os.environ.get("CRJ_EMBEDDING_MODEL_DIR", "").strip()
     if not configured:
         return None, "本地 BM25 与字词精确匹配融合检索；未配置本地语义模型。"
     directory = Path(configured).expanduser()
@@ -95,3 +95,43 @@ def rank_sources(query: str, sources: list[dict], limit: int = 8) -> tuple[list[
             combined[index] = combined.get(index, 0.0) + 1.0 / (60 + position + 1)
     ordered = sorted(combined, key=lambda index: (-combined[index], sources[index]["id"]))[:limit]
     return [{**sources[index], "score": round(combined[index], 6)} for index in ordered], status
+
+
+def compact_sources(sources: list[dict], limit: int = 8) -> list[dict]:
+    """Merge only literal overlap in the same article/version/page, never paraphrase law."""
+    selected = []
+    seen_ids = set()
+    for source in sources:
+        if source['id'] in seen_ids:
+            continue
+        seen_ids.add(source['id'])
+        merged = False
+        for existing in selected:
+            identity = ('document_id', 'version', 'article', 'page', 'kind', 'allow_external')
+            if any(source.get(key) != existing.get(key) for key in identity):
+                continue
+            # Without a document identity, do not merge independent template sources.
+            if not source.get('document_id'):
+                continue
+            left, right = existing['text'], source['text']
+            combined = None
+            if right in left:
+                combined = left
+            elif left in right:
+                combined = right
+            else:
+                for first, second in ((left, right), (right, left)):
+                    for size in range(min(len(first), len(second)), 59, -1):
+                        if first.endswith(second[:size]):
+                            combined = first + second[size:]
+                            break
+                    if combined is not None:
+                        break
+            if combined is not None and len(combined) <= 3600:
+                existing['text'] = combined
+                existing['merged_chunk_ids'] = list(dict.fromkeys([*existing.get('merged_chunk_ids', [existing['id']]), source['id']]))
+                merged = True
+                break
+        if not merged:
+            selected.append(dict(source))
+    return selected[:limit]

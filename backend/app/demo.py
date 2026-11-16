@@ -137,7 +137,7 @@ def populate(session, today):
         existing_numbers.add(number)
         entered = today-timedelta(days=(i*7)%29+1)
         # Latest week has varying entries; older, closed stays make history realistic.
-        p = add(Person(id=str(uuid4()), code=f'NIA-{today.year}-{batch_id[:4].upper()}{i+1:03}', name=name,
+        p = add(Person(id=str(uuid4()), code=f'CRJ-{today.year}-{batch_id[:4].upper()}{i+1:03}', name=name,
             english_name=english, nationality=country, gender=gender, birth_date=date(1985+i%15, i%12+1, i%25+1),
             document_number=number, document_expiry=today+timedelta(days=900+i*39),
             address=f'{ADDRESSES[scenario]} {101+i*3}室', purpose=PURPOSES[scenario], source=f'综合窗口登记表 {today.year}-{i+1:04}',

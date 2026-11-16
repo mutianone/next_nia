@@ -1,3 +1,4 @@
+import { RecordTemplateManager } from '../components/RecordTemplateManager';
 import { aiLabel } from '../lib/aiLabel';
 import { KnowledgePermissions } from '../components/KnowledgePermissions';
 import '../components/interview-fields.css';
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react'
 
 type ProviderId = 'siliconflow' | 'deepseek'
-type Section = 'general' | 'environment' | 'ai' | 'data' | 'accounts'
+type Section = 'general' | 'environment' | 'ai' | 'data' | 'accounts' | 'templates'
 type ProviderSettings = {
   enabled: boolean
   base_url: string
@@ -39,7 +40,7 @@ type PostgresSettings = {
 type AppSettings = {
   general: { system_name: string; organization: string; interview_locations?: string[] }
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
-  ai: { external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
+  ai: { speech?: {provider:'siliconflow'|'aliyun';model:'fun-asr';workspace_id:string;api_key_configured:boolean}; external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
 type Runtime = { sample_workspace?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
@@ -93,6 +94,8 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   const [section, setSection] = useViewState<Section>('settings.section', 'general')
   const mobile = useMediaQuery('(max-width: 700px)')
   const [notice, setNotice] = useState<Notice | null>(null)
+  const [speechKey,setSpeechKey]=useState('');
+  const [clearSpeechKey,setClearSpeechKey]=useState(false);
   const [keys, setKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
   const [savedKeys, setSavedKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
   const [clearKeys, setClearKeys] = useState<Record<ProviderId, boolean>>({ siliconflow: false, deepseek: false })
@@ -120,7 +123,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     return () => { cancelled = true }
   }, [reload])
 
-  const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || password || clearPassword || keys.siliconflow !== savedKeys.siliconflow || keys.deepseek !== savedKeys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
+  const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || speechKey || clearSpeechKey || password || clearPassword || keys.siliconflow !== savedKeys.siliconflow || keys.deepseek !== savedKeys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
 
   usePageDirty(dirty || saving)
 
@@ -168,6 +171,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   }
 
   function resetSecrets(values = savedKeys) {
+    setSpeechKey(''); setClearSpeechKey(false)
     setKeys(values)
     setClearKeys({ siliconflow: false, deepseek: false })
     setVisibleKeys({ siliconflow: true, deepseek: true })
@@ -193,6 +197,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim(), interview_locations: draft.general.interview_locations || [] },
         environment: { mode: draft.environment.mode, postgres: postgresPayload() },
         ai: {
+          ...(draft.ai.speech ? {speech:{provider:draft.ai.speech.provider,model:'fun-asr',workspace_id:draft.ai.speech.workspace_id,api_key:speechKey.trim(),clear_api_key:clearSpeechKey}}:{}),
           enabled: draft.ai.enabled, default_provider: draft.ai.default_provider, external_permissions: draft.ai.external_permissions || { question: true, asr: true, analysis: true },
           providers: Object.fromEntries(providers.map(provider => [provider.id, {
             enabled: draft.ai.providers[provider.id].enabled, base_url: provider.url, chat_model: draft.ai.providers[provider.id].chat_model.trim(),
@@ -204,7 +209,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       }
       const result = await request<SettingsResponse>('/api/settings', { method: 'PUT', body: JSON.stringify(payload) })
       if (!result.settings || !result.runtime) throw new Error('保存响应不完整，请重新读取配置确认状态。')
-      setSaved(result.settings); setDraft(structuredClone(result.settings)); setRuntime(result.runtime)
+      setSaved(result.settings); setDraft(structuredClone(result.settings)); setRuntime(result.runtime);setSpeechKey('');setClearSpeechKey(false)
       const persistedKeys = { siliconflow: clearKeys.siliconflow ? '' : (keys.siliconflow.trim() || savedKeys.siliconflow), deepseek: clearKeys.deepseek ? '' : (keys.deepseek.trim() || savedKeys.deepseek) };
       setSavedKeys(persistedKeys); resetSecrets(persistedKeys); setDatabaseTest(undefined); setAiTests({})
       showNotice({ kind: 'success', text: result.runtime.pending_restart ? '配置已保存。环境配置将在后端服务重启后生效，当前数据不会自动迁移。' : '配置已保存，基础信息与 AI 设置已生效。' })
@@ -217,7 +222,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   if (loadError || !draft || !runtime) return <div className="settings-page"><h1 className="page-title">系统设置</h1><div className="panel settings-state-panel settings-load-error" role="alert"><Unplug size={30} /><h2>暂时无法读取配置</h2><p>{loadError || '服务没有返回完整配置。'}</p><button className="btn btn-primary" onClick={() => setReload(value => value + 1)}><RefreshCw size={16} />重新连接</button></div></div>
 
   return <div className="settings-page">
-    <PageHeading title="系统设置" description="管理账号权限、运行环境、AI 服务和本地数据。" scene="settings">
+    <PageHeading title="系统设置" description="管理账号权限、运行环境、AI 服务和本地数据。">
       <div className={`settings-save-state ${dirty ? 'is-dirty' : ''}`}><span />{dirty ? '有未保存的修改' : '配置已保存'}</div>
     </PageHeading>
 
@@ -228,6 +233,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       <aside className="settings-nav-column">
         <TabsList asChild><nav className="settings-section-nav" aria-label="设置分类">
           {([
+            { id: 'templates' as const, icon: Settings2, title: '笔录模板', subtitle: '字段、问题别名与版本' },
             { id: 'accounts' as const, icon: ShieldCheck, title: '账号管理', subtitle: '人员账号与角色权限' },
             { id: 'general' as const, icon: Settings2, title: '基础信息', subtitle: '名称与所属组织' },
             { id: 'environment' as const, icon: Database, title: '运行环境', subtitle: '数据库切换' },
@@ -239,6 +245,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
       </aside>
 
       <motion.div className="settings-main" key="settings-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <TabsContent value="templates" forceMount asChild><div hidden={section !== 'templates'}><RecordTemplateManager/></div></TabsContent>
         {section === 'accounts' && <TabsContent value="accounts"><AccountManagement/></TabsContent>}
         {section === 'general' && <TabsContent value="general" asChild><section className="panel settings-card">
           <div className="settings-card-heading"><div><h2>基础信息</h2></div></div>
@@ -277,7 +284,15 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         {section === 'ai' && <TabsContent value="ai" asChild><section className="settings-ai-section">
           <div className="panel settings-card"><div className="settings-card-heading"><div><h2>AI 服务配置</h2></div></div>
             <div className="settings-card-body"><div className="settings-external-permissions"><div className="permission-heading"><h3>AI 外发许可</h3><div><button type="button" className="text-button" disabled={saving} onClick={() => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:true,asr:true,analysis:true}}})}>全选</button><button type="button" className="text-button" disabled={saving} onClick={() => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:false,asr:false,analysis:false}}})}>取消全选</button></div></div><p>许可按功能统一生效，实际发送至当前配置的服务商；取消勾选后，对应功能不能发送资料。</p>{([{key:'question',label:'允许法规问答发送至服务商',detail:'当前问题与已获准使用的公开法规片段。'},{key:'asr',label:'允许录音转写发送至AI',detail:'本次选定的音频，原音仍在本地留存。'},{key:'analysis',label:'允许笔录摘要发送至服务商',detail:'已保存的笔录修订文字，用于摘要与要素提取。'}] as const).map(item => <label key={item.key}><input type="checkbox" disabled={saving} checked={draft.ai.external_permissions?.[item.key] ?? true} onChange={e => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:true,asr:true,analysis:true,...draft.ai.external_permissions,[item.key]:e.target.checked}}})}/><span><strong>{item.label}</strong><small>{item.detail}</small></span></label>)}</div><KnowledgePermissions/><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '法规问答、语音转写和摘要可使用已配置的服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
-              <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写固定使用AI。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><Choice className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></Choice></label></div>
+              <div className="settings-default-provider"><div><h3>笔录语音转写</h3><p>阿里云百炼 · Fun-ASR · 北京地域</p></div>
+                <label>语音服务<select className="select" disabled={saving} value={draft.ai.speech?.provider||'siliconflow'} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{model:'fun-asr',workspace_id:'',api_key_configured:false,...draft.ai.speech,provider:e.target.value as 'aliyun'|'siliconflow'}}})}><option value="aliyun">阿里云 Fun-ASR</option><option value="siliconflow">硅基流动（备用）</option></select></label>
+              </div>
+              {draft.ai.speech?.provider==='aliyun'&&<div className="settings-field-grid">
+                <label className="field">百炼 API Key<input className="input" type="password" autoComplete="new-password" value={speechKey} disabled={saving||clearSpeechKey} placeholder={draft.ai.speech.api_key_configured?'已配置，留空保留':'填写北京地域 API Key'} onChange={e=>setSpeechKey(e.target.value)}/></label>
+                <label className="field">业务空间 ID（可选）<input className="input" value={draft.ai.speech.workspace_id} disabled={saving} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,workspace_id:e.target.value}}})}/></label>
+                {draft.ai.speech.api_key_configured&&<label><input type="checkbox" checked={clearSpeechKey} disabled={saving} onChange={e=>{setClearSpeechKey(e.target.checked);setSpeechKey('');}}/>清空阿里云密钥</label>}
+              </div>}
+              <div className="settings-default-provider"><div><h3>默认对话服务商</h3><p>法规问答和笔录摘要使用该服务；语音转写使用上方独立配置。</p></div><label className="settings-provider-select"><span className="settings-visually-hidden">默认对话服务商</span><Choice className="select" disabled={saving} value={draft.ai.default_provider} onChange={event => { setDraft({ ...draft, ai: { ...draft.ai, default_provider: event.target.value as ProviderId } }); setNotice(null) }}><option value="siliconflow">硅基流动</option><option value="deepseek">DeepSeek</option></Choice></label></div>
               {!draft.ai.providers[draft.ai.default_provider].enabled && <div className="settings-inline-warning"><CircleAlert size={16} /><span>默认服务商当前未启用。开启 AI 前，请先启用下方对应服务商。</span></div>}
             </div>
           </div>
@@ -291,7 +306,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
               <div className="settings-provider-header"><div><h3>{provider.name}{draft.ai.default_provider === provider.id && <span className="settings-default-tag">默认</span>}</h3><p>{provider.description}</p></div><Switch checked={config.enabled} disabled={saving} label={`启用${provider.name}`} onChange={enabled => updateProvider(provider.id, { enabled })} /></div>
               <div className="settings-provider-fields">
                 <label className="field settings-field"><span>服务地址 <LockKeyhole size={12} /></span><input className="input settings-readonly" value={config.base_url} readOnly aria-label={`${provider.name}固定服务地址`} /><small>固定官方端点，由后端统一访问。</small></label>
-                <label className="field settings-field"><span>对话模型</span><input className="input" type="text" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <details className="nia-model-options"><summary>选择已检测模型 · {test.models.length}</summary><div>{test.models.map((model) => <button type="button" key={model} disabled={saving} onClick={() => updateProvider(provider.id, { chat_model: model })}>{model}</button>)}</div></details>}</label>
+                <label className="field settings-field"><span>对话模型</span><input className="input" type="text" value={config.chat_model} disabled={saving} placeholder="填写服务商提供的模型 ID" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { chat_model: event.target.value })} /><small>模型权限与可用性以当前账户为准。</small>{test?.models && <details className="crj-model-options"><summary>选择已检测模型 · {test.models.length}</summary><div>{test.models.map((model) => <button type="button" key={model} disabled={saving} onClick={() => updateProvider(provider.id, { chat_model: model })}>{model}</button>)}</div></details>}</label>
                 {provider.id === 'siliconflow' && <label className="field settings-field"><span>中文语音转写模型</span><input className="input" type="text" value={config.asr_model || ''} disabled={saving} maxLength={200} placeholder="填写语音模型标识" autoComplete="off" spellCheck={false} onChange={event => updateProvider(provider.id, { asr_model: event.target.value })} /><small>录音转写独立使用此模型；对话模型用于摘要与法规问答。请使用“语音转写测试”单独验证识别能力。</small></label>}
                 {provider.id === 'deepseek' && <p className="settings-caption">用于文字摘要与要素整理。录音转写使用AI的语音接口。</p>}
                 <div className="field settings-field"><div className="settings-label-line"><label htmlFor={`key-${provider.id}`}>API Key</label><span className={`settings-secret-state ${config.api_key_configured && !clearKeys[provider.id] ? 'configured' : ''}`}><KeyRound size={12} />{clearKeys[provider.id] ? '保存后清空' : config.api_key_configured ? '已保存至数据库' : '未配置'}</span></div><div className="settings-secret-input"><input className="input" id={`key-${provider.id}`} type={visibleKeys[provider.id] ? 'text' : 'password'} value={keys[provider.id]} disabled={saving || clearKeys[provider.id]} autoComplete="new-password" spellCheck={false} placeholder={config.api_key_configured ? '留空保留，输入以更换密钥' : '粘贴此服务商的 API Key'} onChange={event => { setKeys({ ...keys, [provider.id]: event.target.value }); setNotice(null) }} /><button type="button" disabled={saving || clearKeys[provider.id] || !keys[provider.id]} aria-label={visibleKeys[provider.id] ? `隐藏${provider.name}密钥` : `显示${provider.name}密钥`} onClick={() => setVisibleKeys({ ...visibleKeys, [provider.id]: !visibleKeys[provider.id] })}>{visibleKeys[provider.id] ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>{config.api_key_configured && <label className="settings-checkbox"><input type="checkbox" checked={clearKeys[provider.id]} disabled={saving} onChange={event => { setClearKeys({ ...clearKeys, [provider.id]: event.target.checked }); setKeys({ ...keys, [provider.id]: '' }); setNotice(null) }} />保存时清空此密钥</label>}</div>

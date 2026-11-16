@@ -1,0 +1,15 @@
+.candidate-review { margin: 28px 0; padding-top: 24px; border-top: 1px solid var(--border); }
+.candidate-review > h3 { margin: 0 0 12px; }
+.candidate-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:16px; margin:20px 0; }
+.candidate-card { padding:18px; border:1px solid var(--border); border-radius:12px; min-width:0; }
+.candidate-card header,.candidate-card footer { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.candidate-card header { justify-content:space-between; margin-bottom:10px; }
+.candidate-card p { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.8; }
+.candidate-card small { display:block; margin:10px 0; }
+.candidate-card footer { margin-top:16px; }
+
+.candidate-comparison{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}.candidate-comparison>div{padding:14px;background:var(--surface-3);border-radius:10px;overflow-wrap:anywhere}.candidate-comparison blockquote{margin:10px 0;padding-left:12px;border-left:2px solid var(--primary);white-space:pre-wrap}.candidate-quality-summary{display:flex;align-items:center;gap:18px;margin:18px 0}@media(max-width:800px){.candidate-comparison{grid-template-columns:1fr}}
+
+.candidate-comparison blockquote{max-height:260px;overflow:auto}
+
+.candidate-grid>.candidate-card{grid-column:1 / -1}

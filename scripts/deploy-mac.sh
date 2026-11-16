@@ -12,7 +12,7 @@ select_deploy_node
 check_node
 for tool in ssh scp tar git; do command -v "$tool" >/dev/null || fail "缺少命令：$tool"; done
 [ "$#" -eq 0 ] || { [ "$#" -eq 1 ] && [ "${1:-}" = '--package-only' ]; } || fail '仅支持 --package-only（只构建打包，不连接服务器）。'
-TMP_DEPLOY="$(mktemp -d /tmp/nia-deploy.XXXXXX)"
+TMP_DEPLOY="$(mktemp -d /tmp/crj-deploy.XXXXXX)"
 CONTROL="$TMP_DEPLOY/ssh"
 CONNECTED=0
 cleanup() {
@@ -39,8 +39,8 @@ cp scripts/deploy-server.sh "$TMP_DEPLOY/package/scripts/"
 COPYFILE_DISABLE=1 tar -czf "$TMP_DEPLOY/release.tar.gz" -C "$TMP_DEPLOY/package" .
 if [ "${1:-}" = '--package-only' ]; then
   mkdir -p "$PROJECT_ROOT/output"
-  cp "$TMP_DEPLOY/release.tar.gz" "$PROJECT_ROOT/output/nia-$RELEASE.tar.gz"
-  printf '部署包已生成：%s/output/nia-%s.tar.gz\n' "$PROJECT_ROOT" "$RELEASE"
+  cp "$TMP_DEPLOY/release.tar.gz" "$PROJECT_ROOT/output/crj-$RELEASE.tar.gz"
+  printf '部署包已生成：%s/output/crj-%s.tar.gz\n' "$PROJECT_ROOT" "$RELEASE"
   exit 0
 fi
 printf '\n[3/4] 连接 %s；请输入服务器 SSH 密码（输入不显示）。\n首次连接还需核对并接受主机指纹。\n' "$TARGET"

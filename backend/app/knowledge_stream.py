@@ -38,7 +38,7 @@ def stream_answer(question, sources, settings, *, analysis=False):
                     raise KnowledgeAIError(502, 'AI 请求未成功，请检查接口配置、额度或稍后重试。')
                 for block in response.iter_text():
                     size += len(block.encode('utf-8'))
-                    if size > 2 * 1024 * 1024 or time.monotonic() - started > 120:
+                    if size > 2 * 1024 * 1024 or time.monotonic() - started > 180:
                         raise KnowledgeAIError(502, 'AI 响应超过时间或长度限制。')
                     pending += block
                     while '\n' in pending:

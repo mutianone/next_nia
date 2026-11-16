@@ -41,7 +41,7 @@ def seed(engine, days=7, person_id=None, verification="verified", archived=False
     with Session(engine) as session, session.begin():
         if person_id is None:
             person_id = str(uuid4())
-            session.add(Person(id=person_id, code=f"NIA-TEST-{uuid4().hex}", name="虚构测试人员", nationality="虚构国籍", document_number=uuid4().hex.upper(), source="虚构人员来源", verification=verification, archived=archived))
+            session.add(Person(id=person_id, code=f"CRJ-TEST-{uuid4().hex}", name="虚构测试人员", nationality="虚构国籍", document_number=uuid4().hex.upper(), source="虚构人员来源", verification=verification, archived=archived))
             session.flush()
         stay_id = str(uuid4())
         session.add(PersonStay(id=stay_id, person_id=person_id, entry_date=entry or TODAY - timedelta(days=90),

@@ -30,5 +30,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { window.removeEventListener('auth-expired', expire); document.removeEventListener('visibilitychange', check); window.clearInterval(timer); };
   }, []);
   async function logout() { await api('/auth/logout', { method: 'POST' }); clear(); setNotice('已安全退出。'); }
-  return <AuthContext.Provider value={{ user, refresh, logout }}>{loading ? <div className="auth-loading" role="status"><img src="/favicon.svg" alt=""/><span>正在连接工作空间…</span></div> : user ? <Fragment key={`${user.id}:${user.role}`}>{children}</Fragment> : <Login notice={notice} serviceError={error} onLogin={value => { clearWorkspaceViews(); setUser(value); setNotice(''); setError(''); }}/>}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, refresh, logout }}>{loading ? <div className="auth-loading" role="status"><img src="/yiminguanli.png" alt=""/><span>正在连接工作空间…</span></div> : user ? <Fragment key={`${user.id}:${user.role}`}>{children}</Fragment> : <Login notice={notice} serviceError={error} onLogin={value => { clearWorkspaceViews(); setUser(value); setNotice(''); setError(''); }}/>}</AuthContext.Provider>;
 }

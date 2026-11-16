@@ -8,6 +8,6 @@ elif [ "$#" -gt 0 ]; then
   exit 1
 fi
 # Compatibility launcher: selects the populated workspace only. All AI uses real providers.
-export NEXT_NIA_PRESENTATION=1
-export NEXT_NIA_DATA_DIR="$PROJECT_ROOT/backend/presentation-data"
+export CRJ_PRESENTATION=1
+export CRJ_DATA_DIR="$PROJECT_ROOT/backend/presentation-data"
 exec bash "$PROJECT_ROOT/scripts/dev.sh"

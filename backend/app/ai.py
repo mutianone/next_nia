@@ -72,6 +72,7 @@ def test_ai_capability(request: AITestRequest, settings: Settings, key: str, mod
     started = monotonic()
     try:
         if request.capability == "asr":
+            configured.ai.speech.provider = "siliconflow"
             selected.asr_model = request.asr_model or selected.asr_model
             result = transcribe_audio((Path(__file__).resolve().parents[1] / "assets" / "healthcheck.mp3").read_bytes(), "mp3", "audio/mpeg", configured)
             # Successful HTTP alone is not an intelligible transcription.

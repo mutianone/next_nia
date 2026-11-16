@@ -94,3 +94,18 @@
   .dashboard-page .spatial-copy{padding-bottom:0}
   .dashboard-page .spatial-hero{padding-bottom:58px}
 }
+
+/* Collapsible business categories, including the compact desktop rail. */
+.nav-group{margin-top:12px}
+.nav-group-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:10px 13px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:.6875rem;letter-spacing:1px;cursor:pointer;text-align:left}
+.nav-group-toggle:hover{background:var(--surface-2);color:var(--text)}
+.nav-group-toggle>svg{flex-shrink:0;transition:transform .18s}
+.nav-group-toggle[aria-expanded="true"]>svg{transform:rotate(90deg)}
+.nav-group-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.nav-group>div[hidden]{display:none}
+@media(min-width:701px){.nav-collapsed .nav-group-toggle{padding:8px 2px;gap:2px;font-size:.5625rem;letter-spacing:0}.nav-collapsed .nav-group-toggle>svg{width:10px}}
+@media(prefers-reduced-motion:reduce){.nav-group-toggle>svg{transition:none}}
+
+/* Allow the full platform name to wrap within the navigation brand. */
+.brand > span:last-child { min-width: 0; }
+.brand small { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }

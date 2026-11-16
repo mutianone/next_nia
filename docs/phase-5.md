@@ -92,7 +92,7 @@ backend/.venv/bin/python scripts/maintenance.py restore-postgres /absolute/path/
 
 恢复先验证备份，拒绝其他表结构及非空目标，按外键依赖顺序在事务中导入并检查关联完整性。不提供在线覆盖当前库的按钮。SQLite 恢复已完成合成数据、原始音频字节和关联记录演练；真实 PostgreSQL 需在目标服务器单独验证，不能将本机 SQLite 结果视为正式库验收。
 
-升级前停止业务写入并保留现有配置/数据库；恢复验收后，停止当前服务，将 `NEXT_NIA_DATA_DIR` 指向新目录并重启。核对 `/api/health`、人员数量、音频下载校验、来源和关系。出现问题时停止服务，改回原数据目录和对应代码版本；勿覆盖原数据库。
+升级前停止业务写入并保留现有配置/数据库；恢复验收后，停止当前服务，将 `CRJ_DATA_DIR` 指向新目录并重启。核对 `/api/health`、人员数量、音频下载校验、来源和关系。出现问题时停止服务，改回原数据目录和对应代码版本；勿覆盖原数据库。
 
 后台导出和 CLI 不自动调度备份、不上传云端。不包含高可用、日志平台或自动容灾服务。大规模库的备份耗时、磁盘容量和并发仍需目标环境容量测试。
 
@@ -100,8 +100,8 @@ backend/.venv/bin/python scripts/maintenance.py restore-postgres /absolute/path/
 
 ```bash
 npm run build
-export NEXT_NIA_DATA_DIR=/absolute/path/business-data
-# 可选：export NEXT_NIA_PORT=8080
+export CRJ_DATA_DIR=/absolute/path/business-data
+# 可选：export CRJ_PORT=8080
 bash scripts/serve.sh
 ```
 

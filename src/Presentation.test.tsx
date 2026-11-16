@@ -6,7 +6,7 @@ import { Settings } from './pages/Settings';
 vi.mock('./components/PageHeading', () => ({ PageHeading: ({title, children}: {title: string; children: React.ReactNode}) => <header><h1>{title}</h1>{children}</header> }));
 const settings = {
   settings: {
-    general: {system_name:'境智',organization:'出入境业务中心'},
+    general: {system_name:'智境',organization:'出入境业务中心'},
     environment:{mode:'test',postgres:{host:'localhost',port:5432,database:'nia',username:'nia',password_configured:false}},
     ai:{external_permissions:{question:true,asr:true,analysis:true},enabled:false,default_provider:'siliconflow',providers:{siliconflow:{enabled:false,chat_model:'Qwen/Qwen3-8B',asr_model:'FunAudioLLM/SenseVoiceSmall',api_key_configured:false},deepseek:{enabled:false,chat_model:'deepseek-flash',api_key_configured:false}}}
   }, runtime:{active_environment:'test',database_engine:'SQLite',pending_restart:false,sample_workspace:true,local_processing:true}

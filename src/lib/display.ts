@@ -10,3 +10,8 @@ export function formatDuration(milliseconds: number) {
   const seconds = Math.round(milliseconds / 1000);
   return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map(n => String(n).padStart(2, '0')).join(':');
 }
+
+/** Hide the legacy brand prefix without changing the stored archive identifier. */
+export function formatArchiveCode(value?: string | null) {
+  return (value || "").replace(/^NIA-/i, "");
+}
