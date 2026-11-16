@@ -4,6 +4,7 @@ from uuid import uuid4
 from sqlalchemy import JSON, String, UniqueConstraint, select
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
+from .record_qa_boundaries import question_answer_cuts, short_reply_question_cuts
 from .record_asr_results import RecognitionRun, RecognitionSentence, fingerprint
 
 ROLES = {'OFFICER', 'INTERVIEWEE', 'OTHER', 'UNKNOWN'}
@@ -107,5 +108,13 @@ def sentence_parts(session, sentence):
     if review:
         return review.parts, f'review:{review.id}'
     d = sentence.data
+    text = d['text']
+    cuts = sorted(set(question_answer_cuts(text)) | set(short_reply_question_cuts(text)))
+    if cuts:
+        # A single acoustic label cannot identify both sides of a transition.
+        # Keep offsets usable by the sentence-review endpoint (100 parts max).
+        edges = [0, *cuts, len(text)] if len(cuts) < 100 else [0, len(text)]
+        return [{'start': start, 'end': end, 'role': 'UNKNOWN', 'intent': 'UNKNOWN'}
+                for start, end in zip(edges, edges[1:])], 'unreviewed'
     mapping = latest_mapping(session, sentence.run_id, d.get('channel_id'), d.get('speaker_id')) if d.get('speaker_id') is not None else None
     return [{'start': 0, 'end': len(d['text']), 'role': mapping.business_role if mapping else 'UNKNOWN', 'intent': 'UNKNOWN'}], f'mapping:{mapping.id}' if mapping else 'unreviewed'

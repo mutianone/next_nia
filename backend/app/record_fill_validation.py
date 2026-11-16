@@ -1,6 +1,6 @@
 """Validate confirmed structured QA, never infer roles from raw ASR text."""
 from sqlalchemy import select
-from .record_qa_drafts import QADraft,material
+from .record_qa_drafts import QADraft,material,require_boundary_review
 from .record_speaker_turns import SpeakerTurn,build_turns
 from .record_qa_state_machine import QAPair
 from .record_qa_adhesion import QAReviewIssue
@@ -16,7 +16,7 @@ def validate_material(session,record,draft_id,revision):
     originals={s.id:(run,s) for run,ss in runs for s in ss}
     canonical={(ref['sentence_id'],ref['start'],ref['end']):ref for turn in build_turns(session,runs) for ref in turn['sources']}
     turns={t.data['id']:t.data for t in session.scalars(select(SpeakerTurn).where(SpeakerTurn.draft_id==draft.id))}
-    pairs=[];used_turns=set();ranges={}
+    pairs=[];used_turns=set();ranges={};verified_pairs=[]
     for row in session.scalars(select(QAPair).where(QAPair.draft_id==draft.id).order_by(QAPair.position)):
         p=row.data
         # Non-QA statements remain visible in the draft; they cannot fill a field.
@@ -45,6 +45,8 @@ def validate_material(session,record,draft_id,revision):
             texts[kind]='\n'.join(content)
             if texts[kind]!=p[kind]:raise ValueError('问答原文发生丢失或改写。')
         if refs!=p['sources']:raise ValueError('问答来源引用不完整。')
+        verified_pairs.append(p)
         pairs.append({'qa_pair_id':row.id,**texts,'sources':refs,'follow_up_of':p.get('follow_up_of')})
     if not pairs:raise ValueError('暂无完整、已确认的问答可匹配。')
+    require_boundary_review(session, draft, turns.values(), verified_pairs)
     return draft,pairs,parse_template(record.template_snapshot)

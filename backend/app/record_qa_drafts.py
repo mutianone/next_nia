@@ -7,7 +7,7 @@ from .record_asr_results import RecognitionRun,RecognitionSentence,sentences,fin
 from .record_speaker_roles import sentence_parts,now
 from .record_speaker_turns import SpeakerTurn,build_turns
 from .record_qa_state_machine import QAPair,pair_turns
-from .record_qa_adhesion import QAReviewIssue,detect,MESSAGES
+from .record_qa_adhesion import QAReviewIssue,detect,MESSAGES,mixed_boundary_turn_ids
 
 
 class QADraft(Base):
@@ -55,15 +55,24 @@ def material(session,record,run_ids=None):
     return sources,digest,body
 
 
+def boundary_review_key(source_key, turns, pairs):
+    # Preserve existing clean drafts. Old drafts containing newly recognized
+    # mixed turns need a new immutable review, even with identical ASR input.
+    mixed = sorted(mixed_boundary_turn_ids(turns, pairs))
+    return fingerprint([source_key, 'mixed-question-answer', mixed]) if mixed else source_key
+
+
 def rebuild(session,record,actor,run_ids=None):
     sources,digest,body=material(session,record,run_ids)
-    old=session.scalar(select(QADraft).where(QADraft.record_id==record.id,QADraft.input_hash==digest))
+    turns=build_turns(session,sources);pairs=pair_turns(turns)
+    input_key = boundary_review_key(digest, turns, pairs)
+    old=session.scalar(select(QADraft).where(QADraft.record_id==record.id,QADraft.input_hash==input_key))
     if old:return old
     latest=session.scalar(select(QADraft).where(QADraft.record_id==record.id).order_by(QADraft.version.desc()))
-    draft=QADraft(id=str(uuid4()),record_id=record.id,version=(latest.version+1 if latest else 1),input_hash=digest,source_hash=digest,
+    draft=QADraft(id=str(uuid4()),record_id=record.id,version=(latest.version+1 if latest else 1),input_hash=input_key,source_hash=digest,
                   run_ids=[r.id for r,_ in sources],created_by=actor,created_at=now())
     session.add(draft);session.flush()
-    turns=build_turns(session,sources);pairs=pair_turns(turns);issues=detect(turns,pairs)
+    issues=detect(turns,pairs)
     confirmed=session.scalar(select(QADraft.id).where(QADraft.record_id==record.id,QADraft.status=='CONFIRMED'))
     original={s.id:s.data['text'] for _,ss in sources for s in ss}
     edited=[s.id for s in body if s.id in original and s.text!=original[s.id]]
@@ -91,14 +100,27 @@ def draft_json(session,draft):
         'turns':[x.data for x in turns],'pairs':[x.data for x in pairs]}
 
 
+def require_boundary_review(session, draft, turns, pairs):
+    mixed = mixed_boundary_turn_ids(turns, pairs)
+    if not mixed:
+        return
+    required = {fingerprint(['MIXED_SPEAKER_SUSPECTED', [tid], None]) for tid in mixed}
+    resolved = set(session.scalars(select(QAReviewIssue.fingerprint).where(
+        QAReviewIssue.draft_id == draft.id, QAReviewIssue.status == 'RESOLVED')))
+    if not required.issubset(resolved):
+        raise ValueError('发现未经核对的问答粘连，请重建草稿并回听确认发言边界。')
+
+
 def confirm(session,record,draft,expected,actor):
     if draft.revision!=expected:raise ValueError('草稿版本冲突，请刷新。')
     _,digest,_=material(session,record,draft.run_ids)
     if digest!=draft.source_hash:raise ValueError('来源或角色已变化，请重新构建并核对。')
     if session.scalar(select(QAReviewIssue.id).where(QAReviewIssue.draft_id==draft.id,QAReviewIssue.status=='OPEN')):raise ValueError('请先处理草稿疑点。')
-    if draft.status=='CONFIRMED':return draft
     # Resolution notes never promote UNKNOWN identity/intent to confirmed content.
     turns=list(session.scalars(select(SpeakerTurn).where(SpeakerTurn.draft_id==draft.id)))
+    pairs = session.scalars(select(QAPair).where(QAPair.draft_id == draft.id))
+    require_boundary_review(session, draft, (t.data for t in turns), (p.data for p in pairs))
+    if draft.status=='CONFIRMED':return draft
     if any(t.data['status']!='CONFIRMED' for t in turns):raise ValueError('请先确认发言角色和意图，并重建草稿。')
     draft.status='CONFIRMED';draft.revision+=1;draft.confirmed_by=actor;draft.confirmed_at=now()
     session.flush();return draft
@@ -156,7 +178,7 @@ def review_pairs(session,record,previous,expected,entries,actor):
         p['sources']=[s for tid in ids for s in indexed[tid]['sources']]
         pairs.append(p)
     if seen!=set(indexed):raise ValueError('仍有讲话轮次未处理，不能遗漏原文。')
-    digest=fingerprint([source_hash,entries])
+    digest=boundary_review_key(fingerprint([source_hash,entries]), turns, pairs)
     old=session.scalar(select(QADraft).where(QADraft.record_id==record.id,QADraft.input_hash==digest))
     if old:return old
     latest=session.scalar(select(QADraft).where(QADraft.record_id==record.id).order_by(QADraft.version.desc()))

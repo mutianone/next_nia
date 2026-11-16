@@ -200,3 +200,21 @@ def test_semantic_source_race_is_rejected(client,monkeypatch):
     monkeypatch.setattr(record_fill_api,'semantic_suggestions',racing)
     assert preview(client,row,d,use_semantic=True,confirmed=True).status_code==409
     with Session(client.app.state.engine) as s:assert s.scalar(select(func.count(FillBatch.id)))==0
+
+
+def test_old_batch_rechecks_mixed_turn_review_before_fill(client):
+    from backend.app.record_qa_adhesion import QAReviewIssue
+    row, draft = setup(client, ('你叫什么名字？', '名字吗我叫李某。'), confirm=False)
+    issue = next(x for x in get(client, row, 'qa-review-issues')['items']
+                 if x['draft_id'] == draft['id'] and x['type'] == 'MIXED_SPEAKER_SUSPECTED')
+    assert post(client, row, f"qa-review-issues/{issue['id']}/resolve",
+                issue_revision=1, note='已回听逐字核实').status_code == 200
+    draft = post(client, row, f"qa-drafts/{draft['id']}/confirm", draft_revision=draft['revision']).json()
+    batch = preview(client, row, draft).json()
+    # A pre-upgrade confirmed draft/batch lacks the explicit boundary review.
+    with r.write_session(client.app.state.engine) as session:
+        session.delete(session.get(QAReviewIssue, issue['id']))
+    assert preview(client, row, draft).status_code == 409
+    comparison = get(client, row, 'fill-comparison')['batch']
+    assert comparison['stale'] and '粘连' in comparison['reason']
+    assert review(client, row, batch['items'][0]).status_code == 409

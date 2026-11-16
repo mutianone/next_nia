@@ -179,3 +179,21 @@ def test_resolved_issue_keeps_original_resolution(client):
     assert post(client,row,path,issue_revision=2,note='不能覆盖原结果').status_code==409
     saved=next(x for x in get(client,row,'qa-review-issues')['items'] if x['id']==issue['id'])
     assert saved['resolution']['note']=='原处理结果'
+
+
+def test_rebuild_rechecks_legacy_glued_answer_without_mutating_previous_draft(client):
+    from backend.app.record_qa_adhesion import QAReviewIssue
+    row,_ = seed(client, ('确定没偷渡吗。', '偷渡吗我确定'), (0, 1))
+    review_all(client, row)
+    original = post(client, row, 'qa-drafts/rebuild').json()
+    # Simulate a persisted pre-boundary-check draft for the same transcript.
+    with r.write_session(client.app.state.engine) as session:
+        old = session.get(QADraft, original['id'])
+        old.input_hash = old.source_hash
+        for issue in session.scalars(select(QAReviewIssue).where(QAReviewIssue.draft_id == old.id)):
+            session.delete(issue)
+    rebuilt = post(client, row, 'qa-drafts/rebuild').json()
+    assert rebuilt['id'] != original['id'] and rebuilt['status'] == 'REVIEW_REQUIRED'
+    assert rebuilt['pairs'][0]['answer'] == original['pairs'][0]['answer'] == '偷渡吗我确定'
+    assert post(client, row, 'qa-drafts/rebuild').json()['id'] == rebuilt['id']
+    assert post(client, row, f"qa-drafts/{rebuilt['id']}/confirm", draft_revision=rebuilt['revision']).status_code == 409

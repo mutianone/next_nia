@@ -96,3 +96,42 @@ def test_manual_turns_keep_original_attempt_and_audio_associations(client,cloud)
     assert [s['speaker'] for s in updated['segments']]==['interviewer','interviewee']
     assert all(s['audio_id']==first['audio_id'] for s in updated['segments'])
     assert updated['revision']==row['revision']+1
+
+
+def test_mixed_sentence_disables_batch_assignment_for_its_voice_only():
+    def sentence(sid, text, channel=0):
+        return dict(source(text), id=sid, recognition_run_id='run', channel_id=channel, speaker_id=1)
+    sources = [sentence('s1', '你的证件号是123吗？'), sentence('s2', '是的。'),
+               sentence('s3', '确定没偷渡吗我确定'), sentence('s4', '好的。', channel=1)]
+    proposed = {'turns': [dict(segment_id=s['id'], text=s['text'], suggested_role='interviewee')
+                          for s in sources]}
+    turns, issues = validate_turns(proposed, sources)
+    assert [t['text'] for t in turns] == ['你的证件号是123吗？', '是的。', '确定没偷渡吗', '我确定', '好的。']
+    assert [t['voice_group'] for t in turns[:-1]] == [None] * 4
+    assert turns[-1]['voice_group'] is not None
+    assert [t['suggested_role'] for t in turns[2:4]] == ['unknown', 'unknown']
+    assert turns[3]['source_start'] == len('确定没偷渡吗')
+    assert issues
+
+
+def test_question_tail_repeated_in_next_sentence_is_reviewed_verbatim():
+    sources = [source('确定没偷渡吗？'), dict(source('偷渡吗我确定'), id='s2')]
+    turns, issues = validate_turns({'turns': [
+        dict(segment_id=s['id'], text=s['text'], suggested_role=role)
+        for s, role in zip(sources, ['interviewer', 'interviewee'])
+    ]}, sources)
+    assert [t['text'] for t in turns] == ['确定没偷渡吗？', '偷渡吗', '我确定']
+    assert turns[1]['source_id'] == turns[2]['source_id'] == 's2'
+    assert turns[2]['source_start'] == len('偷渡吗')
+    assert issues
+
+
+def test_single_acoustic_turn_with_two_exchanges_keeps_all_four_source_spans():
+    text = '你的出入境证件号是123吗？是的。确定没偷渡吗。我确定'
+    raw = dict(source('[说话人 1] ' + text), start_ms=500, end_ms=5000)
+    proposal = {'turns': [dict(segment_id='s1', text=raw['text'], suggested_role='unknown')]}
+    turns, issues = validate_turns(proposal, [raw])
+    assert [t['text'] for t in turns] == ['[说话人 1] 你的出入境证件号是123吗？', '是的。', '确定没偷渡吗。', '我确定']
+    assert all(t['text'] == raw['text'][t['source_start']:t['source_end']] for t in turns)
+    assert all(t['start_ms'] is None and t['listen_start_ms'] == 500 for t in turns)
+    assert issues

@@ -28,13 +28,14 @@ export function RecordQAReview({record,disabled,onApplied,onPending}:{record:Rec
     if(!proposal)return;const t=proposal.turns[index];const at=inputs.current[index]?.selectionStart??0;
     if(at<=0||at>=t.text.length){setError('请把光标放在需要拆分的位置。');return;}
     setRepairs({});
-    const parts=[t.text.slice(0,at),t.text.slice(at)].map(text=>({...t,text,speaker:'unknown' as Speaker,start_ms:null,end_ms:null}));
-    setProposal({...proposal,turns:[...proposal.turns.slice(0,index),...parts,...proposal.turns.slice(index+1)]});setError('');
+    const turns=proposal.turns.map(turn=>t.voice_group&&turn.voice_group===t.voice_group?{...turn,voice_group:null}:turn);
+    const parts=[t.text.slice(0,at),t.text.slice(at)].map(text=>({...t,text,speaker:'unknown' as Speaker,suggested_role:'unknown' as Speaker,voice_group:null,start_ms:null,end_ms:null}));
+    setProposal({...proposal,turns:[...turns.slice(0,index),...parts,...turns.slice(index+1)]});setError('');
   };
   const merge=(index:number)=>{
     if(!proposal||index===0)return;const before=proposal.turns[index-1],current=proposal.turns[index];
     if(before.source_id!==current.source_id)return;setRepairs({});
-    setProposal({...proposal,turns:[...proposal.turns.slice(0,index-1),{...before,text:before.text+current.text,speaker:'unknown',start_ms:null,end_ms:null},...proposal.turns.slice(index+1)]});
+    setProposal({...proposal,turns:[...proposal.turns.slice(0,index-1),{...before,text:before.text+current.text,speaker:'unknown',suggested_role:'unknown',voice_group:null,start_ms:null,end_ms:null},...proposal.turns.slice(index+1)]});
   };
   const repair=async(index:number)=>{
     if(!proposal||busy)return;

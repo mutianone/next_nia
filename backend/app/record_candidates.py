@@ -7,8 +7,9 @@ from sqlalchemy import select
 from . import records as r
 from .record_templates import SYSTEM_FIELDS
 
-# Text labels only, never inferred voice identities or invented acoustic timestamps.
-MARKER = re.compile(r'(?:^|[\n。！？!?；;])\s*(询问人|民警|被询问人|当事人|问|答)\s*[:：]')
+from .record_selection import ACOUSTIC_MARKER, repeated_particle_cut, role_ranges
+from .record_quality import mixed_answer
+
 FOLLOWUP = re.compile(r'你刚才|刚才说|你是说|你的意思|是否就是说|再确认|补充说明')
 
 
@@ -25,21 +26,21 @@ def pair_qa(segments, template):
     turns = []
     for segment in segments:
         text = segment.text
-        matches = list(MARKER.finditer(text))
-        if matches:
-            for index, match in enumerate(matches):
-                start = match.end()
-                end = matches[index+1].start() if index+1 < len(matches) else len(text)
-                # Keep exact source offsets, including punctuation, with trimmed whitespace only.
-                while start < end and text[start].isspace(): start += 1
-                while end > start and text[end-1].isspace(): end -= 1
-                if start == end: continue
-                role = 'question' if match.group(1) in ('询问人', '民警', '问') else 'answer'
-                turns.append({'role':role, 'text':text[start:end], 'source':{'segment_id':segment.id,'start':start,'end':end,'precision':'exact'}, 'role_source':'text_marker'})
-        elif segment.speaker in ('interviewer', 'interviewee') and text.strip():
-            start = len(text)-len(text.lstrip());end=len(text.rstrip())
-            turns.append({'role':'question' if segment.speaker=='interviewer' else 'answer','text':text[start:end],
-                          'source':{'segment_id':segment.id,'start':start,'end':end,'precision':'exact'},'role_source':'manual_label'})
+        for start, end, role in role_ranges(text, segment.speaker):
+            while start < end and text[start].isspace():
+                start += 1
+            while end > start and text[end - 1].isspace():
+                end -= 1
+            if start == end:
+                continue
+            content = text[start:end]
+            if ACOUSTIC_MARKER.search(content) or role not in ('interviewer', 'interviewee'):
+                turns.append({'role': 'unknown'})
+                continue
+            turns.append({'role': 'question' if role == 'interviewer' else 'answer',
+                          'text': content, 'source': {'segment_id': segment.id, 'start': start,
+                          'end': end, 'precision': 'exact'},
+                          'role_source': 'manual_label' if content == text.strip() else 'text_marker'})
     pairs=[];pending=None;previous=None
     for turn in turns:
         if turn['role']=='question':
@@ -50,7 +51,19 @@ def pair_qa(segments, template):
             # Follow-up relation is a suggestion. Only exact question matches enter rule filling.
             pending={'question':turn['text'],'answer':'','field_id':field,'possible_followup_of':previous if follows else None,
                      'sources':[turn['source']],'role_source':turn['role_source']}
+        elif turn['role'] == 'unknown':
+            if pending:
+                pairs.append(pending)
+            pending = previous = None
         elif pending:
+            cut = repeated_particle_cut(pending['question'], turn['text']) if not pending['answer'] else None
+            if cut is not None:
+                turn['text'] = turn['text'][cut:]
+                turn['source']['start'] += cut
+            if mixed_answer(pending['question'], turn['text']):
+                # The rest of this turn may qualify an earlier answer.
+                pending = previous = None
+                continue
             pending['answer'] += ('\n' if pending['answer'] else '') + turn['text']
             pending['sources'].append(turn['source'])
             previous=len(pairs)

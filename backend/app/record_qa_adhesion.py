@@ -4,6 +4,7 @@ from sqlalchemy import JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
 from .record_asr_results import fingerprint
+from .record_qa_boundaries import question_answer_cuts, question_tail_cut, short_reply_question_cuts
 
 
 class QAReviewIssue(Base):
@@ -36,6 +37,17 @@ MESSAGES={
 }
 
 
+def mixed_boundary_turn_ids(turns, pairs):
+    indexed = {turn['id']: turn['text'] for turn in turns}
+    mixed = {tid for tid, text in indexed.items() if question_answer_cuts(text) or short_reply_question_cuts(text)}
+    for pair in pairs:
+        question = ''.join(indexed[tid] for tid in pair['question_turn_ids'])
+        for tid in pair['answer_turn_ids']:
+            if question_tail_cut(question, indexed[tid]) is not None:
+                mixed.add(tid)
+    return mixed
+
+
 def detect(turns,pairs):
     issues={};indexed={t['id']:t for t in turns};used=[];origins={}
     def emit(kind,ids,pair_id=None):
@@ -44,11 +56,14 @@ def detect(turns,pairs):
         key=fingerprint([kind,ids,pair_id])
         issues[key]={'type':kind,'turn_ids':ids,'sentence_ids':sorted(set(s['sentence_id'] for s in refs)),
                      'pair_id':pair_id,'reason':reason,'suggested_action':action}
+    for tid in mixed_boundary_turn_ids(turns, pairs):
+        emit('MIXED_SPEAKER_SUSPECTED', [tid])
     for t in turns:
         if t['role']=='UNKNOWN':emit('UNKNOWN_ROLE',[t['id']])
         question_hints=list(re.finditer(r'你叫什么|你住在哪里|你什么时候|你是否认识|请介绍一下|说一下你的',t['text']))
         if len(question_hints)>1:emit('MULTIPLE_QUESTIONS',[t['id']])
-        if t['intent']=='ANSWER' and question_hints:emit('MIXED_SPEAKER_SUSPECTED',[t['id']])
+        if t['intent'] in {'ANSWER', 'CONTINUATION'} and question_hints:
+            emit('MIXED_SPEAKER_SUSPECTED', [t['id']])
         roles={s.get('role',t['role']) for s in t['sources']}-{'UNKNOWN'}
         if len(roles)>1:emit('CROSS_ROLE_MERGE',[t['id']])
         if t['role']=='INTERVIEWEE' and t['intent']=='ANSWER' and t.get('suggested_intent') in {'QUESTION','FOLLOW_UP'}:

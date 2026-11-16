@@ -56,3 +56,38 @@ def test_unanswered_question_and_long_pause_preserve_qa():
     assert pair_turns(turns([Q]))[0]['reasons']==['UNANSWERED_QUESTION']
     ts=turns([Q,A,('INTERVIEWEE','CONTINUATION','后来才出去。')]);ts[-1]['sources'][0].update(start_ms=100000,end_ms=101000)
     assert pair_turns(ts)[0]['answer_turn_ids']==['1','2']
+
+
+@pytest.mark.parametrize('question,answer', [
+    ('确定没偷渡吗。', '偷渡吗我确定，但日期我记不住。'),
+    ('确定没偷渡吗？', '吗。 我不确定。'),
+    ('你的证件号是多少？', '多少我记不住。'),
+    ('这些情况都属实，对不对？', '对不对我确定。'),
+])
+def test_question_tail_in_confirmed_answer_triggers_review(question, answer):
+    ts = turns([('OFFICER', 'QUESTION', question), ('INTERVIEWEE', 'ANSWER', answer)])
+    findings = detect(ts, pair_turns(ts))
+    assert any(i['type'] == 'MIXED_SPEAKER_SUSPECTED' and i['turn_ids'] == ['1']
+               for i in findings.values())
+    assert ts[1]['text'] == answer
+
+
+def test_two_pairs_in_one_asr_sentence_preserve_every_character():
+    from backend.app.record_qa_boundaries import split_candidates
+    expected = ['你的出入境证件号是123吗？', '是的。', '确定没偷渡吗。', '我不确定，但我记得大概时间。']
+    text = ''.join(expected)
+    parts, origins = split_candidates([{'id': 's', 'text': text}])
+    assert [p['text'] for p in parts] == expected
+    assert set(origins.values()) == {'s'}
+
+
+@pytest.mark.parametrize('question,answer', [
+    ('你有护照？', '护照我带了。'),
+    ('你确定没偷渡吗？', '我不确定，但我记得大概时间。'),
+    ('你听见他说什么？', '他问我“确定没偷渡吗？”我当时没有回答。'),
+    ('你还记得多少？', '多少年前的事我不记得了。'),
+    ('上述内容对不对？', '不对，我没有这么说。'),
+])
+def test_repetition_or_negation_alone_is_not_a_role_change(question, answer):
+    ts = turns([('OFFICER', 'QUESTION', question), ('INTERVIEWEE', 'ANSWER', answer)])
+    assert not detect(ts, pair_turns(ts))

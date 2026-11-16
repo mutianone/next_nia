@@ -74,3 +74,20 @@ it('bulk adoption requires confirmation and does not save or overwrite manual ro
  expect(screen.getByLabelText('发言2角色')).toHaveValue('interviewee');
  expect(api).toHaveBeenCalledTimes(1);
 });
+
+it('drops stale role suggestions and the shared acoustic group after a manual split',async()=>{
+ vi.mocked(confirmAction).mockResolvedValue(true);
+ vi.mocked(api).mockResolvedValue({revision:2,issues:[],turns:[
+   {...turn,text:'偷渡吗我确定',suggested_role:'interviewee',voice_group:'run:0'},
+   {...turn,source_id:'s2',text:'是的',suggested_role:'unknown',voice_group:'run:0'}
+ ]});
+ render(<RecordQAReview record={record} disabled={false} onApplied={vi.fn()} onPending={vi.fn()}/>);
+ await userEvent.click(screen.getByRole('button',{name:'整理问答'}));
+ const input=await screen.findByLabelText<HTMLTextAreaElement>('发言1文字');
+ input.setSelectionRange(3,3);
+ await userEvent.click(screen.getAllByRole('button',{name:'在光标处拆分'})[0]);
+ expect(screen.getByLabelText('发言2文字')).toHaveValue('我确定');
+ expect(screen.queryByLabelText('声音1角色')).not.toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'采用已核对的角色建议'})).toBeDisabled();
+ expect(screen.getByRole('button',{name:'确认并保存修订'})).toBeDisabled();
+});

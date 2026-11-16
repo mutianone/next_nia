@@ -1,23 +1,67 @@
 """Resolve model-selected utterance IDs to immutable source text, never model prose."""
 import re
 
+from .record_qa_boundaries import question_answer_cuts, question_tail_cut
 
-ROLE_MARKER = re.compile(r'(?:^|(?<=[。！？!?\n]))\s*(问|答|询问人|被询问人|民警|当事人|翻译)[:：]\s*')
-ACOUSTIC_MARKER = re.compile(r'^\[说话人 ([A-Za-z0-9_-]{1,32})\]\s*')
+
+ROLE_MARKER = re.compile(r'(?:^|(?<=[。！？!?，,；;\s])|(?<=[吗嗎呢])(?=答\s*[:：]))\s*(被询问人|询问人|民警|当事人|翻译|问|答)\s*[:：]\s*')
+ACOUSTIC_MARKER = re.compile(r'\[说话人 ([A-Za-z0-9_-]{1,32})\]\s*')
+
+
+QUOTED_SPEECH = re.compile(r'“[^”]*(?:”|$)|「[^」]*(?:」|$)|『[^』]*(?:』|$)|"[^"]*(?:"|$)')
+
+
+def role_ranges(text, role):
+    """Yield source ranges, including unassigned speech before a role marker."""
+    # A reported conversation can itself contain literal 问： and 答：.
+    quoted = QUOTED_SPEECH.finditer(text)
+    span = next(quoted, None)
+    markers = []
+    for marker in ROLE_MARKER.finditer(text):
+        while span and span.end() <= marker.start(1):
+            span = next(quoted, None)
+        if not span or marker.start(1) < span.start():
+            markers.append(marker)
+    if not markers:
+        yield 0, len(text), role
+        return
+    if markers[0].start():
+        yield 0, markers[0].start(), 'unknown'
+    for i, marker in enumerate(markers):
+        end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
+        role = ('interviewer' if marker[1] in ('问', '询问人', '民警')
+                else 'interpreter' if marker[1] == '翻译' else 'interviewee')
+        yield marker.end(), end, role
+
+
+def repeated_particle_cut(question, answer):
+    # Word questions may be echoed naturally ("多少我记不清"). Only a
+    # duplicated question-particle ending qualifies for automatic extraction.
+    if re.search(r'[吗嗎][，。,.？！?!；;：:\s]*$', question):
+        cut = question_tail_cut(question, answer)
+        if cut is not None:
+            tail = answer[:cut].strip()
+            if re.fullmatch(r'[^否不没无未非别莫勿难，。！？?!；;\s]{0,2}[吗嗎]', tail):
+                if tail != question.rstrip('。？！?! ').strip():
+                    return cut
+    return None
 
 
 def source_units(segments):
     units=[]
     for segment in segments:
-        text=segment['text']; markers=list(ROLE_MARKER.finditer(text))
-        ranges=[]
-        if markers:
-            if markers[0].start(): ranges.append((0,markers[0].start(),'unknown'))
-            for i,m in enumerate(markers):
-                role='interviewer' if m[1] in ('问','询问人','民警') else 'interpreter' if m[1]=='翻译' else 'interviewee'
-                ranges.append((m.end(),markers[i+1].start() if i+1<len(markers) else len(text),role))
-        else: ranges=[(0,len(text),'unconfirmed_voice' if segment.get('speaker_id') is not None and segment.get('speaker','unknown')=='unknown' else segment.get('speaker','unknown'))]
+        text = segment['text']
+        role = segment.get('speaker', 'unknown')
+        if role == 'unknown' and segment.get('speaker_id') is not None:
+            role = 'unconfirmed_voice'
+        ranges = role_ranges(text, role)
         for begin,finish,role in ranges:
+            if ACOUSTIC_MARKER.search(text, begin, finish):
+                role = 'unconfirmed_voice'
+            if role == 'interviewee' and units and units[-1]['role'] == 'interviewer':
+                cut = repeated_particle_cut(units[-1]['text'], text[begin:finish])
+                if cut is not None:
+                    begin += cut
             for match in re.finditer(r'[^。！？!?\n]+[。！？!?\n]*',text[begin:finish]):
                 start,end=begin+match.start(),begin+match.end()
                 while start<end and text[start].isspace(): start+=1
@@ -69,6 +113,10 @@ def resolve_selections(data, segments):
     return data
 
 
+def is_question_unit(text):
+    return bool(re.search(r'[？?]$|[吗嗎][。！!\s]*$', text))
+
+
 def paired_options(segments):
     """Confirmed turn boundaries outrank punctuation. Unknown voices never imply roles."""
     units=source_units(segments); pairs=[];i=0
@@ -82,11 +130,11 @@ def paired_options(segments):
             while j<len(units) and units[j]['role']=='interviewee' and (not answers or units[j]['segment_id']==answers[0]['segment_id']):
                 answers.append(units[j]);j+=1
             i=j if answers else i+len(questions)
-        elif role=='unknown' and re.search(r'[？?]$',unit['text']):
+        elif role=='unknown' and is_question_unit(unit['text']):
             questions=[unit];answers=[];j=i+1
             while j<len(units):
                 following=units[j]
-                if following['role']!='unknown' or re.search(r'[？?]',following['text']):break
+                if following['role']!='unknown' or is_question_unit(following['text']) or question_answer_cuts(following['text']):break
                 if answers and following['segment_id']!=answers[0]['segment_id']:break
                 answers.append(following);j+=1
             i+=1

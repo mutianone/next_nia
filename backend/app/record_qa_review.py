@@ -5,6 +5,19 @@ from fastapi import HTTPException, Request
 from . import records as r
 from .records_ai import bounded_post, CHAT_URLS, RecordAIError
 from .ai_protocol import structured_options
+from .record_qa_boundaries import question_answer_cuts, question_tail_cut, short_reply_question_cuts
+
+
+def _review_edges(speech, previous_text, offset):
+    cuts = set(question_answer_cuts(speech)) | set(short_reply_question_cuts(speech))
+    if previous_text:
+        tail = question_tail_cut(previous_text, speech)
+        if tail is not None:
+            cuts.add(tail)
+    for match in re.finditer(r'(?=说一下你|请你介绍|告诉我你)', speech):
+        if speech[:match.start()].strip():
+            cuts.add(match.start())
+    return [0, *(offset + cut for cut in sorted(cuts) if 0 < cut < len(speech)), len(speech) + offset]
 
 
 def validate_turns(data, sources):
@@ -22,30 +35,48 @@ def validate_turns(data, sources):
         if position<previous: raise RecordAIError(502,'问答整理顺序异常，原文未修改。')
         previous=position;grouped[sid].append(item)
     turns=[];issues=[]
+    unsafe=set()
+    previous_text = ''
+    previous_origin = None
+    voice_prefix = re.compile(r'^\[说话人 ([A-Za-z0-9_-]{1,32})\]\s*')
     for source in sources:
+        origin = source.get('recognition_run_id') or source.get('audio_id')
+        if origin != previous_origin or not origin:
+            previous_text = ''
+        previous_origin = origin
         items=grouped[source['id']]
         # Full exact coverage: no dropped negatives, invented punctuation or duplicated phrases.
-        if ''.join(i['text'] for i in items)!=source['text']:
+        complete = ''.join(i['text'] for i in items) == source['text']
+        if not complete:
             issues.append({'segment_id':source['id'],'message':'分句未能完整对应原文，请手工拆分。'})
             items=[{'text':source['text'],'suggested_role':'unknown'}]
         checked=[]
         for item in items:
-            parts=re.split(r'(?=说一下你|请你介绍|告诉我你)',item['text'])
-            if len(parts)>1 and re.sub(r'^\[说话人 [A-Za-z0-9_-]+\]\s*','',parts[0]).strip():
+            text = item['text']
+            prefix = voice_prefix.match(text)
+            offset = prefix.end() if prefix else 0
+            speech = text[offset:]
+            edges = _review_edges(speech, previous_text, offset) if complete else [0, len(text)]
+            if len(edges) > 2:
                 issues.append({'segment_id':source['id'],'message':'发现疑似问答粘连，已提出拆分；请回听确认角色。'})
-                checked.extend({'text':part,'suggested_role':'unknown'} for part in parts if part)
-            else: checked.append(item)
+                checked.extend({'text':text[a:b], 'suggested_role':'unknown'} for a,b in zip(edges, edges[1:]))
+            else:
+                checked.append(item)
+            previous_text = voice_prefix.sub('', checked[-1]['text'])
         items=checked
         cursor=0
         for item in items:
             end=cursor+len(item['text'])
             voice=re.match(r'^\[说话人 ([A-Za-z0-9_-]{1,32})\]',item['text'])
-            label=source.get('speaker_id') if source.get('recognition_run_id') else (voice[1] if voice else None)
+            label=source.get('speaker_id')
+            if label is None and voice:
+                label=voice[1]
             group=(f"{source['recognition_run_id']}:{label}" if source.get('recognition_run_id') and label is not None
                    else f"{source['audio_id'] or source['id']}:{voice[1]}" if voice else None)
             if source.get('recognition_run_id') and source.get('channel_id') is not None and label is not None:
                 group=f"{source['recognition_run_id']}:channel={json.dumps(source['channel_id'])}:{label}"
-            if len(items)>1:group=None
+            if group and (len(items)>1 or not complete):
+                unsafe.add(group)
             turns.append({'source_id':source['id'],'source_start':cursor,'source_end':end,
                           'text':item['text'],'suggested_role':item['suggested_role'], 'speaker':'unknown',
                           'voice_group':group, 'voice_label':str(label) if label is not None else None,
@@ -54,11 +85,10 @@ def validate_turns(data, sources):
                           'end_ms':source['end_ms'] if len(items)==1 else None})
             cursor=end
     # A mixed or role-conflicting acoustic group is unsafe for bulk role assignment.
-    unsafe=set();roles={}
+    roles={}
     for turn in turns:
         group=turn['voice_group']
         if group:
-            if len(grouped[turn['source_id']])>1:unsafe.add(group)
             if turn['suggested_role']!='unknown':roles.setdefault(group,set()).add(turn['suggested_role'])
     unsafe.update(g for g,values in roles.items() if len(values)>1)
     for turn in turns:

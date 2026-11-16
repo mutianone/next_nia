@@ -51,3 +51,17 @@ def test_legacy_review_ui_scopes_provider_labels_by_channel():
     sources=[dict(id=str(i),text='原文',audio_id='a',start_ms=0,end_ms=1000,recognition_run_id='run',speaker_id=0,channel_id=i) for i in (0,1)]
     result,_=validate_turns({'turns':[dict(segment_id=s['id'],text=s['text'],suggested_role='unknown') for s in sources]},sources)
     assert result[0]['voice_group']!=result[1]['voice_group']
+
+
+def test_mixed_asr_sentence_exposes_lossless_review_parts_even_with_voice_mapping(db):
+    text = '你的证件号是123吗？是的。确定没偷渡吗。我确定'
+    run = save_result(db, 'record', 'audio:one', output(speakers=(0,), texts=(text,)))
+    sentence, = sentences(db, run)
+    map_role(db, 'record', run.id, 0, 0, 'OFFICER', 0, 'actor')
+    parts, _ = sentence_parts(db, sentence)
+    assert [text[p['start']:p['end']] for p in parts] == ['你的证件号是123吗？', '是的。', '确定没偷渡吗。', '我确定']
+    assert all(p['role'] == p['intent'] == 'UNKNOWN' for p in parts)
+    confirmed = [dict(p, role=role, intent=intent) for p, role, intent in
+                 zip(parts, ['OFFICER','INTERVIEWEE'] * 2, ['QUESTION','ANSWER'] * 2)]
+    review_sentence(db, 'record', sentence.id, confirmed, 0, 'reviewer')
+    assert sentence_parts(db, sentence)[0] == confirmed

@@ -128,3 +128,66 @@ def test_answer_from_officer_is_blocked_even_with_valid_quote():
     fact={'label':'q001','value':'是真的。','segment_ids':['s'],'evidence':[{'segment_id':'s','question':'护照是真的吗？','answer':'是真的。'}]}
     accepted,checks=check_answers([fact],sources,{'fields':[{'id':'q001','label':'护照是真的吗？'}]})
     assert not accepted and checks[0]['code']=='role_mismatch'
+
+
+def test_two_short_replies_keep_independent_exact_source_spans():
+    from types import SimpleNamespace
+    from backend.app.record_candidates import pair_qa, rule_facts
+
+    questions = ['你的出入境证件号是xxxxx吗？', '确定没偷渡吗。']
+    text = f'问：{questions[0]}答：是的。 问：{questions[1]}答：偷渡吗我不确定，但我记得当时带了证件。'
+    template = {'fields': [{'id': f'q{i}', 'label': q} for i, q in enumerate(questions)]}
+    sources = [{'segment_id': 's', 'text': text}]
+    selected = resolve_selections({'key_facts': [
+        {'label': 'q0', 'qa_ids': ['p0001']}, {'label': 'q1', 'qa_ids': ['p0002']}]}, sources)
+    accepted, _ = check_answers(selected['key_facts'], sources, template)
+    pairs = pair_qa([SimpleNamespace(id='s', text=text, speaker='unknown')], template)
+    expected = ['是的。', '我不确定，但我记得当时带了证件。']
+    assert [f['value'] for f in rule_facts(pairs)] == [f['value'] for f in accepted] == expected
+    for pair, value, fact in zip(pairs, expected, accepted):
+        for span in (pair['sources'][1], fact['evidence_spans'][0]):
+            assert text[span['start']:span['end']] == value
+
+
+def test_plain_asr_with_period_after_second_question_keeps_both_pairs():
+    sources = [{'segment_id': 's', 'text': '你的出入境证件号是xxxxx吗？是的。确定没偷渡吗。我确定。'}]
+    facts = [{'label': 'q1', 'qa_ids': ['p0001']}, {'label': 'q2', 'qa_ids': ['p0002']}]
+    result = resolve_selections({'key_facts': facts}, sources)
+    assert [f['value'] for f in result['key_facts']] == ['是的。', '我确定。']
+
+
+@pytest.mark.parametrize(('gap', 'answer'), [('', '偷渡吗我确定。'), ('没有。', '我确定。')])
+def test_raw_model_evidence_cannot_include_a_question_tail_or_skip_a_denial(gap, answer):
+    q = '确定没偷渡吗？'
+    sources = [{'segment_id': 's', 'text': q + gap + answer}]
+    fact = {'label': 'q1', 'value': answer, 'segment_ids': ['s'],
+            'evidence': [{'segment_id': 's', 'question': q, 'answer': answer}]}
+    accepted, checks = check_answers([fact], sources, {'fields': [{'id': 'q1', 'label': q}]})
+    assert not accepted and checks[0]['status'] == 'blocked'
+
+
+def test_exact_rule_cannot_pair_across_unconfirmed_speech():
+    from types import SimpleNamespace
+    from backend.app.record_candidates import pair_qa, rule_facts
+    turns = [('interviewer', '确定没偷渡吗？'), ('unknown', '确定什么？'), ('interviewee', '我确定。')]
+    sources = [SimpleNamespace(id=str(i), text=text, speaker=role) for i, (role, text) in enumerate(turns)]
+    pairs = pair_qa(sources, {'fields': [{'id': 'q1', 'label': turns[0][1]}]})
+    assert not rule_facts(pairs)
+
+
+def test_reported_dialogue_is_not_an_officer_question_with_a_short_reply():
+    question = '你带护照了吗？'
+    sources = [{'segment_id': 's', 'text': f'他问我：“{question}”我回答过。'}]
+    fact = {'label': 'q1', 'value': '我回答过。', 'segment_ids': ['s'],
+            'evidence': [{'segment_id': 's', 'question': question, 'answer': '我回答过。'}]}
+    accepted, checks = check_answers([fact], sources, {'fields': [{'id': 'q1', 'label': question}]})
+    assert not accepted and checks[0]['code'] == 'role_mismatch'
+
+
+@pytest.mark.parametrize('text', ['你知道为什么吗？对的。', '会求数列吗？定不会。', '遇见不同的人吗？北方的人有吗？没都是南方的。'])
+def test_unconfirmed_asr_susceptible_to_polarity_or_turn_errors_requires_review(text):
+    sources = [{'segment_id': 's', 'text': text, 'recognition_run_id': 'run', 'speaker': 'unknown'}]
+    result = resolve_selections({'key_facts': [{'label': 'q1', 'qa_ids': ['p0001']}]}, sources)
+    fact = result['key_facts'][0]
+    accepted, checks = check_answers([fact], sources, {'fields': [{'id': 'q1', 'label': fact['evidence'][0]['question']}]})
+    assert not accepted and checks[0]['code'] == 'unverified_asr_answer'

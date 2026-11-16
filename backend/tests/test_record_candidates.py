@@ -115,3 +115,33 @@ def test_earlier_answer_and_contextual_candidate_have_distinct_versions(client,c
     newest=next(v for v in versions if v['latest'])
     assert newest['origin']=='ai' and newest['status']=='conflict'
     assert row['qa_pairs'][1]['possible_followup_of']==0
+
+
+def test_generation_job_uses_only_reply_span_for_duplicated_question_tail(client, cloud, queue):
+    enable_ai(client, 'deepseek')
+    row = with_segments(client, template_id='bride')
+    question = next(f['label'] for f in row['template_snapshot']['fields'] if f['id'] == 'q001')
+    text = f'问：{question}\n答：白了吗我不确定，请再解释一遍。'
+    row = segments(client, row, [editable(row['segments'][0], speaker='unknown', text=text)]).json()
+    cloud.respond = response
+    start(client, row)
+    run(queue)
+    result = current(client, row)
+    expected = '我不确定，请再解释一遍。'
+    assert result['template_snapshot']['values']['q001'] == expected
+    candidate = next(c for c in result['candidates'] if c['field_id'] == 'q001')
+    assert candidate['origin'] == 'rule' and candidate['value'] == expected
+    assert candidate['evidence_preview'][-1]['quote'] == expected
+    assert result['segments'][0]['text'] == text
+    assert expected in result['rendered_text'] and '白了吗我' not in result['rendered_text']
+
+
+def test_mixed_or_reported_speech_never_becomes_an_exact_rule_fact():
+    q = '确定没偷渡吗？'
+    template = {'fields': [{'id': 'q1', 'label': q}]}
+    for answer in ('是的。\n[说话人 2] 不对。',
+                   '他说：“当时，民警：确定没偷渡吗？答：我确定。”',
+                   '没有。你是什么时候来的。我昨天来。',
+                   '没偷渡吗？我确定他偷渡了。'):
+        material = SimpleNamespace(id='s', text=f'问：{q}答：{answer}', speaker='unknown')
+        assert not c.rule_facts(c.pair_qa([material], template)), answer

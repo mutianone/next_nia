@@ -1,7 +1,10 @@
 """Conservative extractive checks, not a semantic truth or legal classifier."""
 import re
 
-POLICY = 'extractive-qa-v4'
+from .record_selection import QUOTED_SPEECH, repeated_particle_cut, source_units
+from .record_qa_boundaries import question_answer_cuts, question_tail_cut, short_reply_question_cuts
+
+POLICY = 'extractive-qa-v6'
 BOUNDARY = '。！？!?；;\n'
 CONDITIONS = re.compile(r'不确定|记不清|记不住|不知道|可能|好像|但是|但|需要核|请.*核|不对|不是|没有|未')
 
@@ -9,10 +12,29 @@ def tokens(text):
     text = re.sub(r'[^\u4e00-\u9fffA-Za-z0-9]', '', text)
     return {text[i:i+2] for i in range(len(text)-1)} - {'你是','你的','你有','是否','什么','一下','情况','问你','我们','现在'}
 
+def mixed_answer(question, answer):
+    second_person_question = re.search(
+        r'(?:^|[。！？?!；;\n])\s*(?:你|您)(?:是|的)?[^，。！？?!；;\n]{0,16}'
+        r'(?:什么时候|什么地方|什么名字|为什么|从哪|在哪里|去哪|怎么来|多少次|几次)', answer)
+    return bool(second_person_question or question_answer_cuts(answer) or short_reply_question_cuts(answer) or question_tail_cut(question, answer) is not None
+                or re.search(r'说一下你|请(?:你)?介绍|告诉我你|你(?:的)?(?:姓名|国籍|出生日期|联系方式|电话号码).*是什么', answer)
+                or re.search(r'[?？]|[吗嗎][。！!\s]*$|(?:^|[\s。；，])(?:问|民警|询问人)\s*[:：]', answer))
+
+
+def adjacent_evidence(question, answer, gap, confirmed_pair):
+    # A short skipped phrase can be an entire second question or a negation.
+    gap = re.sub(r'^[\s。！？?!；;，,]*(?:(?:答|被询问人|当事人)\s*[:：]\s*)?', '', gap)
+    if not gap:
+        return True
+    return confirmed_pair and repeated_particle_cut(question, gap + answer) == len(gap)
+
+
 def check_answers(facts, segments, template, semantic_matches=frozenset()):
     indexed = {s['segment_id']:s['text'] for s in segments}
-    from .record_selection import source_units
     units=source_units(segments)
+    raw_asr = {s['segment_id'] for s in segments if s.get('recognition_run_id') and
+               s.get('speaker', 'unknown') == 'unknown'}
+    quotes = {sid: [m.span() for m in QUOTED_SPEECH.finditer(text)] for sid, text in indexed.items()}
     offsets={};cursor=0
     for source in segments:
         offsets[source['segment_id']]=cursor;cursor+=len(source['text'])+1
@@ -41,17 +63,34 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 reason = ('invalid_evidence', '引用不是唯一可定位的原文'); break
             answer_roles={u['role'] for u in units if u['segment_id']==item['segment_id'] and u['start']<ai+len(answer) and u['end']>ai}
             question_roles={u['role'] for u in units if u['segment_id']==qid and u['start']<qi+len(question) and u['end']>qi}
-            if answer_roles & {'interviewer','interpreter','unconfirmed_voice'} or question_roles & {'interviewee','interpreter','unconfirmed_voice'}:
+            quoted_question = any(start <= qi + len(question) - 1 < end for start, end in quotes.get(qid, []))
+            if (not answer_roles or not question_roles or quoted_question
+                    or answer_roles & {'interviewer','interpreter','unconfirmed_voice'}
+                    or question_roles & {'interviewee','interpreter','unconfirmed_voice'}):
                 reason=('role_mismatch','发言角色未确认或问答角色不匹配'); break
             gap=offsets[item['segment_id']]+ai-(offsets[qid]+qi+len(question))
-            if gap < 0 or gap > 12:
+            confirmed = answer_roles == {'interviewee'} and question_roles == {'interviewer'}
+            skipped = (qtext[qi+len(question):ai] if qid == item['segment_id'] else
+                       qtext[qi+len(question):] + '\n' + text[:ai])
+            if (gap < 0 or gap != len(skipped) or
+                    not adjacent_evidence(question, answer, skipped, confirmed)):
                 reason = ('unpaired_answer', '问题与回答的位置无法可靠配对'); break
-            if re.search(r'说一下你|请(?:你)?介绍|告诉我你|你(?:的)?(?:姓名|国籍|出生日期|联系方式|电话号码).*是什么', answer) or '?' in answer or '？' in answer or re.search(r'(?:^|[\n。])\s*(?:问|民警|询问人)[:：]',answer):
+            if item['segment_id'] in raw_asr and not confirmed:
+                reply = re.sub(r'[\W_]+', '', answer)
+                preceding = qtext[:qi].rstrip()
+                # With no verified speaker, a missing syllable can reverse a
+                # yes/no reply, and the next question can be joined to it.
+                if ((len(reply) <= 8 and re.search(r'不|没|否|未|对|是|确定|肯定|^有|^嗯', reply))
+                        or preceding.endswith(('？', '?'))):
+                    reason = ('unverified_asr_answer', '原始转写的短答或连续问话尚未确认说话人，请回听并核对问答'); break
+            if mixed_answer(question, answer):
                 reason = ('question_in_answer', '回答中混入询问内容'); break
             # Require a complete utterance rather than a substring such as 是真的
             # extracted from 不是真的 / 我认为是真的，但请核查.
             before=text[ai-1:ai];after=text[ai+len(answer):ai+len(answer)+1]
-            if (ai and before not in BOUNDARY+'：: \t') or (after and answer[-1] not in BOUNDARY and after not in BOUNDARY):
+            starts_turn = confirmed and any(u['segment_id'] == item['segment_id'] and
+                                            u['role'] == 'interviewee' and u['start'] == ai for u in units)
+            if (ai and not starts_turn and before not in BOUNDARY+'：: \t') or (after and answer[-1] not in BOUNDARY and after not in BOUNDARY):
                 reason = ('partial_answer', '引用截断了原句，可能丢失限定条件'); break
             tail=text[ai+len(answer):]
             if tail.startswith(('，','但','不过','不对','只是')):
