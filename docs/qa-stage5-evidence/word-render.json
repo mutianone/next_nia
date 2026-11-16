@@ -1,0 +1,590 @@
+[
+  {
+    "file": "backend/templates/records/border_case.docx",
+    "input": {
+      "sha256": "2500244c177e607f4a939573132e50fd578b6ba86bc07ada84c99ec9b351aca5",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "cs": [
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "黑体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 2705
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 9
+  },
+  {
+    "file": "backend/templates/records/bride.docx",
+    "input": {
+      "sha256": "fd46dd4d6a04cb427c74e6761a884b2f553836a985556f170e131a01c58de60a",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 846
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "backend/templates/records/bride_family.docx",
+    "input": {
+      "sha256": "208b841f031c68c588c39ab2975681b5fad4ce32ee000379f8e07093fa3d3518",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 757
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/border_case-applied.docx",
+    "input": {
+      "sha256": "040a99f3bddfab1976fb0678efb5af8b82d280c9960940abf4dc2e12b297b3d5",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "cs": [
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "黑体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 2177
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 9
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/border_case-before.docx",
+    "input": {
+      "sha256": "ef4d8e8671f8391ae1ab01cbfffbb77a76b65e036495568c2a774e648109b10b",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "cs": [
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "黑体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 1893
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 9
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/border_case-restored.docx",
+    "input": {
+      "sha256": "ef4d8e8671f8391ae1ab01cbfffbb77a76b65e036495568c2a774e648109b10b",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "楷体_GB2312;楷体",
+          "黑体"
+        ],
+        "cs": [
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋",
+          "仿宋_GB2312",
+          "宋体",
+          "楷体",
+          "黑体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 1893
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 9
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/bride-applied.docx",
+    "input": {
+      "sha256": "f14d81172b83ece6253606325e81043ee03c2336a40e3349faaa68e14335f339",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 1058
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/bride-before.docx",
+    "input": {
+      "sha256": "b45e50748b0e9320395bb0812b94d26096acca078e3740a1362012ecdabc8c25",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 774
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/bride-restored.docx",
+    "input": {
+      "sha256": "b45e50748b0e9320395bb0812b94d26096acca078e3740a1362012ecdabc8c25",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 774
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/bride_family-applied.docx",
+    "input": {
+      "sha256": "5eb4f412d7673052f4bcb8c3745335e080215221e07408c4f46efbc06674def0",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 1039
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/bride_family-before.docx",
+    "input": {
+      "sha256": "269988ab87ff574bb3f64bd34b675ef30d0949b2924b98dd00d96503988f235b",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 755
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  },
+  {
+    "file": "/private/tmp/fill-stage4-docx/bride_family-restored.docx",
+    "input": {
+      "sha256": "269988ab87ff574bb3f64bd34b675ef30d0949b2924b98dd00d96503988f235b",
+      "fonts": {
+        "ascii": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "hAnsi": [
+          "Calibri",
+          "Liberation Sans",
+          "Liberation Serif",
+          "仿宋_GB2312;仿宋",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "eastAsia": [
+          "Linux Libertine G",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "方正小标宋简体",
+          "楷体"
+        ],
+        "cs": [
+          "Calibri",
+          "Noto Sans",
+          "Times New Roman",
+          "仿宋_GB2312;仿宋",
+          "宋体",
+          "楷体"
+        ],
+        "hint": [
+          "eastAsia"
+        ]
+      },
+      "cjk_characters": 755
+    },
+    "unchanged": true,
+    "render_exit": 0,
+    "pages": 4
+  }
+]

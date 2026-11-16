@@ -1,0 +1,103 @@
+{
+  "case_id": "http-synthetic-jinzi",
+  "audio": {
+    "status": "not_supplied",
+    "accuracy_claim": false
+  },
+  "stages": {
+    "automatic": {
+      "status": "measured",
+      "role_accuracy": 0.0,
+      "role_correct": 0,
+      "role_total": 4,
+      "unknown_or_missing": 4,
+      "speaker_pairwise": {
+        "correct": 2,
+        "expected": 2,
+        "predicted": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "character_error_rate": 0.0,
+      "qa_boundaries": {
+        "correct": 0,
+        "expected": 2,
+        "predicted": 4,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "field_exact": {
+        "correct": 0,
+        "expected": 2,
+        "predicted": 0,
+        "precision": null,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "adhesion": {
+        "correct": 0,
+        "expected": 0,
+        "predicted": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "export_exact": null,
+      "export_fragments": null,
+      "review_seconds": null
+    },
+    "reviewed": {
+      "status": "measured",
+      "role_accuracy": 1.0,
+      "role_correct": 4,
+      "role_total": 4,
+      "unknown_or_missing": 0,
+      "speaker_pairwise": {
+        "correct": 2,
+        "expected": 2,
+        "predicted": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "character_error_rate": 0.0,
+      "qa_boundaries": {
+        "correct": 2,
+        "expected": 2,
+        "predicted": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "field_exact": {
+        "correct": 2,
+        "expected": 2,
+        "predicted": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "adhesion": {
+        "correct": 0,
+        "expected": 0,
+        "predicted": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "false_positive": 0,
+        "false_negative": 0
+      },
+      "export_exact": null,
+      "export_fragments": {
+        "金子。": 1,
+        "我住在测试路8号。": 1
+      },
+      "review_seconds": null
+    }
+  },
+  "note": "Automatic and reviewed metrics are separate. Synthetic self-checks do not establish real ASR quality. Missing timing is not zero."
+}

@@ -22,6 +22,7 @@ def client(tmp_path):
 def payload(client):
     settings = client.get("/api/settings").json()["settings"]
     settings["environment"]["postgres"].pop("password_configured")
+    settings["ai"]["speech"].pop("api_key_configured", None)
     for provider in settings["ai"]["providers"].values():
         provider.pop("api_key_configured")
     return settings

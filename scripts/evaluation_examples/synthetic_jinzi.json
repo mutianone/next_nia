@@ -1,0 +1,178 @@
+{
+  "case_id": "metric-self-check-not-model-benchmark",
+  "data_class": "synthetic",
+  "expected": {
+    "utterances": [
+      {
+        "id": "q1",
+        "role": "OFFICER",
+        "speaker": "officer",
+        "text": "你叫什么名字？"
+      },
+      {
+        "id": "a1",
+        "role": "INTERVIEWEE",
+        "speaker": "person",
+        "text": "金子。"
+      },
+      {
+        "id": "q2",
+        "role": "OFFICER",
+        "speaker": "officer",
+        "text": "你住在哪里？"
+      },
+      {
+        "id": "a2",
+        "role": "INTERVIEWEE",
+        "speaker": "person",
+        "text": "我住在测试路8号。"
+      }
+    ],
+    "qa": [
+      {
+        "question_sources": [
+          "q1"
+        ],
+        "answer_sources": [
+          "a1"
+        ]
+      },
+      {
+        "question_sources": [
+          "q2"
+        ],
+        "answer_sources": [
+          "a2"
+        ]
+      }
+    ],
+    "fields": [
+      {
+        "field_id": "name",
+        "answer_sources": [
+          "a1"
+        ],
+        "value": "金子。"
+      },
+      {
+        "field_id": "address",
+        "answer_sources": [
+          "a2"
+        ],
+        "value": "我住在测试路8号。"
+      }
+    ],
+    "adhesion_issues": [
+      "glued-1"
+    ],
+    "word_text": "问：你叫什么名字？\n答：金子。\n问：你住在哪里？\n答：我住在测试路8号。"
+  },
+  "automatic": {
+    "utterances": [
+      {
+        "id": "q1",
+        "role": "UNKNOWN",
+        "speaker": null,
+        "text": "你叫什么名字？"
+      },
+      {
+        "id": "a1",
+        "role": "UNKNOWN",
+        "speaker": null,
+        "text": "金子。"
+      },
+      {
+        "id": "q2",
+        "role": "UNKNOWN",
+        "speaker": null,
+        "text": "你住在哪里？"
+      },
+      {
+        "id": "a2",
+        "role": "UNKNOWN",
+        "speaker": null,
+        "text": "我住在测试路8号。"
+      }
+    ],
+    "qa": [
+      {
+        "question_sources": [
+          "q1"
+        ],
+        "answer_sources": [
+          "a1",
+          "q2",
+          "a2"
+        ]
+      }
+    ],
+    "fields": [],
+    "adhesion_issues": []
+  },
+  "reviewed": {
+    "utterances": [
+      {
+        "id": "q1",
+        "role": "OFFICER",
+        "speaker": "officer",
+        "text": "你叫什么名字？"
+      },
+      {
+        "id": "a1",
+        "role": "INTERVIEWEE",
+        "speaker": "person",
+        "text": "金子。"
+      },
+      {
+        "id": "q2",
+        "role": "OFFICER",
+        "speaker": "officer",
+        "text": "你住在哪里？"
+      },
+      {
+        "id": "a2",
+        "role": "INTERVIEWEE",
+        "speaker": "person",
+        "text": "我住在测试路8号。"
+      }
+    ],
+    "qa": [
+      {
+        "question_sources": [
+          "q1"
+        ],
+        "answer_sources": [
+          "a1"
+        ]
+      },
+      {
+        "question_sources": [
+          "q2"
+        ],
+        "answer_sources": [
+          "a2"
+        ]
+      }
+    ],
+    "fields": [
+      {
+        "field_id": "name",
+        "answer_sources": [
+          "a1"
+        ],
+        "value": "金子。"
+      },
+      {
+        "field_id": "address",
+        "answer_sources": [
+          "a2"
+        ],
+        "value": "我住在测试路8号。"
+      }
+    ],
+    "adhesion_issues": [
+      "glued-1"
+    ],
+    "word_text": "问：你叫什么名字？\n答：金子。\n问：你住在哪里？\n答：我住在测试路8号。"
+  }
+}

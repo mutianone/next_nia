@@ -1,0 +1,331 @@
+[
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[-1-past_due-urgent]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[0-due_today-urgent]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[1-due_soon-urgent]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[7-due_soon-urgent]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[8-due_soon-normal]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[30-due_soon-normal]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_deadline_boundaries_and_unknown_dates[None-needs_review-review]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_person_pending_multiple_stays_and_future_departure_need_review",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_facts_get_defaults_do_not_create_unverified_record",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_visa_validity_is_separate_and_never_substitutes_for_stay_deadline",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_pending_receipt_and_unverified_supplements_need_review[facts0]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_pending_receipt_and_unverified_supplements_need_review[facts1]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_pending_receipt_and_unverified_supplements_need_review[facts2]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_pending_receipt_and_unverified_supplements_need_review[facts3]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_verified_approved_extension_overrides_baseline_and_clears_old_alert",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_editing_original_stay_rechecks_previously_verified_supplements",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_manual_closed_same_facts_days_and_priority_changes_do_not_reopen",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_material_deadline_change_reopens_manual_closed_alert",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_auto_closure_reappearance_and_history",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_manual_closure_then_disappearance_and_identical_reappearance_reopens[window]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_manual_closure_then_disappearance_and_identical_reappearance_reopens[archived]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_manual_closure_then_disappearance_and_identical_reappearance_reopens[departed]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_action_transitions_notes_history_filters_and_stats",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_rules_validation_disabled_only_blocks_automatic_scans",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_scan_api_uses_business_today_and_rejects_client_override",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_concurrent_manual_scans_are_unique_and_automatic_scans_run_once_per_interval",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_alerts.py::test_audits_contain_only_identifiers_and_counts",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_secrets_are_saved_retained_and_cleared_without_response_or_audit_leak",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_configuration_survives_restart",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_invalid_production_database_does_not_save_or_change_runtime",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_environment_switch_validates_then_waits_for_restart",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_database_test_uses_unsaved_fields_preserves_password_and_does_not_save",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_cross_site_configuration_changes_are_rejected",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_failed_atomic_save_keeps_original_settings",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_asr_model_is_public_configurable_and_preserved_for_older_clients",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_api.py::test_ai_credentials_are_admin_only",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正请求夹具：不回传只读speech.api_key_configured；保留服务端严格校验。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_auth.py::test_roles_enforced_at_api[business-/api/documents/any-PATCH-422]",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "资源不存在时404/422预期差异，及新增root账号导致单管理员、账号数假设失效；不能据此认定越权。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_auth.py::test_last_admin_duplicate_phone_profile_and_password",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "资源不存在时404/422预期差异，及新增root账号导致单管理员、账号数假设失效；不能据此认定越权。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_auth.py::test_backup_never_contains_live_sessions",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "资源不存在时404/422预期差异，及新增root账号导致单管理员、账号数假设失效；不能据此认定越权。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_dashboard.py::test_dashboard_tracks_actual_alerts_and_document_states_without_activity_personal_details",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_dashboard.py::test_restarting_app_scans_due_persisted_stays_before_serving_dashboard",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "现有规则改为人员证件到期三天预警；测试仍按停留许可日期及旧阈值构造，需确认业务规则后统一。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_demo.py::test_complete_dataset_is_local_coherent_and_repeatable",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "演示数据返回结构与旧alerts/items访问契约不一致。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_demo.py::test_record_audio_transcripts_summary_and_exports_are_consistent",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "演示数据返回结构与旧alerts/items访问契约不一致。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_people.py::test_stay_date_relations_are_validated_without_partial_write[stay1-\\u5141\\u8bb8\\u505c\\u7559\\u622a\\u6b62\\u65e5\\u671f\\u4e0d\\u80fd\\u65e9\\u4e8e\\u5165\\u5883\\u65e5\\u671f]",
+    "baseline": "FAILED",
+    "category": "非核心功能问题",
+    "reason": "允许停留日期早于入境日期未被拒绝，存在日期数据质量缺口，需结合当前证件到期规则处理。",
+    "status": "remaining"
+  },
+  {
+    "test": "backend/tests/test_presentation.py::test_sample_workspace_uses_provider_for_all_ai_and_keeps_failed_attempt",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正source_units模拟响应，以及未批准资料测试显式关闭allow_external；保留禁止外发断言。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_presentation.py::test_unapproved_seed_laws_cannot_be_sent",
+    "baseline": "FAILED",
+    "category": "测试夹具或环境问题",
+    "reason": "修正source_units模拟响应，以及未批准资料测试显式关闭allow_external；保留禁止外发断言。",
+    "status": "fixed"
+  },
+  {
+    "test": "backend/tests/test_presentation.py::test_unapproved_seed_laws_cannot_be_sent",
+    "baseline": "ERROR",
+    "category": "测试夹具或环境问题",
+    "reason": "修正source_units模拟响应，以及未批准资料测试显式关闭allow_external；保留禁止外发断言。",
+    "status": "fixed"
+  }
+]

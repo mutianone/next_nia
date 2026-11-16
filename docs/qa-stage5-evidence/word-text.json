@@ -1,0 +1,62 @@
+[
+  {
+    "name": "border_case",
+    "pdf_cjk": 2705,
+    "pages": 9
+  },
+  {
+    "name": "bride",
+    "pdf_cjk": 878,
+    "pages": 4
+  },
+  {
+    "name": "bride_family",
+    "pdf_cjk": 789,
+    "pages": 4
+  },
+  {
+    "name": "border_case-applied",
+    "pdf_cjk": 2177,
+    "pages": 9
+  },
+  {
+    "name": "border_case-before",
+    "pdf_cjk": 1893,
+    "pages": 9
+  },
+  {
+    "name": "border_case-restored",
+    "pdf_cjk": 1893,
+    "pages": 9
+  },
+  {
+    "name": "bride-applied",
+    "pdf_cjk": 1090,
+    "pages": 4
+  },
+  {
+    "name": "bride-before",
+    "pdf_cjk": 806,
+    "pages": 4
+  },
+  {
+    "name": "bride-restored",
+    "pdf_cjk": 806,
+    "pages": 4
+  },
+  {
+    "name": "bride_family-applied",
+    "pdf_cjk": 1071,
+    "pages": 4
+  },
+  {
+    "name": "bride_family-before",
+    "pdf_cjk": 787,
+    "pages": 4
+  },
+  {
+    "name": "bride_family-restored",
+    "pdf_cjk": 787,
+    "pages": 4
+  }
+]

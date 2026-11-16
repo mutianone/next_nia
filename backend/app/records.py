@@ -27,7 +27,8 @@ from . import record_asr_results as asr_results
 from .records_ai import RecordAIError, analyze_segments, provider_config, transcribe_audio
 from .schemas import reveal
 from .record_word import export_original
-from .record_templates import CASE_TEMPLATES, schema as template_schema, filled_template, render as render_template
+from .record_templates import CASE_TEMPLATES, schema as template_schema, render as render_template
+from .record_formal_guard import filled_template
 
 Scenario = Literal["study", "marriage", "residence", "violation", "other"]
 TemplateId = Annotated[str, Field(pattern=r'^[a-z][a-z0-9_-]{0,19}$')]
@@ -496,6 +497,12 @@ def analysis_json(row, current_hash):
 
 
 def version(session, row, action, *, initial=False):
+    if action in {'candidate_confirmed', 'candidate_rejected'}:
+        previous=session.scalar(select(RecordVersion.snapshot).where(RecordVersion.record_id==row.id,RecordVersion.revision==row.revision))
+        old=(previous or {}).get('template_snapshot',{})
+        for field in old.get('structured_fill_sources',{}):
+            if old.get('values',{}).get(field)!=row.template_snapshot.get('values',{}).get(field):
+                raise HTTPException(409,'该字段已有结构化正式应用，请在正式字段审核入口修改。')
     if not initial:
         row.revision += 1
         row.updated_at = utc_now()
@@ -659,7 +666,8 @@ def update_template_values(record_id: str, body: TemplateValuesUpdate, request: 
         values={key:plain_text(value) for key,value in body.values.items()}
         changed = {key for key, value in values.items() if value != template.get('values', {}).get(key, '')}
         locks = (set(template.get('locked_fields', [])) | changed) - set(body.unlock_fields)
-        row.template_snapshot={**template,'values':{**template.get('values',{}),**values},'human_edited':True,'locked_fields':sorted(locks)}
+        provenance={k:v for k,v in template.get('structured_fill_sources',{}).items() if k not in changed}
+        row.template_snapshot={**template,'values':{**template.get('values',{}),**values},'human_edited':True,'locked_fields':sorted(locks),'structured_fill_sources':provenance}
         version(session,row,'template_corrected')
         return detail(session,row)
 
@@ -873,6 +881,9 @@ def delete_audio(record_id: str, audio_id: str, body: AIRequest, request: Reques
     with write_session(request.app.state.engine) as session:
         row = get_record(session, record_id, True)
         mutable(row, body.expected_revision)
+        from .record_fill_apply import FillApplication
+        if session.scalar(select(FillApplication.id).where(FillApplication.record_id == record_id).limit(1)):
+            raise HTTPException(409, '此笔录已有正式应用历史，不能删除关联音频及历史来源。')
         clip = session.scalar(select(AudioClip).where(AudioClip.id == audio_id, AudioClip.record_id == record_id))
         if clip is None:
             raise HTTPException(404, "未找到当前笔录的所选原音。")

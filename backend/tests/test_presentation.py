@@ -51,8 +51,9 @@ def test_sample_workspace_uses_provider_for_all_ai_and_keeps_failed_attempt(clie
             return httpx.Response(200,json={'text':'今天下午三点召开工作会议。'})
         payload = json.loads(request.content)
         inputs = json.loads(payload['messages'][1]['content'])
-        if isinstance(inputs, list):
-            output = {'summary':'会议在下午三点举行。','key_facts':[{'label':'会议时间','value':'下午三点','segment_ids':[inputs[0]['segment_id']]}],'issues':[]}
+        if isinstance(inputs, list) or 'segments' in inputs or 'source_units' in inputs:
+            segments = inputs if isinstance(inputs, list) else inputs.get('segments', inputs.get('source_units'))
+            output = {'summary':'会议在下午三点举行。','key_facts':[{'label':'facts','value':'今天下午三点召开工作会议。','segment_ids':[segments[0]['segment_id']]}],'issues':[]}
         else:
             output = {'claims':[{'text':'签证延期需要提交证明材料。','source_ids':[inputs['evidence'][0]['source_id']]}]}
         return httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'content':json.dumps(output)}}]})
@@ -107,6 +108,12 @@ def test_sample_workspace_uses_provider_for_all_ai_and_keeps_failed_attempt(clie
 
 
 def test_unapproved_seed_laws_cannot_be_sent(client,monkeypatch):
+    # Seed policy now explicitly approves public laws. This test needs unapproved material.
+    from sqlalchemy.orm import Session
+    from sqlalchemy import update
+    from backend.app.knowledge import KnowledgeDocument
+    with Session(client.app.state.engine) as session:
+        session.execute(update(KnowledgeDocument).values(allow_external=False));session.commit()
     calls=transport(monkeypatch,lambda _:pytest.fail('private source sent'))
     enable_ai(client)
     result=client.post('/api/knowledge/ask',json={'question':'申请延长居留期限，应当何时提出申请？','confirm_external':True}).json()
