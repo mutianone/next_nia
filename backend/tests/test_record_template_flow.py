@@ -68,8 +68,16 @@ def test_original_word_template_filled_and_samples_removed(client,cloud,template
     from backend.app.record_word import ROOT,W
     enable_ai(client,'deepseek');row=with_segments(client,template_id=template_id)
     template=row['template_snapshot'];question=next(f for f in template['fields'] if f['id'].startswith('q') and '家庭情况' in f['label'])
-    row=segments(client,row,[editable(row['segments'][0],text=question['label']+'家庭情况合成回答，仅用于测试。')]).json()
-    cloud.respond=lambda request:analysis_response(row['segments'][0]['id'],key_facts=[{'label':'name','value':'测试人员','segment_ids':[row['segments'][0]['id']]},{'label':question['id'],'value':'家庭情况合成回答，仅用于测试。','segment_ids':[row['segments'][0]['id']],'evidence':[{'segment_id':row['segments'][0]['id'],'question':question['label'],'answer':'家庭情况合成回答，仅用于测试。'}]}])
+    # Explicit human-reviewed turns: a question is not interviewee speech.
+    answer='家庭情况合成回答，仅用于测试。'
+    row=segments(client,row,[{'speaker':'interviewer','text':question['label']},
+                             {'speaker':'interviewee','text':answer},
+                             {'speaker':'interviewee','text':'我的姓名是测试人员。'}]).json()
+    q,a,name=row['segments']
+    cloud.respond=lambda request:analysis_response(a['id'],key_facts=[
+        {'label':'name','value':'测试人员','segment_ids':[name['id']]},
+        {'label':question['id'],'value':answer,'segment_ids':[q['id'],a['id']],
+         'evidence':[{'segment_id':a['id'],'question_segment_id':q['id'],'question':question['label'],'answer':answer}]}])
     response=analyze(client,row);assert response.status_code==200,response.text
     current=response.json();assert '家庭情况合成回答' in current['rendered_text']
     assert '答：属实' not in current['rendered_text'] and '答：明白' not in current['rendered_text']

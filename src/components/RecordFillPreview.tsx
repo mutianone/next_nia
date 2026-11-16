@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { api } from '../api';
+import { RecordFillApply } from './RecordFillApply';
 import { recordError, type RecordDetail } from '../record-types';
 type Review={status:string;value:string|null;template_field_id:string|null;actor?:string;at?:string;revision?:number};
 type Candidate={candidate_id:string;revision:number;template_field_id:string|null;question_text:string;answer_text:string;match_method:string;candidate_status:string;problems:string[];formal_value:string;source_refs:{sentence_id:string;recognition_run_id:string;audio_id:string|null;listen_start_ms:number|null;start:number;end:number}[];review:Review|null;reviews:Review[]};
 type Batch={formal_values?:Record<string,string>;id:string;stale:boolean;reason:string|null;fields:{id:string;label:string;fillable:boolean;protected:boolean}[];items:Candidate[]};
 const methods:Record<string,string>={RULE:'规则匹配',ALIAS:'同义问法',SEMANTIC:'语义建议',EXPLICIT:'明确绑定',FREE_QA:'自由问答',UNMATCHED:'待选择字段'};
-export function RecordFillPreview({record,draft,disabled}:{record:RecordDetail;draft:{id:string;revision:number};disabled:boolean}){
+export function RecordFillPreview({record,draft,disabled,onApplied}:{record:RecordDetail;draft:{id:string;revision:number};disabled:boolean;onApplied?:(r:RecordDetail)=>void}){
  const [batch,setBatch]=useState<Batch|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const [fields,setFields]=useState<Record<string,string>>({}),[values,setValues]=useState<Record<string,string>>({});
  const [semantic,setSemantic]=useState(false),[consent,setConsent]=useState(false);
@@ -25,6 +26,7 @@ export function RecordFillPreview({record,draft,disabled}:{record:RecordDetail;d
   {semantic&&<label><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>同意发送本次问题及模板字段至已配置的云端服务</label>}
   <button type="button" disabled={busy||disabled||(semantic&&!consent)} onClick={()=>void perform(async()=>{const b=await api<Batch>(`${root}/fill-preview`,{method:'POST',body:JSON.stringify({expected_revision:record.revision,draft_id:draft.id,draft_revision:draft.revision,use_semantic:semantic,confirmed:consent})});setBatch(b);setFields({});setValues({});})}>生成匹配预览</button>
   <p>接受或修改仅保存到预览，不修改正式笔录。</p>
+  {batch&&<RecordFillApply record={record} batchId={batch.id} candidates={batch.items.filter(c=>c.review&&['ACCEPTED','MODIFIED'].includes(c.review.status)).map(c=>c.candidate_id)} disabled={busy||disabled} onApplied={updated=>{setBatch(b=>b&&({...b,stale:true,reason:'正式字段已更新，请重新生成候选。'}));onApplied?.(updated);}}/>}
   {batch?.stale&&<p role="alert">{batch.reason}</p>}
   {clip&&<audio controls autoPlay key={`${playing?.id}:${playing?.start}`} src={clip.playback_url} onLoadedMetadata={e=>{e.currentTarget.currentTime=(playing?.start??0)/1000;}}/>}
   {batch?.items.map((c,i)=><article className="qa-review-turn" key={c.candidate_id}>

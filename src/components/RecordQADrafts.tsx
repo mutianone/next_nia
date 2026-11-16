@@ -17,7 +17,7 @@ const roles:Record<Role,string>={UNKNOWN:'待确认',OFFICER:'民警',INTERVIEWE
 const intents:Record<Intent,string>={UNKNOWN:'待确认',QUESTION:'独立问题',ANSWER:'回答',FOLLOW_UP:'追问',CONTINUATION:'继续发言',INSTRUCTION:'告知说明',CLARIFICATION:'澄清反问',OTHER:'其他'};
 const status:Record<string,string>={PROVISIONAL:'草稿',REVIEW_REQUIRED:'待核对',CONFIRMED:'已确认',QA_COMPLETED:'已配对'};
 
-export function RecordQADrafts({record,disabled,onPending}:{record:RecordDetail;disabled:boolean;onPending:(v:boolean)=>void}) {
+export function RecordQADrafts({record,disabled,onPending,onApplied}:{record:RecordDetail;disabled:boolean;onPending:(v:boolean)=>void;onApplied?:(r:RecordDetail)=>void}) {
   const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const [material,setMaterial]=useState<Material|null>(null),[drafts,setDrafts]=useState<Draft[]>([]),[issues,setIssues]=useState<Issue[]>([]);
   const [runIds,setRunIds]=useState<string[]|null>(null);
@@ -100,7 +100,7 @@ export function RecordQADrafts({record,disabled,onPending}:{record:RecordDetail;
               const saved=await post(`qa-drafts/${draft.id}/pairs/review`,{draft_revision:draft.revision,pairs}) as Draft;setSelected(saved.id);setLinks({});
             })}>保存关联为新草稿</button>
           </details>
-          {draft.status==='CONFIRMED'&&<RecordFillPreview key={`${draft.id}:${draft.revision}`} record={{...record,revision:material.revision}} draft={draft} disabled={busy||dirty.size>0||!!draft.stale||disabled}/>}
+          {draft.status==='CONFIRMED'&&<RecordFillPreview key={`${draft.id}:${draft.revision}`} record={{...record,revision:material.revision}} draft={draft} onApplied={updated=>{onApplied?.(updated);void load();}} disabled={busy||dirty.size>0||!!draft.stale||disabled}/>}
           {draft.pairs.map(p=><article key={p.id} className="qa-review-turn"><strong>{status[p.state]??'待核对'}</strong><p>问：{p.question||'—'}</p><p>答：{p.answer||'—'}</p><details><summary>来源原文</summary>{Array.from(new Set(p.sources.map(s=>s.sentence_id))).map(id=><blockquote key={id}>{material.sentences.find(s=>s.id===id)?.text??'来源不可用'}</blockquote>)}</details></article>)}
           {issues.filter(i=>i.draft_id===draft.id).map(i=><article key={i.id} className="qa-review-turn"><p>{i.reason}</p><p>{i.suggested_action}</p>{i.status==='OPEN'?<><input aria-label={`处理结果${i.id}`} value={notes[i.id]??''} onChange={e=>setNotes(n=>({...n,[i.id]:e.target.value}))}/><button type="button" disabled={busy||!notes[i.id]?.trim()} onClick={()=>void perform(()=>post(`qa-review-issues/${i.id}/resolve`,{issue_revision:i.revision,note:notes[i.id]}))}>记录处理结果</button></>:<span>已处理</span>}</article>)}
           <button type="button" className="btn btn-primary" disabled={busy||dirty.size>0||draft.stale||draft.status==='CONFIRMED'||issues.some(i=>i.draft_id===draft.id&&i.status==='OPEN')} onClick={()=>void perform(()=>post(`qa-drafts/${draft.id}/confirm`,{draft_revision:draft.revision}))}>确认 QA 草稿</button>

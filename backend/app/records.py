@@ -1138,3 +1138,5 @@ from . import record_qa_draft_api  # noqa: E402,F401
 
 # Stage-three sidecar only; never replaces formal fill.
 from . import record_fill_api  # noqa: E402,F401
+
+from . import record_fill_apply_api  # noqa: E402,F401
