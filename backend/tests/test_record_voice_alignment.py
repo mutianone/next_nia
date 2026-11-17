@@ -64,3 +64,57 @@ def test_local_disagreement_flags_provider_groups_without_relabeling(monkeypatch
                 for i,(sp,txt) in enumerate([(10,'确定吗'),(10,'确定'),(11,'还有谁')])]
     output=voice.annotate(b'','wav',{'provider':'aliyun','segments':segments},3)
     assert [(s['speaker_id'],s['voice_review']) for s in output['segments']] == [(10,True),(10,True),(11,False)]
+
+
+@pytest.mark.parametrize('cloud', ['你知道吗？对的。', '你知道吗？', '你知道吗？不是啊。'])
+def test_isolated_disputed_or_missing_reply_is_a_listening_hint(cloud):
+    pytest.importorskip('rapidfuzz')
+    tokens = [(ch, 200*i, 200*i+150) for i, ch in enumerate('你知道吗')]
+    tokens.extend((ch, 2200+180*i, 2360+180*i) for i, ch in enumerate('不知道'))
+    parts = aligned_segments(cloud, tokens, [(1,False)]*4 + [(2,False)]*3, windows=[(4,7)])
+    assert ''.join(p['text'] for p in parts) == cloud
+    hints = [p for p in parts if p.get('local_alternatives')]
+    assert len(hints) == 1 and hints[0]['voice_review'] and hints[0]['speaker'] == 'unknown'
+    assert hints[0]['local_alternatives'] == [{'text':'不知道', 'start_ms':2200, 'end_ms':2720, 'speaker_id':2}]
+    if cloud.endswith('不是啊。'):
+        assert hints[0]['text'] == '不是啊。'
+
+
+def test_pair_windows_keep_quiet_reply_and_original_time(monkeypatch):
+    np = pytest.importorskip('numpy')
+    from backend.app import record_voice_audio as voice
+    rate = voice.RATE
+    audio = np.zeros(3*rate, dtype=np.float32)
+    audio[:rate] = .15
+    audio[2*rate:] = .004
+    ranges = list(voice.pair_windows(audio))
+    assert ranges == [(0, 24000), (24000, len(audio))]
+    def decode(_, clip):
+        if len(clip) == len(audio):
+            return [('问', 200, 600)]
+        assert np.max(clip) > .03
+        return [('答', 650, 850)] if np.max(clip) < .1 else [('问', 300, 700)]
+    monkeypatch.setattr(voice, 'local_tokens', decode)
+    tokens, windows = voice.pair_tokens(None, audio)
+    assert tokens == [('问', 200, 600), ('答', 2050, 2250)]
+    assert windows == [(0, 1), (1, 2)]
+    assert audio[-1] == np.float32(.004)
+
+
+@pytest.mark.parametrize('late_switch', [True, False])
+def test_pair_recovers_unpunctuated_reply_onset_with_acoustic_support(late_switch):
+    pytest.importorskip('rapidfuzz')
+    text = '确定没偷渡吗我不确定'
+    at = text.index('我')
+    words = []
+    for i, ch in enumerate(text):
+        start = i * 150 + (300 if i >= at and not late_switch else 0)
+        words.append((ch, start, start + 130))
+    voices = [(1 if not late_switch or i <= at else 2, False) for i in range(len(text))]
+    parts = aligned_segments(text, words, voices, paired_dialogue=True)
+    assert [s['text'] for s in parts] == [text[:at], '我不确定']
+    assert all(s['voice_review'] and s['speaker'] == 'unknown' for s in parts)
+    if not late_switch:
+        assert [s['speaker_id'] for s in parts] == [1, 1]
+    contiguous = [(ch, i*150, i*150+130) for i, ch in enumerate(text)]
+    assert len(aligned_segments(text, contiguous, [(1,False)]*len(text), paired_dialogue=True)) == 1

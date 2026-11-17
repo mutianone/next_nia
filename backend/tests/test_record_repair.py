@@ -12,7 +12,7 @@ def test_retranscribe_returns_candidate_without_overwriting_original(client,clou
     row=segments(client,row,[{'audio_id':row['audio_clips'][0]['id'],'text':'我没有重大疾病，不申请回','speaker':'unknown','start_ms':1000,'end_ms':3000}]).json()
     monkeypatch.setattr(record_media,'extract_speech_window',lambda *args:b'fictional-window')
     from backend.app import records_ai
-    monkeypatch.setattr(records_ai,'normalize_for_asr',lambda *args:(b'fictional','mp3','audio/mpeg'))
+    monkeypatch.setattr(records_ai,'normalize_for_asr',lambda *args, **kwargs:(b'fictional','mp3','audio/mpeg'))
     cloud.respond=lambda _:httpx.Response(200,json={'text':'我没有重大疾病，不申请回避。'})
     path=f"/api/records/{row['id']}/qa-retranscribe";body={'expected_revision':row['revision'],'confirmed':True,'segment_id':row['segments'][0]['id']}
     assert client.post(path,json={**body,'confirmed':False}).status_code==400

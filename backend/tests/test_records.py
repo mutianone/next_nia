@@ -479,14 +479,14 @@ def test_conversion_failure_preserves_original_and_success_sends_only_local_mp3(
     response = upload(client, create(client), wav, 'private-original-name.wav')
     assert response.status_code == 201
     row = response.json()
-    def unavailable(*args):
+    def unavailable(*args, **kwargs):
         raise RecordMediaError('本地转换不可用，原件已保留，尚未发送。')
     monkeypatch.setattr(records_ai, 'normalize_for_asr', unavailable)
     assert asr(client, row).status_code == 422
     current = client.get(f"/api/records/{row['id']}").json()
     assert current['transcription_attempts'][0]['status'] == 'failed'
     assert cloud.calls == [] and client.get(current['audio_clips'][0]['playback_url']).content == wav
-    monkeypatch.setattr(records_ai, 'normalize_for_asr', lambda raw, format: (MP3, 'mp3', 'audio/mpeg'))
+    monkeypatch.setattr(records_ai, 'normalize_for_asr', lambda raw, format, **kwargs: (MP3, 'mp3', 'audio/mpeg'))
     cloud.respond = lambda request: httpx.Response(200, json={'text': '经本地转换后转写的模拟结果。'})
     assert asr(client, current).status_code == 200
     payload = cloud.calls[0].read()

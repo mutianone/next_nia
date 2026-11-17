@@ -243,6 +243,7 @@ def metadata(row):
     return {k: data.get(k) for k in ('recognition_run_id', 'raw_result_ref', 'sentence_id', 'speaker_id',
              'speaker_scope', 'channel_id', 'words', 'timestamp_unit', 'session_intervals', 'word_session_intervals')} | {
              'asr_timestamp_source': data.get('timestamp_source', 'UNKNOWN'),
+             **({'local_alternatives': data['local_alternatives']} if data.get('local_alternatives') else {}),
              **({'voice_review': True, 'listen_start_ms': data.get('listen_start_ms', data.get('start_ms'))} if data.get('voice_review') else {}),
              'asr_original_text': data['text'], 'asr_start_ms': data.get('start_ms'), 'asr_end_ms': data.get('end_ms')}
 

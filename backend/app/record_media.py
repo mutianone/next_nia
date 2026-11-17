@@ -9,6 +9,10 @@ MAX_OUTPUT_BYTES = 20 * 1024 * 1024
 MAX_SECONDS = 3600
 TIMEOUT_SECONDS = 90
 DEMUXERS = {"wav": "wav", "webm": "matroska", "ogg": "ogg", "m4a": "mov", "flac": "flac"}
+# Gain in dB for a near/far pair: leave silence and loud speech alone,
+# lift quiet speech by at most 12 dB. No gate or time shift at turn boundaries.
+PAIR_LEVEL_FILTER = ("compand=attacks=0.015:decays=0.12:"
+                     "points=-90/-90|-65/-65|-45/-33|-30/-23|-14/-14|0/0:soft-knee=3:volume=-45")
 
 
 class RecordMediaError(Exception):
@@ -26,12 +30,12 @@ def conversion_available() -> bool:
     return conversion_binary() is not None
 
 
-def normalize_for_asr(raw: bytes, file_format: str) -> tuple[bytes, str, str]:
+def normalize_for_asr(raw: bytes, file_format: str, *, level_pair: bool = False) -> tuple[bytes, str, str]:
     if not raw or len(raw) > MAX_OUTPUT_BYTES:
         raise RecordMediaError("音频为空或超过 20 MiB，请分段后重试；原件保持不变。")
-    if file_format == "mp3":
+    if file_format == "mp3" and (not level_pair or not conversion_available()):
         return raw, "mp3", "audio/mpeg"
-    demuxer = DEMUXERS.get(file_format)
+    demuxer = "mp3" if file_format == "mp3" else DEMUXERS.get(file_format)
     if not demuxer:
         raise RecordMediaError("此录音格式不能用于转写；原件保持不变。")
     binary = conversion_binary()
@@ -53,7 +57,8 @@ def normalize_for_asr(raw: bytes, file_format: str) -> tuple[bytes, str, str]:
             command = [binary, "-nostdin", "-hide_banner", "-loglevel", "error", "-xerror",
                        "-protocol_whitelist", "file,pipe", "-err_detect", "explode", "-f", demuxer, "-i", str(source),
                        "-map", "0:a", "-vn", "-sn", "-dn", "-map_metadata", "-1", "-map_chapters", "-1",
-                       "-af", "asetpts=PTS-STARTPTS", "-ac", "1", "-ar", "16000",
+                       "-af", "asetpts=PTS-STARTPTS" + ("," + PAIR_LEVEL_FILTER if level_pair else ""),
+                       "-ac", "1", "-ar", "16000",
                        "-c:a", "libmp3lame", "-b:a", "48k", "-f", "mp3", "-t", str(MAX_SECONDS + 1),
                        "-fs", str(MAX_OUTPUT_BYTES), "-progress", "pipe:1", "-y", str(output)]
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,

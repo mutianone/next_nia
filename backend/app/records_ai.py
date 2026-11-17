@@ -80,7 +80,7 @@ def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Set
         raise RecordAIError(422, '多人转写需要安装本机分人模型或配置阿里云 Fun-ASR。')
     original, original_format = raw, file_format
     try:
-        raw, file_format, mime_type = normalize_for_asr(raw, file_format)
+        raw, file_format, mime_type = normalize_for_asr(raw, file_format, level_pair=speaker_count == 2)
     except RecordMediaError as error:
         raise RecordAIError(422, str(error)) from None
     if provider == 'aliyun':

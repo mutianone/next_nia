@@ -73,6 +73,70 @@ def local_tokens(recognizer, audio):
     return result
 
 
+def pair_windows(audio):
+    """Partition at sustained quiet valleys without trimming any original samples."""
+    import numpy as np
+    frame = RATE // 50
+    limit = 29 * RATE  # leave room for decoder padding under the 30 s limit
+    quiet_blocks = []
+    for start in range(0, len(audio), limit):
+        block = audio[start:start + limit]
+        frames = block[:len(block) // frame * frame].reshape(-1, frame)
+        if len(frames):
+            rms = np.sqrt(np.mean(frames * frames, axis=1))
+            floor = np.clip(np.percentile(rms, 20) * 1.9, .00045, .009)
+            quiet_blocks.append(rms < floor)
+    quiet = np.concatenate(quiet_blocks) if quiet_blocks else np.array([], dtype=bool)
+    edges = np.flatnonzero(np.diff(quiet, prepend=False, append=False))
+    pauses = [(a + b) // 2 * frame for a, b in edges.reshape(-1, 2)
+              if b - a >= 22 and a >= 8 and b < len(quiet) - 8]
+    start = 0
+    for end in [*pauses, len(audio)]:
+        while end - start > limit:
+            yield start, start + limit
+            start += limit
+        if end > start:
+            yield start, end
+            start = end
+
+
+def pair_tokens(recognizer, audio):
+    """Keep contextual decoding for long speech and re-listen to isolated short turns."""
+    import numpy as np
+    tokens, windows = [], []
+    pad = RATE // 10
+    context = local_tokens(recognizer, audio)
+    cursor = 0
+    for start, end in pair_windows(audio):
+        first_context = cursor
+        while cursor < len(context) and context[cursor][1] * RATE < end * 1000:
+            cursor += 1
+        contextual = context[first_context:cursor]
+        if end - start > 3.3 * RATE or sum(len(t) for t, _, _ in contextual) > 8:
+            tokens.extend(contextual)
+            continue
+        part = audio[start:end]
+        peak = float(np.max(np.abs(part)))
+        if peak < .001:
+            tokens.extend(contextual)
+            continue
+        normalized = part * min(10., .16 / peak)
+        padded = np.pad(normalized, (pad, RATE * 15 // 100))
+        short = []
+        for text, onset, stop in local_tokens(recognizer, padded):
+            left = start + max(0, onset * RATE // 1000 - pad)
+            right = min(end, start + stop * RATE // 1000 - pad)
+            if right - left >= RATE // 1000:
+                short.append((text, int(left * 1000 // RATE), int(right * 1000 // RATE)))
+        if short and short[-1][2] - short[0][1] <= 1500 and sum(len(t) for t, _, _ in short) <= 6:
+            first = len(tokens)
+            tokens.extend(short)
+            windows.append((first, len(tokens)))
+        else:
+            tokens.extend(contextual)
+    return tokens, windows
+
+
 def cluster_anchors(matrix, count):
     import numpy as np
     # Average-link clustering of normalized voice embeddings.
@@ -91,18 +155,30 @@ def cluster_anchors(matrix, count):
     return groups
 
 
-def voice_decisions(extractor, audio, words, count):
+def voice_decisions(extractor, audio, words, count, *, anchor_on_words=False):
     import numpy as np
     if not words:
         return []
     bins = (len(audio)+HOP-1)//HOP
-    anchors = np.unique(np.linspace(0, bins-1, min(bins, MAX_ANCHORS), dtype=int))
+    if anchor_on_words:
+        # Fit the two reference voices on timed speech. Background during a
+        # long pause can otherwise take one of the two cluster slots.
+        speech_bins = np.unique([min(bins-1, (start + min(80, (end-start)//2)) // 100)
+                                 for _, start, end in words if 0 <= start < end <= len(audio)*1000/RATE+1])
+        anchors = speech_bins[np.linspace(0, len(speech_bins)-1, min(len(speech_bins), MAX_ANCHORS), dtype=int)]
+    else:
+        anchors = np.unique(np.linspace(0, bins-1, min(bins, MAX_ANCHORS), dtype=int))
     def embedding(index):
         middle = index*HOP+HOP//2
         clip = audio[max(0,middle-4*HOP):middle+4*HOP]
         # Silence provides no speaker evidence.
-        if len(clip)<RATE//4 or np.sqrt(np.mean(clip*clip)) < .002:
+        if len(clip)<RATE//4:
             return None
+        rms = np.sqrt(np.mean(clip*clip))
+        if rms < (.0005 if count == 2 else .002):
+            return None
+        if count == 2:
+            clip = clip * min(10., .05 / rms)
         stream = extractor.create_stream()
         stream.accept_waveform(RATE, clip)
         stream.input_finished()
@@ -176,9 +252,13 @@ def annotate(raw, fmt, output, count):
                     if len(by_provider.get(seg.get('speaker_id'),()))>1 or any(len(by_local.get(v,()))>1 for v in labels):
                         seg['voice_review'] = True
             else:
-                words = local_tokens(recognizer,audio)
-                labels = voice_decisions(extractor,audio,words,count)
-                segments = aligned_segments(output['text'],words,labels)
+                windows = []
+                if count == 2:
+                    words, windows = pair_tokens(recognizer, audio)
+                else:
+                    words = local_tokens(recognizer,audio)
+                labels = voice_decisions(extractor, audio, words, count, anchor_on_words=bool(windows))
+                segments = aligned_segments(output['text'],words,labels,windows=windows,paired_dialogue=count == 2)
                 if not segments:
                     segments = [{'speaker':'unknown','text':output['text'],'voice_review':True}]
                 output.setdefault('raw_result', {'text':output['text']})

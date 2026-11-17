@@ -77,6 +77,7 @@ def mappings(record_id:str,request:Request):
                 reviews.append({'id':sentence.id,'recognition_run_id':run.id,'text':d['text'],'parts':parts,
                     'revision':review.revision if review else 0,'audio_id':run.audio_id,'start_ms':d.get('start_ms'),
                     'channel_id':d.get('channel_id'),'speaker_id':d.get('speaker_id'),
+                    **({'local_alternatives': d['local_alternatives']} if d.get('local_alternatives') else {}),
                     'voice_review':bool(d.get('voice_review')), 'listen_start_ms':d.get('listen_start_ms',d.get('start_ms'))})
         history=list(s.scalars(select(roles.SpeakerRoleMapping).where(roles.SpeakerRoleMapping.record_id==record_id).order_by(roles.SpeakerRoleMapping.confirmed_at)))
         sentence_history=list(s.scalars(select(roles.SentenceRoleReview).where(roles.SentenceRoleReview.record_id==record_id).order_by(roles.SentenceRoleReview.confirmed_at)))

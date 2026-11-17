@@ -11,7 +11,7 @@ type Capture={id:string;state:string;error:string;partial:boolean;saved_count:nu
 const terminal=(state?:string)=>['completed','partial','cancelled'].includes(state||'');
 const duration=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
 export function ContinuousRecorder({recordId,revision,disabled,visible,onActive,onCompleted,multiSpeaker}:{multiSpeaker?:boolean;recordId:string;revision:number;disabled:boolean;visible:boolean;onActive:(v:boolean)=>void;onCompleted:()=>void}){
- const [speakerCount,setSpeakerCount]=useState<number|null>(null);
+ const [speakerCount,setSpeakerCount]=useState<number|null>(2);
  const {user}=useAuth();const key=`${user?.id}:${recordId}`;
  const [capture,setCapture]=useState<Capture|null>(null),[recording,setRecording]=useState(false),[starting,setStarting]=useState(false),[error,setError]=useState(''),[pending,setPending]=useState(0),[elapsed,setElapsed]=useState(0),[recovered,setRecovered]=useState(false);
  const cache=useRef<CaptureCache|null>(null),context=useRef<AudioContext|null>(null),node=useRef<AudioWorkletNode|null>(null),stream=useRef<MediaStream|null>(null),writing=useRef<Promise<void>>(Promise.resolve()),uploading=useRef(false),mounted=useRef(true),live=useRef(false),samples=useRef(0),memory=useRef<{sequence:number;pcm:ArrayBuffer}[]>([]),writeBytes=useRef(0),closed=useRef(false),finishRequested=useRef(false),completed=useRef(''),sawActive=useRef(false),stopTimer=useRef<ReturnType<typeof setTimeout>|null>(null);

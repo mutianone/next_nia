@@ -107,6 +107,30 @@ def generate_audio(path, *arguments):
 
 
 @pytest.mark.skipif(not media.conversion_available(), reason="Local FFmpeg is optional")
+def test_pair_leveling_lifts_quiet_reply_without_moving_it(tmp_path):
+    np = pytest.importorskip('numpy')
+    rate = 16000
+    tone = np.sin(np.arange(rate) * 2 * np.pi * 440 / rate)
+    pcm = np.concatenate((tone*.5, np.zeros(rate), tone*.008))
+    buf = BytesIO()
+    with wave.open(buf, 'wb') as wav:
+        wav.setparams((1, 2, rate, 0, 'NONE', ''))
+        wav.writeframes((pcm * 32767).astype('<i2').tobytes())
+    decoded = []
+    for pair in (False, True):
+        mp3, _, _ = media.normalize_for_asr(buf.getvalue(), 'wav', level_pair=pair)
+        path = tmp_path / f'{pair}.mp3'
+        path.write_bytes(mp3)
+        raw = subprocess.check_output([media.conversion_binary(), '-v', 'error', '-i', str(path), '-f', 'f32le', '-'])
+        decoded.append(np.frombuffer(raw, dtype='<f4'))
+    baseline, leveled = decoded
+    assert len(baseline) == len(leveled) == len(pcm)
+    assert np.max(np.abs(leveled[rate+rate//4:2*rate-rate//4])) < .0001
+    assert np.std(leveled[-rate//2:]) > 2 * np.std(baseline[-rate//2:])
+    assert .9 < np.std(leveled[rate//2:rate]) / np.std(baseline[rate//2:rate]) < 1.1
+
+
+@pytest.mark.skipif(not media.conversion_available(), reason="Local FFmpeg is optional")
 def test_installed_ffmpeg_rejects_partially_decodable_flac(tmp_path):
     original = generate_audio(tmp_path / "tone.flac", "-f", "lavfi", "-i",
                               "sine=frequency=440:duration=8:sample_rate=16000", "-c:a", "flac")
