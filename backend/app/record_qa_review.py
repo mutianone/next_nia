@@ -148,6 +148,7 @@ def propose(sources,settings,provider,model,key):
         'suggested_role只能是interviewer、interviewee、interpreter、unknown。这是待人工核实的文本角色建议，不是声纹识别；无法确定选unknown。'
         '音色编号不等于业务角色，Fun-ASR可能把提问和回答标为同一个说话人；必须结合前后文提出角色建议。'
         '特别检查回答末尾紧接下一题，例如“我骑车来的，你和谁一起住？”应在“你和谁”前拆分。'
+        '一轮提问可含几句话。民警可以先交代背景、提问、再限定范围；同一人连续发言时维持角色，不能按句号或轮流次序分配角色。'
         '提问可以没有问号；回答也可以引用问题，不要仅凭问号或疑问词拆分。声纹标签逐字保留在原位置。'
         '每一次发言单独一段；连续回答的补充、否认、更正不得丢失。不得把模板问题补入原文。最多500段。'},
         {'role':'user','content':json.dumps([{'segment_id':s['id'],'text':s['text']} for s in sources],ensure_ascii=False)}]}

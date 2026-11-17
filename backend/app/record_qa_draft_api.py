@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from . import records as r
 from . import record_speaker_roles as roles,record_qa_drafts as drafts
 from .record_asr_results import RecognitionRun,sentences
-from .record_speaker_turns import build_turns
+from .record_speaker_turns import build_turns, voice_continuation_hint
 from .record_qa_adhesion import QAReviewIssue
 
 Role=Literal['OFFICER','INTERVIEWEE','OTHER','UNKNOWN']
@@ -66,6 +66,7 @@ def mappings(record_id:str,request:Request):
         runs=list(s.scalars(select(RecognitionRun).where(RecognitionRun.record_id==record_id)))
         for run in runs:
             seen=set()
+            previous = None
             for sentence in sentences(s,run):
                 d=sentence.data;key=roles.scope(run.id,d.get('channel_id'),d.get('speaker_id'))
                 if key not in seen and d.get('speaker_id') is not None:
@@ -74,7 +75,10 @@ def mappings(record_id:str,request:Request):
                         'business_role':m.business_role if m else 'UNKNOWN','revision':m.revision if m else 0,
                         'confirmed_by':m.confirmed_by if m else None,'confirmed_at':m.confirmed_at if m else None})
                 review=roles.latest_review(s,sentence.id);parts,_=roles.sentence_parts(s,sentence)
+                continues = previous is not None and voice_continuation_hint(previous, d)
+                previous = d
                 reviews.append({'id':sentence.id,'recognition_run_id':run.id,'text':d['text'],'parts':parts,
+                    'same_voice_as_previous':continues,
                     'revision':review.revision if review else 0,'audio_id':run.audio_id,'start_ms':d.get('start_ms'),
                     'channel_id':d.get('channel_id'),'speaker_id':d.get('speaker_id'),
                     **({'local_alternatives': d['local_alternatives']} if d.get('local_alternatives') else {}),

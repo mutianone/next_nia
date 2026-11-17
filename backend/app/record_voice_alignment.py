@@ -4,7 +4,7 @@ from bisect import bisect_left
 from itertools import groupby
 import re
 
-from .record_qa_boundaries import question_answer_cuts, short_reply_question_cuts
+from .record_qa_boundaries import question_answer_cuts, restates_question, short_reply_question_cuts
 _DIGITS = str.maketrans("〇零一二三四五六七八九", "00123456789")
 _SHORT_REPLY = re.compile(r'(?:是的|对的|没有|不是|我确定|我不确定|不知道|不清楚)(?P<question>[你您](?:是|在|有|哪|什|还|记|能|的|当))')
 
@@ -118,6 +118,10 @@ def aligned_segments(text, tokens, decisions, *, windows=(), paired_dialogue=Fal
         # before separating an unpunctuated question from a brief answer.
         positions = [pos for pos, _ in cloud]
         for offset in question_answer_cuts(text) + short_reply_question_cuts(text):
+            # "我问的是…" can be the questioner's next sentence. Keep the
+            # measured acoustic boundary instead of shifting it onto this 我.
+            if restates_question(text[offset:offset+12]):
+                continue
             at = bisect_left(positions, offset)
             if 0 < at < len(pieces):
                 dialogue_cuts.add(at)

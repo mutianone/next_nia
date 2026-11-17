@@ -4,7 +4,7 @@ from sqlalchemy import JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
 from .record_asr_results import fingerprint
-from .record_qa_boundaries import question_answer_cuts, question_tail_cut, short_reply_question_cuts
+from .record_qa_boundaries import question_answer_cuts, question_tail_cut, restates_question, short_reply_question_cuts
 
 
 class QAReviewIssue(Base):
@@ -38,8 +38,20 @@ MESSAGES={
 
 
 def mixed_boundary_turn_ids(turns, pairs):
-    indexed = {turn['id']: turn['text'] for turn in turns}
-    mixed = {tid for tid, text in indexed.items() if question_answer_cuts(text) or short_reply_question_cuts(text)}
+    indexed, mixed = {}, set()
+    for turn in turns:
+        text = indexed[turn['id']] = turn['text']
+        cuts = set(question_answer_cuts(text))
+        if cuts and turn['role'] == 'OFFICER' and turn['intent'] in {'QUESTION','FOLLOW_UP'}:
+            # Across two explicitly reviewed officer parts, "我问的是…" can
+            # restate the question. Keep checks inside each original part.
+            offset = 0
+            for part in turn['sources'][:-1]:
+                offset += part['end'] - part['start'] + 1
+                if offset in cuts and restates_question(text[offset:offset+12]):
+                    cuts.remove(offset)
+        if cuts or short_reply_question_cuts(text):
+            mixed.add(turn['id'])
     for pair in pairs:
         question = ''.join(indexed[tid] for tid in pair['question_turn_ids'])
         for tid in pair['answer_turn_ids']:

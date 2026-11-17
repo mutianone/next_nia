@@ -56,8 +56,11 @@ def material(session,record,run_ids=None):
 
 
 def boundary_review_key(source_key, turns, pairs):
-    # Preserve existing clean drafts. Old drafts containing newly recognized
-    # mixed turns need a new immutable review, even with identical ASR input.
+    # Updated boundaries need a new immutable draft, even for the same ASR.
+    question_sources = [[(s['sentence_id'], s['start'], s['end']) for s in t['sources']]
+                        for t in turns if t['role']=='OFFICER' and t['intent'] in {'QUESTION','FOLLOW_UP'} and len(t['sources'])>1]
+    if question_sources:
+        source_key = fingerprint([source_key, 'question-continuations', question_sources])
     mixed = sorted(mixed_boundary_turn_ids(turns, pairs))
     return fingerprint([source_key, 'mixed-question-answer', mixed]) if mixed else source_key
 

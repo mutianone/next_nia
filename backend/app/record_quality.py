@@ -1,10 +1,10 @@
 """Conservative extractive checks, not a semantic truth or legal classifier."""
 import re
 
-from .record_selection import QUOTED_SPEECH, repeated_particle_cut, source_units
-from .record_qa_boundaries import question_answer_cuts, question_tail_cut, short_reply_question_cuts
+from .record_selection import QUOTED_SPEECH, officer_question_contexts, repeated_particle_cut, source_units
+from .record_qa_boundaries import contains_question_prompt, question_answer_cuts, question_tail_cut, short_reply_question_cuts
 
-POLICY = 'extractive-qa-v6'
+POLICY = 'extractive-qa-v7'
 BOUNDARY = '。！？!?；;\n'
 CONDITIONS = re.compile(r'不确定|记不清|记不住|不知道|可能|好像|但是|但|需要核|请.*核|不对|不是|没有|未')
 
@@ -32,6 +32,7 @@ def adjacent_evidence(question, answer, gap, confirmed_pair):
 def check_answers(facts, segments, template, semantic_matches=frozenset()):
     indexed = {s['segment_id']:s['text'] for s in segments}
     units=source_units(segments)
+    contexts=officer_question_contexts(segments)
     raw_asr = {s['segment_id'] for s in segments if s.get('recognition_run_id') and
                s.get('speaker', 'unknown') == 'unknown'}
     disputed = {s['segment_id'] for s in segments if s.get('voice_review') and s.get('speaker','unknown') == 'unknown'}
@@ -53,6 +54,7 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
         reason = None
         evidence = fact.get('evidence', [])
         spans = []
+        context_ids = set()
         if not evidence:
             reason = ('missing_evidence', '缺少逐字问答依据')
         for item in evidence:
@@ -68,7 +70,8 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
             if exact: qi=item['question_start']
             if not question or not answer or (exact and (item['end'] != ai+len(answer) or text[ai:item['end']] != answer or qtext[qi:qi+len(question)] != question)) or qi < 0 or ai < 0 or (not exact and text.count(answer) != 1) or item['segment_id'] not in fact['segment_ids'] or qid not in fact['segment_ids']:
                 reason = ('invalid_evidence', '引用不是唯一可定位的原文'); break
-            answer_roles={u['role'] for u in units if u['segment_id']==item['segment_id'] and u['start']<ai+len(answer) and u['end']>ai}
+            answer_units=[u for u in units if u['segment_id']==item['segment_id'] and u['start']<ai+len(answer) and u['end']>ai]
+            answer_roles={u['role'] for u in answer_units}
             question_roles={u['role'] for u in units if u['segment_id']==qid and u['start']<qi+len(question) and u['end']>qi}
             quoted_question = any(start <= qi + len(question) - 1 < end for start, end in quotes.get(qid, []))
             if (not answer_roles or not question_roles or quoted_question
@@ -77,14 +80,26 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 reason=('role_mismatch','发言角色未确认或问答角色不匹配'); break
             gap=offsets[item['segment_id']]+ai-(offsets[qid]+qi+len(question))
             confirmed = answer_roles == {'interviewee'} and question_roles == {'interviewer'}
+            if answer_roles != {'interviewee'} and contains_question_prompt(answer):
+                reason = ('question_in_answer', '疑似将提问人的补充说明纳入回答，请回听核对'); break
             skipped = (qtext[qi+len(question):ai] if qid == item['segment_id'] else
                        qtext[qi+len(question):] + '\n' + text[:ai])
             if (gap < 0 or gap != len(skipped) or
                     not adjacent_evidence(question, answer, skipped, confirmed)):
                 reason = ('unpaired_answer', '问题与回答的位置无法可靠配对'); break
+            context = contexts.get(qid)
+            question_sources = []
+            if context is not None:
+                if not context or not confirmed or question.strip() != qtext.strip():
+                    reason = ('unpaired_answer', '连续问话与回答的对应关系需要核对'); break
+                question = '\n'.join(s['text'] for s in context)
+                question_sources = [{'segment_id':s['segment_id'],'start':0,'end':len(s['text']),'precision':'exact'} for s in context]
+                context_ids.update(s['segment_id'] for s in context)
             if item['segment_id'] in raw_asr and not confirmed:
                 reply = re.sub(r'[\W_]+', '', answer)
                 preceding = qtext[:qi].rstrip()
+                if answer_roles != {'interviewee'} and len(answer_units)>1:
+                    reason = ('unverified_asr_answer', '连续数句的发言人尚未核对，可能含提问人的补充说明'); break
                 # With no verified speaker, a missing syllable can reverse a
                 # yes/no reply, and the next question can be joined to it.
                 if ((len(reply) <= 8 and re.search(r'不|没|否|未|对|是|确定|肯定|^有|^嗯', reply))
@@ -108,12 +123,16 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 reason = ('question_mismatch', '原问题与模板问题缺少明确匹配，待核对'); break
             if len(answer)>600 and len(answer)>len(text)*.6:
                 reason = ('whole_transcript', '单题混入过多转写全文'); break
-            spans.append({'segment_id':item['segment_id'],'start':ai,'end':ai+len(answer),'precision':'exact','question':question,'quote':answer})
+            spans.append({'segment_id':item['segment_id'],'start':ai,'end':ai+len(answer),'precision':'exact','question':question,'quote':answer,
+                          **({'question_sources':question_sources} if question_sources else {})})
         if not reason and fact['value'] != '\n'.join(e['answer'] for e in evidence):
             reason = ('rewritten_answer', '答案改写了引用原文，可能强化结论或丢失否认')
         if reason:
             checks.append({'field_id':fact['label'],'code':reason[0],'message':reason[1],'status':'blocked'})
         else:
+            if context_ids:
+                context_ids.update(fact['segment_ids'])
+                fact = {**fact,'segment_ids':[sid for sid in indexed if sid in context_ids]}
             accepted.append({**fact,'evidence_spans':spans})
             if fact['label'] in semantic_matches:
                 checks.append({'field_id':fact['label'],'code':'semantic_match','message':'同义问答匹配，请核对原文','status':'attention'})

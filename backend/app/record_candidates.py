@@ -7,7 +7,7 @@ from sqlalchemy import select
 from . import records as r
 from .record_templates import SYSTEM_FIELDS
 
-from .record_selection import ACOUSTIC_MARKER, repeated_particle_cut, role_ranges
+from .record_selection import ACOUSTIC_MARKER, officer_question_contexts, repeated_particle_cut, role_ranges
 from .record_quality import mixed_answer
 
 FOLLOWUP = re.compile(r'你刚才|刚才说|你是说|你的意思|是否就是说|再确认|补充说明')
@@ -18,13 +18,27 @@ def normalize(text):
 
 
 def pair_qa(segments, template):
+    segments = list(segments)
     aliases = defaultdict(set)
     for field in template.get('fields', []):
         if field['id'].startswith('q'):
             for alias in [field['label'], *field.get('question_aliases', [])]:
                 aliases[normalize(alias)].add(field['id'])
     turns = []
+    contexts = officer_question_contexts(r.input_segments(segments))
+    leadins = {s['segment_id'] for context in contexts.values() for s in context[:-1]}
     for segment in segments:
+        if segment.id in leadins:
+            continue
+        if segment.id in contexts:
+            block = contexts[segment.id]
+            if block:
+                turns.append({'role':'question','text':'\n'.join(s['text'] for s in block),
+                              'sources':[{'segment_id':s['segment_id'], 'start':0, 'end':len(s['text']), 'precision':'exact'} for s in block],
+                              'role_source':'manual_label'})
+            else:
+                turns.append({'role':'unknown'})
+            continue
         if segment.speaker == 'unknown':
             from .record_asr_results import metadata
             if getattr(segment, 'voice_review', False) or metadata(segment).get('voice_review'):
@@ -55,7 +69,7 @@ def pair_qa(segments, template):
             follows=previous is not None and bool(FOLLOWUP.search(turn['text']))
             # Follow-up relation is a suggestion. Only exact question matches enter rule filling.
             pending={'question':turn['text'],'answer':'','field_id':field,'possible_followup_of':previous if follows else None,
-                     'sources':[turn['source']],'role_source':turn['role_source']}
+                     'sources':turn['sources'] if 'sources' in turn else [turn['source']],'role_source':turn['role_source']}
         elif turn['role'] == 'unknown':
             if pending:
                 pairs.append(pending)
@@ -116,7 +130,8 @@ def add_candidates(session, row, attempt, facts):
         is_rule=key in exact and fact['value']==exact[key]['value']
         sources=([s for pair in pairs if pair['field_id']==key for s in pair['sources']] if is_rule else
                  [{'segment_id':sid,'start':0,'end':len(by_id[sid].text),'precision':'segment'} for sid in fact['segment_ids']])
-        if fact.get('evidence_spans'):sources=fact['evidence_spans']
+        if fact.get('evidence_spans'):
+            sources = [source for answer in fact['evidence_spans'] for source in [*answer.get('question_sources', []), answer]]
         # Keep earlier exact answers as candidate versions when contextual analysis
         # produces a later interpretation. They are never discarded or auto-confirmed.
         earlier=[pair for pair in pairs if pair['field_id']==key and pair['answer']]

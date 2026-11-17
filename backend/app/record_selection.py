@@ -1,7 +1,7 @@
 """Resolve model-selected utterance IDs to immutable source text, never model prose."""
 import re
 
-from .record_qa_boundaries import question_answer_cuts, question_tail_cut
+from .record_qa_boundaries import contains_question_prompt, question_answer_cuts, question_tail_cut
 
 
 ROLE_MARKER = re.compile(r'(?:^|(?<=[。！？!?，,；;\s])|(?<=[吗嗎呢])(?=答\s*[:：]))\s*(被询问人|询问人|民警|当事人|翻译|问|答)\s*[:：]\s*')
@@ -117,9 +117,30 @@ def is_question_unit(text):
     return bool(re.search(r'[？?]$|[吗嗎][。！!\s]*$', text))
 
 
+def officer_question_contexts(segments):
+    """Whole, adjacent, role-confirmed ASR clips preceding a respondent."""
+    from .record_speaker_turns import same_contiguous_voice
+    contexts, block = {}, []
+    for s in segments:
+        if s.get('speaker') == 'interviewer' and not ROLE_MARKER.search(s['text']) and not ACOUSTIC_MARKER.search(s['text']):
+            if block and not same_contiguous_voice(block[-1], s):
+                block = []
+            block.append(s)
+        else:
+            if len(block)>1 and s.get('speaker')=='interviewee':
+                # An empty entry withholds this candidate from automatic filling.
+                count = sum(is_question_unit(clause) for part in block for clause in re.findall(r'[^。！？!?\n]+[。！？!?]*', part['text']))
+                last = block[-1]
+                same_recording = all(s.get(key)==last.get(key) for key in ('recognition_run_id','channel_id'))
+                contexts[last['segment_id']] = block if count<=1 and same_recording and len(block)<30 else []
+            block = []
+    return contexts
+
+
 def paired_options(segments):
     """Confirmed turn boundaries outrank punctuation. Unknown voices never imply roles."""
     units=source_units(segments); pairs=[];i=0
+    contexts=officer_question_contexts(segments)
     while i<len(units):
         unit=units[i]; role=unit['role']
         if role=='interviewer':
@@ -139,7 +160,7 @@ def paired_options(segments):
                 answers.append(following);j+=1
             i+=1
         else:i+=1;continue
-        if answers:
+        if answers and contexts.get(unit['segment_id']) != [] and not (role=='unknown' and any(contains_question_prompt(u['text']) for u in answers)):
             pairs.append({'id':f'p{len(pairs)+1:04d}','question_ids':[u['id'] for u in questions],
                           'answer_ids':[u['id'] for u in answers]})
     return pairs

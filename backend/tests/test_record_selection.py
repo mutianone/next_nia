@@ -191,3 +191,44 @@ def test_unconfirmed_asr_susceptible_to_polarity_or_turn_errors_requires_review(
     fact = result['key_facts'][0]
     accepted, checks = check_answers([fact], sources, {'fields': [{'id': 'q1', 'label': fact['evidence'][0]['question']}]})
     assert not accepted and checks[0]['code'] == 'unverified_asr_answer'
+
+
+@pytest.mark.parametrize('candidate', ['我问的是上次。请你回忆一下。我想是五月。', '当时天气挺冷。其实也没几个人。我想是五月。'])
+def test_unconfirmed_multisentence_officer_speech_cannot_fill_as_an_answer(candidate):
+    question = '你什么时候到的？'
+    sources = [{'segment_id':'s', 'text':question+candidate, 'recognition_run_id':'r', 'speaker':'unknown'}]
+    fact = {'label':'q1','value':candidate,'segment_ids':['s'],
+            'evidence':[{'segment_id':'s','question':question,'answer':candidate}]}
+    accepted,checks=check_answers([fact],sources,{'fields':[{'id':'q1','label':question}]})
+    assert not accepted and checks[0]['code'] in {'question_in_answer','unverified_asr_answer'}
+
+
+def test_confirmed_officer_context_is_available_to_model_rules_and_evidence(monkeypatch):
+    from types import SimpleNamespace
+    from backend.app import record_asr_results, records_ai
+    from backend.app.record_candidates import pair_qa, rule_facts
+    from backend.app.config import Settings
+    from backend.app.records import input_segments
+    parts = ['先核对一下时间。','你哪天入境的？','我问的是最近一次。','我记得是上周五。']
+    segments = [SimpleNamespace(id=str(i),text=t,speaker='interviewer' if i<3 else 'interviewee') for i,t in enumerate(parts)]
+    monkeypatch.setattr(record_asr_results, 'metadata', lambda s: dict(recognition_run_id='run',channel_id=0,speaker_id=int(s.id=='3'),
+                        asr_original_text=s.text,asr_start_ms=int(s.id)*1000,asr_end_ms=int(s.id)*1000+850))
+    full = '\n'.join(parts[:3])
+    template = {'fields':[{'id':'q1','label':'入境日期','question_aliases':[full]}]}
+    sources = input_segments(segments)
+    import json
+    monkeypatch.setattr(records_ai,'provider_config',lambda *_: ('deepseek','deepseek-chat','test'))
+    message = records_ai.analysis_payload(sources,Settings(),template)['messages'][1]
+    assert json.loads(message['content'])['qa_options']==[{'id':'p0001','question':full,'answer':parts[-1]}]
+    facts = resolve_selections({'key_facts':[{'label':'q1','qa_ids':['p0001']}]},sources)
+    accepted,_ = check_answers(facts['key_facts'],sources,template)
+    ref, = accepted[0]['evidence_spans']
+    assert ref['question']==full and ref['quote']==parts[-1]
+    assert [q['segment_id'] for q in ref['question_sources']]==['0','1','2']
+    pair, = pair_qa(segments,template)
+    assert pair['question']==full and rule_facts([pair])[0]['value']==parts[-1]
+    segments[2].text = '你的证件号码是多少？'
+    template['fields'][0]['question_aliases'].append(segments[2].text)
+    assert not rule_facts(pair_qa(segments,template))
+    from backend.app.record_selection import paired_options
+    assert not paired_options(input_segments(segments))

@@ -34,6 +34,35 @@ def review_all(client,row):
         assert response.status_code==200,response.text
 
 
+@pytest.mark.parametrize('intents', [('CONTINUATION','QUESTION','CONTINUATION'), ('QUESTION','CONTINUATION','CONTINUATION')])
+def test_multisentence_officer_turn_reaches_fill_preview_with_all_sources(client, intents):
+    lines = (('先核对一下时间。', '你几点到的？', '我问的是上午。') if intents[0]=='CONTINUATION' else
+             ('你几点到的？', '我问的是上午。', '请你仔细想想。'))
+    answer = '我记不清，可能是十点。'
+    row,_ = seed(client, (*lines, answer), (0,0,0,1))
+    material = get(client,row,'speaker-mappings')['sentences']
+    assert [s['same_voice_as_previous'] for s in material] == [False,True,True,False]
+    for s,intent in zip(material, (*intents,'ANSWER')):
+        role = 'INTERVIEWEE' if intent=='ANSWER' else 'OFFICER'
+        res = post(client,row,f'speaker-sentences/{s["id"]}/review',sentence_revision=0,
+                   parts=[dict(start=0,end=len(s['text']),role=role,intent=intent)])
+        assert res.status_code==200,res.text
+    draft = post(client,row,'qa-drafts/rebuild').json()
+    question,reply = draft['turns']
+    assert question['text']=='\n'.join(lines) and question['intent']=='QUESTION'
+    pair, = draft['pairs']
+    assert pair['state']=='QA_COMPLETED' and pair['answer']==reply['text']==answer
+    assert [s['sentence_id'] for s in pair['sources']]==[s['id'] for s in material]
+    assert not get(client,row,'qa-review-issues')['items']
+    assert post(client,row,'qa-drafts/rebuild').json()['id']==draft['id']
+    confirmed=post(client,row,f'qa-drafts/{draft["id"]}/confirm',draft_revision=draft['revision']).json()
+    res=post(client,row,'fill-preview',draft_id=draft['id'],draft_revision=confirmed['revision'])
+    assert res.status_code==200,res.text
+    item, = res.json()['items']
+    assert item['answer_text']==answer and item['question_text']==question['text']
+    assert item['source_refs']==pair['sources']
+
+
 def test_two_pairs_independent_projection_idempotent_and_confirmed_protection(client):
     row,run_id=seed(client);before=get(client,row,'')
     review_all(client,row)

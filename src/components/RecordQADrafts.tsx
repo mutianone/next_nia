@@ -9,7 +9,7 @@ import type { LocalSpeechHint, RecordDetail } from '../record-types';
 type Role = 'OFFICER'|'INTERVIEWEE'|'OTHER'|'UNKNOWN';
 type Intent = 'QUESTION'|'ANSWER'|'FOLLOW_UP'|'CONTINUATION'|'INSTRUCTION'|'CLARIFICATION'|'OTHER'|'UNKNOWN';
 type Part = {start:number;end:number;role:Role;intent:Intent};
-type Sentence = {local_alternatives?:LocalSpeechHint[];voice_review?:boolean;listen_start_ms?:number|null;speaker_id?:string|number|null;id:string;recognition_run_id:string;text:string;parts:Part[];revision:number;audio_id:string|null;start_ms:number|null};
+type Sentence = {local_alternatives?:LocalSpeechHint[];voice_review?:boolean;same_voice_as_previous?:boolean;listen_start_ms?:number|null;speaker_id?:string|number|null;id:string;recognition_run_id:string;text:string;parts:Part[];revision:number;audio_id:string|null;start_ms:number|null};
 type Mapping = {recognition_run_id:string;channel_id:string|number|null;speaker_id:string|number;business_role:Role;revision:number};
 type Material = {runs?:{id:string;origin_key:string;applied:boolean}[];revision:number;items:Mapping[];sentences:Sentence[];history:{id:string;role:Role;actor:string;at:string}[];sentence_history:{sentence_id:string;revision:number;actor:string;at:string}[]};
 type Draft = {turns:{id:string;role:Role;intent:Intent;text:string}[];id:string;version:number;revision:number;status:string;stale?:boolean;pairs:{id:string;question:string;answer:string;state:string;sources:{sentence_id:string}[]}[]};
@@ -80,9 +80,11 @@ export function RecordQADrafts({record,disabled,onPending,onApplied}:{record:Rec
         </details>
         {clip&&<audio controls autoPlay key={`${playing?.id}:${playing?.start}`} src={clip.playback_url} onLoadedMetadata={e=>{e.currentTarget.currentTime=(playing?.start??0)/1000;}}/>}
         <details><summary>逐句核对与拆分</summary>
+          <p>民警用几句话问同一题时，把主问题标为“独立问题”或“追问”，同一人对该题的铺垫和补充标为“继续发言”。另起一题时单独标记。</p>
           <div className="qa-review-turns">{material.sentences.filter(s=>runIds===null || runIds.includes(s.recognition_run_id)).map((s,si)=><article key={s.id} className="qa-review-turn">
             <header><strong>发言 {si+1}{s.speaker_id!=null && ` · 声音 ${s.speaker_id}`}</strong>{s.voice_review && <span>{s.revision ? '声音边界已人工核对' : '声音边界待回听'}</span>}{s.audio_id&&<button type="button" className="text-button" onClick={()=>setPlaying({id:s.audio_id!,start:s.listen_start_ms??s.start_ms??0})}>{s.start_ms===null?'回听原音':'回听原句'}</button>}</header>
             <LocalSpeechHints hints={s.local_alternatives} listen={s.audio_id ? ms => setPlaying({id:s.audio_id!,start:ms}) : undefined}/>
+            {s.same_voice_as_previous && <span>与上一句的声音相近</span>}
             {s.parts.map((p,index)=><div key={index}>
               <label>角色<select aria-label={`发言${si+1}第${index+1}段角色`} disabled={busy} value={p.role} onChange={e=>update(s.id,s.parts.map((q,j)=>j===index?{...q,role:e.target.value as Role}:q))}>{Object.entries(roles).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
               <label>讲话意图<select aria-label={`发言${si+1}第${index+1}段意图`} disabled={busy} value={p.intent} onChange={e=>update(s.id,s.parts.map((q,j)=>j===index?{...q,intent:e.target.value as Intent}:q))}>{Object.entries(intents).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>

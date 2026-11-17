@@ -5,6 +5,28 @@ from backend.app.record_quality import check_answers
 from backend.app.records import TranscribeRequest
 
 
+def test_officer_restatement_keeps_measured_voice_boundary():
+    pytest.importorskip('rapidfuzz')
+    text = '你哪天到的？我问的是上午。'
+    words = [(ch,i*140,i*140+130) for i,ch in enumerate(c for c in text if c.isalnum())]
+    # The acoustic switch is after 我. Do not move it solely because 我
+    # followed a question mark, including when more evidence is needed.
+    labels = [(0 if i<6 else 1,False) for i in range(len(words))]
+    parts = aligned_segments(text,words,labels,paired_dialogue=True)
+    assert [(p['speaker_id'],p['text']) for p in parts]==[(0,'你哪天到的？'),(0,'我'),(1,'问的是上午。')]
+
+
+def test_same_voice_hint_requires_supported_edges():
+    from backend.app.record_speaker_turns import voice_continuation_hint
+    left = dict(recognition_run_id='a', channel_id=0,speaker_id=1,text='哪天？',start_ms=10,end_ms=500,
+                voice_review=True,words=[{'text':'哪','voice_review':False},{'text':'天？','voice_review':False}])
+    right = dict(left, start_ms=700, end_ms=1100)
+    assert voice_continuation_hint(left,right)
+    for patch in ({'start_ms':3000},{'start_ms':300},{'speaker_id':None},{'channel_id':1},
+                  {'recognition_run_id':'b'},{'words':[]},{'text':'我哪天？'},{'local_alternatives':[{'text':'不知道'}]}):
+        assert not voice_continuation_hint(left, {**right,**patch})
+
+
 def test_short_answer_next_question_and_unmatched_negative():
     pytest.importorskip('rapidfuzz')
     text = '我确定你是哪天到的？'

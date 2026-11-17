@@ -4,7 +4,7 @@ from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
 from .record_asr_results import map_interval
-from .record_speaker_roles import sentence_parts, scope
+from .record_speaker_roles import sentence_parts
 
 
 class SpeakerTurn(Base):
@@ -47,6 +47,37 @@ def reviewed_word_times(data, start, end):
     return (left, right) if left is not None and right is not None and left < right else (None, None)
 
 
+def same_contiguous_voice(a, b):
+    keys = ('recognition_run_id', 'channel_id', 'speaker_id')
+    if not a.get('recognition_run_id') or a.get('speaker_id') is None or any(a.get(k) != b.get(k) for k in keys):
+        return False
+    if a.get('end_ms') is None or b.get('start_ms') is None or not 0 <= b['start_ms'] - a['end_ms'] <= 2000:
+        return False
+    left, right = a.get('session_intervals', []), b.get('session_intervals', [])
+    if len(left) > 1 or len(right) > 1 or bool(left) != bool(right):
+        return False
+    return not left or 0 <= right[0]['start_ms'] - left[-1]['end_ms'] <= 2000
+
+
+def voice_continuation_hint(previous, current):
+    """Compare only the two adjoining edges. A hint never confirms a role."""
+    if not same_contiguous_voice(previous, current):
+        return False
+    for sentence, at_start in ((previous, False), (current, True)):
+        if sentence.get('local_alternatives'):
+            return False
+        if not sentence.get('voice_review'):
+            continue
+        words = sentence.get('words') or []
+        edge = words[:2] if at_start else words[-2:]
+        if len(edge) < 2 or any(w.get('voice_review') is not False for w in edge):
+            return False
+        text = ''.join(w['text'] for w in edge)
+        if not (sentence['text'].startswith(text) if at_start else sentence['text'].endswith(text)):
+            return False
+    return True
+
+
 def build_turns(session, runs_and_sentences):
     result=[]
     for run, sentences in runs_and_sentences:
@@ -73,15 +104,15 @@ def build_turns(session, runs_and_sentences):
                 # same provider speaker/channel/run, and a contiguous source interval.
                 previous=result[-1] if result else None
                 if previous and role!='UNKNOWN' and previous['role']==role and previous['status']=='CONFIRMED' and current['status']=='CONFIRMED':
-                    a=previous['sources'][-1];b=source
-                    same_voice=scope(a['recognition_run_id'],a['channel_id'],a['speaker_id'])==scope(b['recognition_run_id'],b['channel_id'],b['speaker_id'])
-                    adjacent=a['end_ms'] is not None and b['start_ms'] is not None and 0<=b['start_ms']-a['end_ms']<=2000
-                    discontinuous=len(a['source_intervals'])>1 or len(b['source_intervals'])>1
-                    if a['source_intervals'] and b['source_intervals']:
-                        discontinuous=discontinuous or not 0<=b['source_intervals'][0]['start_ms']-a['source_intervals'][-1]['end_ms']<=2000
-                    answer_continuation=role=='INTERVIEWEE' and previous['intent'] in {'ANSWER','CONTINUATION'} and intent=='CONTINUATION'
-                    explicit_continuation=intent=='CONTINUATION' and previous['intent'] not in {'QUESTION','FOLLOW_UP'}
-                    if same_voice and a['speaker_id'] is not None and adjacent and not discontinuous and (answer_continuation or explicit_continuation):
+                    question = intent in {'QUESTION','FOLLOW_UP'}
+                    leading_context = role=='OFFICER' and previous['intent']=='CONTINUATION' and question
+                    continuation = intent=='CONTINUATION' and (role=='OFFICER' or previous['intent'] not in {'QUESTION','FOLLOW_UP'})
+                    last = previous['sources'][-1]
+                    if ((leading_context or continuation) and same_contiguous_voice(last,source)
+                            and len(last['source_intervals']) <= 1 and len(source['source_intervals']) <= 1):
+                        if leading_context:
+                            previous['intent'] = intent
+                            previous['suggested_intent'] = current['suggested_intent']
                         previous['sources'].append(source);previous['text']+='\n'+text
                         continue
                 result.append(current)

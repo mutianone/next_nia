@@ -22,6 +22,17 @@ _NEXT_QUESTION = re.compile(
 _QUOTES = ('“', '”', '「', '」', '『', '』', '"', '问我', '问他', '问她')
 
 
+def restates_question(text):
+    """A speaker explicitly continues asking. This cue alone cannot identify them."""
+    return text.lstrip().startswith(('我问的是', '我刚才问的是', '我是问你', '我是问您', '我想问的是'))
+
+
+def contains_question_prompt(text):
+    return any(restates_question(clause) or clause.lstrip().startswith(
+        ('请你回忆', '请您回忆', '请你想清楚', '请你仔细想', '请说具体一点'))
+        for clause in re.split(r'[，,。！？?!；;\n]', text))
+
+
 def question_answer_cuts(text):
     """Possible starts of replies inside one ASR span, in original coordinates."""
     if any(mark in text for mark in _QUOTES):

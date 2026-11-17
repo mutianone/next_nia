@@ -446,8 +446,19 @@ def record_json(session, row):
 
 
 def input_segments(segments):
-    return [{"segment_id": item.id, "text": item.text, "speaker": item.speaker,
-             **({"speaker_id": meta.get("speaker_id"), "recognition_run_id": meta["recognition_run_id"], **({"voice_review": True} if meta.get("voice_review") else {})} if (meta := asr_results.metadata(item)) else {})} for item in segments]
+    inputs = []
+    for item in segments:
+        source = {"segment_id": item.id, "text": item.text, "speaker": item.speaker}
+        meta = asr_results.metadata(item)
+        if meta:
+            source.update(speaker_id=meta.get("speaker_id"), recognition_run_id=meta["recognition_run_id"])
+            if meta.get("voice_review"):
+                source["voice_review"] = True
+            if item.speaker in {"interviewer", "interviewee"} and item.text == meta.get("asr_original_text"):
+                source.update(channel_id=meta.get("channel_id"), start_ms=meta.get("asr_start_ms"),
+                              end_ms=meta.get("asr_end_ms"), session_intervals=meta.get("session_intervals") or [])
+        inputs.append(source)
+    return inputs
 
 
 def content_hash(segments):

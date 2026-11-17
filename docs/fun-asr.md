@@ -40,6 +40,10 @@
 
 若短句与云端原文不一致，打开“文字修订”或“角色与 QA 草稿 → 逐句核对与拆分”，点击“回听候选位置”。本机候选保存在该识别版本内，仅供核对。即使两种识别给出相反的肯否，也须由人听原音后修订正文。
 
+在“人工修订 → 角色与 QA 草稿 → 逐句核对与拆分”可核对连续问话。例如民警说“先核对一下时间。你几点到的？我问的是上午。”，群众答“我记不清，可能是十点。”依次把前三句标为民警的“继续发言、独立问题、继续发言”，把最后一句标为被询问人的“回答”。在同一声音、时间连续的情况下，构建草稿后应有一组问答，问题引用前三句，答案只引用第四句。“与上一句的声音相近”是相邻边界的回听提示。两道独立问题应分别标记。
+
+用普通话真人对话 CTS-CN-F2F-2019-11-15-1428 的 1377.15 至 1391.37 秒复测了上述流程。浏览器转写把第一人的三段话归入同一声音编号，第二人的“是的”单独成段。逐句确认后，草稿保留三个问话来源和一个回答来源。开头单字“因”缺少音色依据，仍单列待核对。同一录音的快速问答片段（1362.0 至 1370.7 秒）仍有漏字，末尾的“对”没有进入转写正文。以上材料为日常对话，现场环境的准确率需另测。
+
 2026-11-17 对比使用同一硅基流动模型和本机模型。选取有逐句标注的两场普通话真人对话（CTS-CN-F2F 1428、1434），分别对比原录音与只把回答者区间衰减 12 dB 的副本。下表按去除标点后的回答计数，只有完整原话独立成段才命中，本机候选另计。
 
 | 材料 | 改前 | 改后 |
@@ -61,7 +65,7 @@
 ```sh
 backend/.venv/bin/python -m pytest -q \
   backend/tests/test_record_voice_alignment.py backend/tests/test_record_selection.py \
-  backend/tests/test_record_candidates.py backend/tests/test_speaker_roles.py \
+  backend/tests/test_record_candidates.py backend/tests/test_speaker_roles.py backend/tests/test_qa_drafts.py \
   backend/tests/test_record_capture.py backend/tests/test_fun_asr.py
 npm test -- src/components/RecordQAReview.test.tsx src/components/RecordQADrafts.test.tsx
 ```
