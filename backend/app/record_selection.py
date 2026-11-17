@@ -89,12 +89,22 @@ def answer_blocks(segments, units):
     """Index multi-clip replies by unit. An empty block requires boundary review."""
     from .record_speaker_turns import same_contiguous_voice
     positions = {s['segment_id']: i for i, s in enumerate(segments)}
+    unit_positions = {u['id']: i for i, u in enumerate(units)}
     blocks = {}
     for role, sequence in groupby(units, key=lambda u: u['role']):
         if role != 'interviewee':
             continue
         members = list(sequence)
         spans = source_spans(members)
+        next_index = unit_positions[members[-1]['id']] + 1
+        if next_index < len(units) and units[next_index]['role'] in {'unknown','unconfirmed_voice'}:
+            last = segments[positions[members[-1]['segment_id']]]
+            following = segments[positions[units[next_index]['segment_id']]]
+            if last.get('recognition_run_id') and last['recognition_run_id'] == following.get('recognition_run_id'):
+                # An unreviewed next fragment may be the denial or qualification
+                # of this very reply. Do not silently keep only its first half.
+                blocks.update((u['id'], ()) for u in members)
+                continue
         if len(spans) == 1:
             continue
         indices = [positions[sid] for sid, _, _ in spans]
@@ -102,7 +112,18 @@ def answer_blocks(segments, units):
         # have no ASR run from which to verify a shared speaker.
         if not any(segments[i].get('recognition_run_id') for i in indices):
             continue
-        verified = all(b == a+1 and same_contiguous_voice(segments[a], segments[b]) for a,b in pairwise(indices))
+        # A respondent can pause to recall details. Extend only a fully confirmed
+        # reply with consistent acoustic evidence; officer context keeps its 2s limit.
+        def follows(a, b):
+            left, right = segments[a], segments[b]
+            if b != a + 1:
+                return False
+            if same_contiguous_voice(left, right):
+                return True
+            return (left.get('speaker') == right.get('speaker') == 'interviewee'
+                    and not left.get('voice_review') and not right.get('voice_review')
+                    and same_contiguous_voice(left, right, max_gap_ms=10000))
+        verified = all(follows(a, b) for a,b in pairwise(indices))
         block = spans if verified else ()
         for u in members:
             blocks[u['id']] = block

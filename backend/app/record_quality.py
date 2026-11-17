@@ -4,7 +4,7 @@ import re
 from .record_selection import QUOTED_SPEECH, answer_blocks, officer_question_contexts, repeated_particle_cut, source_units
 from .record_qa_boundaries import contains_question_prompt, question_answer_cuts, question_tail_cut, short_reply_question_cuts
 
-POLICY = 'extractive-qa-v8'
+POLICY = 'extractive-qa-v9'
 BOUNDARY = '。！？!?；;\n'
 CONDITIONS = re.compile(r'不确定|记不清|记不住|不知道|可能|好像|但是|但|需要核|请.*核|不对|不是|没有|未')
 
@@ -12,13 +12,28 @@ def tokens(text):
     text = re.sub(r'[^\u4e00-\u9fffA-Za-z0-9]', '', text)
     return {text[i:i+2] for i in range(len(text)-1)} - {'你是','你的','你有','是否','什么','一下','情况','问你','我们','现在'}
 
-def mixed_answer(question, answer):
+def tentative_answer(answer, confirmed):
+    """A single terminal question mark need not turn a confirmed reply into a prompt.
+
+    Keep the mark verbatim and flag it for review. Lexical questions, second-person
+    prompts and internal question boundaries still cannot pass this exception.
+    """
+    return bool(confirmed and re.search(r'[？?]\s*$', answer)
+                and len(re.findall(r'[？?]', answer)) == 1
+                and not contains_question_prompt(answer)
+                and not re.search(r'谁|什么|哪[里儿个天位些]|几[个岁次点天]|多少|怎么|为何|为什么|何时|是否|能否|可否|是不是|有没有|对不对|吗|嗎|呢', answer)
+                and not re.search(r'([\u4e00-\u9fff])(?:不|没)\1', answer)
+                and not re.search(r'(?:^|[，,。！？?!；;\n])\s*(?:你|您)|说一下|请.*(?:说|介绍|回忆)|告诉我', answer))
+
+
+def mixed_answer(question, answer, confirmed=False):
     second_person_question = re.search(
         r'(?:^|[。！？?!；;\n])\s*(?:你|您)(?:是|的)?[^，。！？?!；;\n]{0,16}'
         r'(?:什么时候|什么地方|什么名字|为什么|从哪|在哪里|去哪|怎么来|多少次|几次)', answer)
     return bool(second_person_question or question_answer_cuts(answer) or short_reply_question_cuts(answer) or question_tail_cut(question, answer) is not None
                 or re.search(r'说一下你|请(?:你)?介绍|告诉我你|你(?:的)?(?:姓名|国籍|出生日期|联系方式|电话号码).*是什么', answer)
-                or re.search(r'[?？]|[吗嗎][。！!\s]*$|(?:^|[\s。；，])(?:问|民警|询问人)\s*[:：]', answer))
+                or (re.search(r'[?？]', answer) and not tentative_answer(answer, confirmed))
+                or re.search(r'[吗嗎][。！!\s]*$|(?:^|[\s。；，])(?:问|民警|询问人)\s*[:：]', answer))
 
 
 def adjacent_evidence(question, answer, gap, confirmed_pair):
@@ -46,6 +61,7 @@ def covers_answer_block(block, evidence, indexed):
 
 def check_answers(facts, segments, template, semantic_matches=frozenset()):
     indexed = {s['segment_id']:s['text'] for s in segments}
+    source_by_id = {s['segment_id']:s for s in segments}
     units=source_units(segments)
     blocks=answer_blocks(segments, units)
     contexts=officer_question_contexts(segments)
@@ -134,7 +150,7 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 if ((len(reply) <= 8 and re.search(r'不|没|否|未|对|是|确定|肯定|^有|^嗯', reply))
                         or preceding.endswith(('？', '?'))):
                     reason = ('unverified_asr_answer', '原始转写的短答或连续问话尚未确认说话人，请回听并核对问答'); break
-            if mixed_answer(question, answer):
+            if mixed_answer(question, answer, confirmed):
                 reason = ('question_in_answer', '回答中混入询问内容'); break
             # Require a complete utterance rather than a substring such as 是真的
             # extracted from 不是真的 / 我认为是真的，但请核查.
@@ -167,4 +183,10 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 checks.append({'field_id':fact['label'],'code':'semantic_match','message':'同义问答匹配，请核对原文','status':'attention'})
             if CONDITIONS.search(fact['value']):
                 checks.append({'field_id':fact['label'],'code':'qualification','message':'含否认、不确定或补充条件，已保留原文','status':'attention'})
+            if re.search(r'[？?]', fact['value']):
+                checks.append({'field_id':fact['label'],'code':'tentative_answer','message':'回答含疑问语气，已保留原文及问号，请回听核对，不作肯定陈述','status':'attention'})
+            reply_sources = [source_by_id[e['segment_id']] for e in evidence]
+            if any(a.get('end_ms') is not None and b.get('start_ms') is not None
+                   and b['start_ms'] - a['end_ms'] > 2000 for a,b in zip(reply_sources,reply_sources[1:])):
+                checks.append({'field_id':fact['label'],'code':'paused_reply','message':'同一人的回答中有较长停顿，已保留全部补充，请回听核对关联','status':'attention'})
     return accepted, checks

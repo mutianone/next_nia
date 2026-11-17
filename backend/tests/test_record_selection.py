@@ -305,3 +305,92 @@ def test_split_answer_reaches_ordinary_template_and_saved_evidence(client,cloud)
     evidence=saved['analysis']['key_facts'][0]['evidence_spans']
     assert [(s['segment_id'],s['start'],s['end']) for s in evidence]==[
         (s['id'],0,len(s['text'])) for s in saved['segments'][1:]]
+
+
+def paused_reply():
+    sources, template = split_reply()
+    for source in sources[2:]:
+        source['start_ms'] += 4500
+        source['end_ms'] += 4500
+    return sources, template
+
+
+@pytest.mark.parametrize('gap_ms', [2100, 4600, 10000])
+def test_confirmed_same_voice_pause_preserves_supplement_and_qualification(gap_ms):
+    sources, template = paused_reply()
+    shift = gap_ms - (sources[2]['start_ms'] - sources[1]['end_ms'])
+    for source in sources[2:]:
+        source['start_ms'] += shift
+        source['end_ms'] += shift
+    fact, = resolve_selections({'key_facts':[{'label':'q001','qa_ids':['p0001']}]}, sources)['key_facts']
+    accepted, checks = check_answers([fact], sources, template)
+    assert accepted[0]['value'] == '\n'.join(s['text'] for s in sources[1:])
+    assert len(accepted[0]['evidence_spans']) == 3
+    assert any(c['code']=='paused_reply' and c['status']=='attention' for c in checks)
+    truncated = {**fact, 'evidence':fact['evidence'][:1], 'value':fact['evidence'][0]['answer']}
+    assert not check_answers([truncated], sources, template)[0]
+
+
+@pytest.mark.parametrize('change', [dict(speaker_id=None), dict(speaker_id=3), dict(channel_id=1),
+    dict(recognition_run_id='other'), dict(voice_review=True), dict(speaker='unknown'),
+    dict(start_ms=12000,end_ms=12500), dict(start_ms=1800,end_ms=2300),
+    dict(session_intervals=[{'start_ms':20000,'end_ms':20500}])])
+def test_pause_cannot_override_unknown_voice_overlap_or_recording_boundaries(change):
+    from backend.app.record_selection import paired_options
+    sources, _ = paused_reply()
+    sources[2].update(change)
+    assert not paired_options(sources)
+
+
+def test_extended_reply_gap_does_not_extend_officer_context_or_voice_hints():
+    from backend.app.record_speaker_turns import same_contiguous_voice, voice_continuation_hint
+    sources, _ = paused_reply()
+    assert not same_contiguous_voice(sources[1], sources[2])
+    assert not voice_continuation_hint(sources[1], sources[2])
+
+
+@pytest.mark.parametrize('answer', ['猪啊？', '北京？', '天下第一行书，莫非是王羲之？', '可能是上周五？'])
+def test_confirmed_tentative_reply_keeps_question_mark_and_review_notice(answer):
+    from types import SimpleNamespace
+    from backend.app.record_candidates import pair_qa, rule_facts
+    sources = [{'segment_id':'q','speaker':'interviewer','text':'请说一下具体情况。'},
+               {'segment_id':'a','speaker':'interviewee','text':answer}]
+    template = {'fields':[{'id':'q001','label':sources[0]['text']}]}
+    fact, = resolve_selections({'key_facts':[{'label':'q001','qa_ids':['p0001']}]}, sources)['key_facts']
+    accepted, checks = check_answers([fact], sources, template)
+    assert accepted[0]['value'] == answer
+    assert any(c['code']=='tentative_answer' and c['status']=='attention' for c in checks)
+    pairs = pair_qa([SimpleNamespace(id=s['segment_id'],speaker=s['speaker'],text=s['text']) for s in sources],template)
+    assert rule_facts(pairs)[0]['value'] == answer
+    sources[1]['speaker'] = 'unknown'
+    assert not check_answers([fact],sources,template)[0]
+
+
+@pytest.mark.parametrize('answer', ['没有。你带了护照？', '对，李四什么时候来的？', '你说哪天？',
+    '王某是谁？', '去过吗？', '是不是他？', '不知道。请说一下你的姓名？', '北京？我不知道。',
+    '我问的是上次？', '带没带？', '去不去？'])
+def test_confirmed_role_does_not_allow_question_text_to_leak_into_answer(answer):
+    sources = [{'segment_id':'q','speaker':'interviewer','text':'请说一下具体情况。'},
+               {'segment_id':'a','speaker':'interviewee','text':answer}]
+    fact, = resolve_selections({'key_facts':[{'label':'q001','qa_ids':['p0001']}]}, sources)['key_facts']
+    assert not check_answers([fact],sources,{'fields':[{'id':'q001','label':sources[0]['text']} ]})[0]
+
+
+def test_question_only_template_without_pairs_stays_empty_without_cloud_request(client,cloud):
+    from backend.app import records as r
+    enable_ai(client, 'deepseek')
+    row = with_segments(client)
+    with r.write_session(client.app.state.engine) as db:
+        record=db.get(r.RecordSession,row['id'])
+        record.template_snapshot={'id':'no-pairs','version':'1','name':'核对',
+            'fields':[{'id':'q001','label':'你带证件了吗？'}],'values':{}}
+    row=client.get(f"/api/records/{row['id']}").json()
+    response=segments(client,row,[editable(row['segments'][0],speaker='unknown',text='尚未核对这段发言。')])
+    assert response.status_code==200,response.text
+    row=response.json()
+    response=client.post(f"/api/records/{row['id']}/analyze",json={'confirmed':True,'expected_revision':row['revision']})
+    assert response.status_code==200,response.text
+    saved=client.get(f"/api/records/{row['id']}").json()
+    assert not cloud.calls
+    assert not saved['candidates'] and not saved['template_snapshot']['values']
+    assert saved['template_snapshot']['quality_checks'][0]['code']=='no_qa_options'

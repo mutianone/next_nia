@@ -245,8 +245,19 @@ def analysis_payload(segments: list[dict], settings: Settings, template: dict | 
 def analyze_segments(segments: list[dict], settings: Settings, template: dict | None = None) -> dict:
     provider, model, key = provider_config(settings, "analysis")
     payload = analysis_payload(segments, settings, template)
-    result = bounded_post(CHAT_URLS[provider], key, limit=256 * 1024, timeout=180.0, json=payload)
-    output = parse_analysis_response(result, segments, template, key, provider, model)
+    # A question-only template has nothing the model can select when the server
+    # has no complete QA options. Do not ask it to invent a pair or empty schema.
+    from .record_selection import paired_options
+    no_options = bool(template and template.get('fields')
+                      and not template.get('grouped_generation')
+                      and all(f['id'].startswith('q') for f in template['fields'])
+                      and not paired_options(segments))
+    if no_options:
+        result = {}
+        output = AnalysisOutput(summary='没有可回填的完整问答。', key_facts=[], issues=[])
+    else:
+        result = bounded_post(CHAT_URLS[provider], key, limit=256 * 1024, timeout=180.0, json=payload)
+        output = parse_analysis_response(result, segments, template, key, provider, model)
     if template and template.get("fields"):
         grounded_template_facts(output, segments)
     usage = result.get('usage', {})
@@ -256,6 +267,9 @@ def analyze_segments(segments: list[dict], settings: Settings, template: dict | 
         from .record_quality import check_answers, POLICY
         facts=result['key_facts']
         result['key_facts'], result['quality_checks'] = check_answers(facts, segments, template)
+        if no_options:
+            result['quality_checks'] = [dict(field_id=f['id'], code='no_qa_options', status='blocked',
+                message='未形成可回填的完整问答，请核对角色、声音和全部补充回答') for f in template['fields']]
         from .record_semantic import review_matches
         matches=review_matches(facts,result['quality_checks'],template,settings)
         if matches:

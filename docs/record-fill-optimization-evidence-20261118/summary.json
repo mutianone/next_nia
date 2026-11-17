@@ -1,0 +1,23 @@
+{
+  "before": {
+    "saved": 5,
+    "faithful": 4,
+    "failed": 1,
+    "blank": 6
+  },
+  "after": {
+    "saved": 6,
+    "faithful": 5,
+    "failed": 0,
+    "blank": 6,
+    "cloud_calls": 6,
+    "local_only_cases": [
+      "02",
+      "03",
+      "06",
+      "08",
+      "10",
+      "12"
+    ]
+  }
+}

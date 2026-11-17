@@ -1,0 +1,1186 @@
+{
+  "qwen3-asr": [
+    {
+      "id": "01",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "我看过啊。",
+        "candidate_values": [
+          "我看过啊。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n你没看过吗？：我看过啊。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "我看过啊。",
+            "segment_ids": [
+              "92c5ae41-6516-546d-a729-b33ad326b3a9",
+              "a402b816-d35c-5485-ab8b-7bad953e2aa2"
+            ],
+            "evidence": [
+              {
+                "segment_id": "a402b816-d35c-5485-ab8b-7bad953e2aa2",
+                "question_segment_id": "92c5ae41-6516-546d-a729-b33ad326b3a9",
+                "start": 0,
+                "end": 5,
+                "question_start": 0,
+                "question": "你没看过吗？",
+                "answer": "我看过啊。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "a402b816-d35c-5485-ab8b-7bad953e2aa2",
+                "start": 0,
+                "end": 5,
+                "precision": "exact",
+                "question": "你没看过吗？",
+                "quote": "我看过啊。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "我看过啊。",
+        "candidate_values": [
+          "我看过啊。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n你没看过吗？：我看过啊。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "我看过啊。",
+            "segment_ids": [
+              "554bd123-5197-53c1-9d7d-665a55514cc0",
+              "5268cc55-088d-5756-8c86-f40707a64887"
+            ],
+            "evidence": [
+              {
+                "segment_id": "5268cc55-088d-5756-8c86-f40707a64887",
+                "question_segment_id": "554bd123-5197-53c1-9d7d-665a55514cc0",
+                "start": 0,
+                "end": 5,
+                "question_start": 0,
+                "question": "你没看过吗？",
+                "answer": "我看过啊。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "5268cc55-088d-5756-8c86-f40707a64887",
+                "start": 0,
+                "end": 5,
+                "precision": "exact",
+                "question": "你没看过吗？",
+                "quote": "我看过啊。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "我看过啊",
+      "faithful_after": true
+    },
+    {
+      "id": "02",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n是嗯什么哪位老师配的音效？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 0,
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "no_qa_options",
+            "status": "blocked",
+            "message": "未形成可回填的完整问答，请核对角色、声音和全部补充回答"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n是嗯什么哪位老师配的音效？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "reference_answer": "敖丙是瀚墨配的音",
+      "faithful_after": false
+    },
+    {
+      "id": "03",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n他叫什么名字？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 0,
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "no_qa_options",
+            "status": "blocked",
+            "message": "未形成可回填的完整问答，请核对角色、声音和全部补充回答"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n他叫什么名字？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "reference_answer": "我也不太清楚唉，反正那个名字比较复杂，是个外国人诶，那个名字有点是俄国人的那种感觉，好长好长，我都忘了",
+      "faithful_after": false
+    },
+    {
+      "id": "04",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "知道知道。",
+        "candidate_values": [
+          "知道知道。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n奥斯卡应该知道是什么吧？：知道知道。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "知道知道。",
+            "segment_ids": [
+              "8346de71-1100-5418-b1dc-75cdee626569",
+              "dc634488-5678-5149-9785-82155e55629a"
+            ],
+            "evidence": [
+              {
+                "segment_id": "dc634488-5678-5149-9785-82155e55629a",
+                "question_segment_id": "8346de71-1100-5418-b1dc-75cdee626569",
+                "start": 0,
+                "end": 5,
+                "question_start": 0,
+                "question": "么吧？",
+                "answer": "知道知道。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "dc634488-5678-5149-9785-82155e55629a",
+                "start": 0,
+                "end": 5,
+                "precision": "exact",
+                "question": "么吧？",
+                "quote": "知道知道。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "知道知道。",
+        "candidate_values": [
+          "知道知道。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n奥斯卡应该知道是什么吧？：知道知道。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "知道知道。",
+            "segment_ids": [
+              "9a0c6746-b36c-5e34-aa50-2b8fa9b51af9",
+              "f4d90508-12d4-5f7b-bb55-b9671dd1600a"
+            ],
+            "evidence": [
+              {
+                "segment_id": "f4d90508-12d4-5f7b-bb55-b9671dd1600a",
+                "question_segment_id": "9a0c6746-b36c-5e34-aa50-2b8fa9b51af9",
+                "start": 0,
+                "end": 5,
+                "question_start": 0,
+                "question": "么吧？",
+                "answer": "知道知道。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "f4d90508-12d4-5f7b-bb55-b9671dd1600a",
+                "start": 0,
+                "end": 5,
+                "precision": "exact",
+                "question": "么吧？",
+                "quote": "知道知道。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "知道知道",
+      "faithful_after": true
+    },
+    {
+      "id": "05",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "猪啊！",
+        "candidate_values": [
+          "猪啊！"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n哦，就说起这个，说起这个你你有没有想到那个太乙真人他那个坐骑是什么？：猪啊！",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "猪啊！",
+            "segment_ids": [
+              "e5cb40e8-1c09-5e19-9ca9-916edc82b2fb",
+              "f2e5280b-b98c-5407-97d4-d52577ada44d"
+            ],
+            "evidence": [
+              {
+                "segment_id": "f2e5280b-b98c-5407-97d4-d52577ada44d",
+                "question_segment_id": "e5cb40e8-1c09-5e19-9ca9-916edc82b2fb",
+                "start": 0,
+                "end": 3,
+                "question_start": 0,
+                "question": "说起这个，说起这个，你你有没有想到那个泰中他那个坐骑是什么？",
+                "answer": "猪啊！"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "f2e5280b-b98c-5407-97d4-d52577ada44d",
+                "start": 0,
+                "end": 3,
+                "precision": "exact",
+                "question": "说起这个，说起这个，你你有没有想到那个泰中他那个坐骑是什么？",
+                "quote": "猪啊！"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "猪啊！",
+        "candidate_values": [
+          "猪啊！"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n哦，就说起这个，说起这个你你有没有想到那个太乙真人他那个坐骑是什么？：猪啊！",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "猪啊！",
+            "segment_ids": [
+              "f1086733-dae9-5c9e-a73a-f3ae0e3fbedb",
+              "4f727273-1ebf-52d3-be03-d4f9621c310c"
+            ],
+            "evidence": [
+              {
+                "segment_id": "4f727273-1ebf-52d3-be03-d4f9621c310c",
+                "question_segment_id": "f1086733-dae9-5c9e-a73a-f3ae0e3fbedb",
+                "start": 0,
+                "end": 3,
+                "question_start": 0,
+                "question": "说起这个，说起这个，你你有没有想到那个泰中他那个坐骑是什么？",
+                "answer": "猪啊！"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "4f727273-1ebf-52d3-be03-d4f9621c310c",
+                "start": 0,
+                "end": 3,
+                "precision": "exact",
+                "question": "说起这个，说起这个，你你有没有想到那个泰中他那个坐骑是什么？",
+                "quote": "猪啊！"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "猪啊",
+      "faithful_after": true
+    },
+    {
+      "id": "06",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n啊，发现那布布满了很多炸弹，你觉得觉得能走吗？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 0,
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "no_qa_options",
+            "status": "blocked",
+            "message": "未形成可回填的完整问答，请核对角色、声音和全部补充回答"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n啊，发现那布布满了很多炸弹，你觉得觉得能走吗？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "reference_answer": "肯定不能啊",
+      "faithful_after": false
+    },
+    {
+      "id": "07",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。",
+        "candidate_values": [
+          "而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n条件苛刻吗？：而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。",
+            "segment_ids": [
+              "943faf89-a02a-5858-9f58-0fab14ea4827",
+              "92a18b81-4c42-55cf-a498-0949bab1370c",
+              "b49ae909-a21e-5bce-af28-99333ca51726"
+            ],
+            "evidence": [
+              {
+                "segment_id": "92a18b81-4c42-55cf-a498-0949bab1370c",
+                "question_segment_id": "943faf89-a02a-5858-9f58-0fab14ea4827",
+                "start": 0,
+                "end": 15,
+                "question_start": 0,
+                "question": "条件苛刻嘛，",
+                "answer": "而且你需要足球场，这个很难找。"
+              },
+              {
+                "segment_id": "b49ae909-a21e-5bce-af28-99333ca51726",
+                "question_segment_id": "943faf89-a02a-5858-9f58-0fab14ea4827",
+                "start": 0,
+                "end": 17,
+                "question_start": 0,
+                "question": "条件苛刻嘛，",
+                "answer": "其实对大学生来说，足球场是可以的。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "92a18b81-4c42-55cf-a498-0949bab1370c",
+                "start": 0,
+                "end": 15,
+                "precision": "exact",
+                "question": "条件苛刻嘛，",
+                "quote": "而且你需要足球场，这个很难找。"
+              },
+              {
+                "segment_id": "b49ae909-a21e-5bce-af28-99333ca51726",
+                "start": 0,
+                "end": 17,
+                "precision": "exact",
+                "question": "条件苛刻嘛，",
+                "quote": "其实对大学生来说，足球场是可以的。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。",
+        "candidate_values": [
+          "而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n条件苛刻吗？：而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "而且你需要足球场，这个很难找。\n其实对大学生来说，足球场是可以的。",
+            "segment_ids": [
+              "d00da141-901c-5649-8ea6-290f3240a7e7",
+              "91d2766d-0947-51e1-84dc-a751855ba2f2",
+              "396c8425-3718-5efa-9c8b-1ca458a77407"
+            ],
+            "evidence": [
+              {
+                "segment_id": "91d2766d-0947-51e1-84dc-a751855ba2f2",
+                "question_segment_id": "d00da141-901c-5649-8ea6-290f3240a7e7",
+                "start": 0,
+                "end": 15,
+                "question_start": 0,
+                "question": "条件苛刻嘛，",
+                "answer": "而且你需要足球场，这个很难找。"
+              },
+              {
+                "segment_id": "396c8425-3718-5efa-9c8b-1ca458a77407",
+                "question_segment_id": "d00da141-901c-5649-8ea6-290f3240a7e7",
+                "start": 0,
+                "end": 17,
+                "question_start": 0,
+                "question": "条件苛刻嘛，",
+                "answer": "其实对大学生来说，足球场是可以的。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "91d2766d-0947-51e1-84dc-a751855ba2f2",
+                "start": 0,
+                "end": 15,
+                "precision": "exact",
+                "question": "条件苛刻嘛，",
+                "quote": "而且你需要足球场，这个很难找。"
+              },
+              {
+                "segment_id": "396c8425-3718-5efa-9c8b-1ca458a77407",
+                "start": 0,
+                "end": 17,
+                "precision": "exact",
+                "question": "条件苛刻嘛，",
+                "quote": "其实对大学生来说，足球场是可以的。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "而且你需要足球场，这个很难找其实对大学生来说，足球场还是可以的",
+      "faithful_after": false
+    },
+    {
+      "id": "08",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n目的就是也是让你强身健体，那么说健身，你觉得健身呢算不算一种体育运动？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 0,
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "no_qa_options",
+            "status": "blocked",
+            "message": "未形成可回填的完整问答，请核对角色、声音和全部补充回答"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n目的就是也是让你强身健体，那么说健身，你觉得健身呢算不算一种体育运动？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "reference_answer": "健身呢也算一种体育运动",
+      "faithful_after": false
+    },
+    {
+      "id": "09",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "对。",
+        "candidate_values": [
+          "对。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n呃一个愉悦身心的活动是吧？：对。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "对。",
+            "segment_ids": [
+              "f74bc4e6-ac78-5eaf-b929-4240c0dde93c",
+              "7f03b056-088b-522c-b86a-4af119a5101d"
+            ],
+            "evidence": [
+              {
+                "segment_id": "7f03b056-088b-522c-b86a-4af119a5101d",
+                "question_segment_id": "f74bc4e6-ac78-5eaf-b929-4240c0dde93c",
+                "start": 0,
+                "end": 2,
+                "question_start": 0,
+                "question": "是吧？",
+                "answer": "对。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "7f03b056-088b-522c-b86a-4af119a5101d",
+                "start": 0,
+                "end": 2,
+                "precision": "exact",
+                "question": "是吧？",
+                "quote": "对。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "对。",
+        "candidate_values": [
+          "对。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n呃一个愉悦身心的活动是吧？：对。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "对。",
+            "segment_ids": [
+              "096b4400-811f-5fdd-93da-d920e6eeeeeb",
+              "619ec38d-d5d3-56ae-9c08-58043ef3741c"
+            ],
+            "evidence": [
+              {
+                "segment_id": "619ec38d-d5d3-56ae-9c08-58043ef3741c",
+                "question_segment_id": "096b4400-811f-5fdd-93da-d920e6eeeeeb",
+                "start": 0,
+                "end": 2,
+                "question_start": 0,
+                "question": "是吧？",
+                "answer": "对。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "619ec38d-d5d3-56ae-9c08-58043ef3741c",
+                "start": 0,
+                "end": 2,
+                "precision": "exact",
+                "question": "是吧？",
+                "quote": "对。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "对",
+      "faithful_after": true
+    },
+    {
+      "id": "10",
+      "before": {
+        "status": 502,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 502,
+            "error": "AI 笔录生成校验失败 [schema]：字段结构不符：key_facts.1(model_type), issues(missing)；本次结果未应用。"
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": null,
+        "rendered_text": "真人对话试题\n本稿仅整理当前人工修订片段，不自动作法律或可信度判断。\n询问发生时间：未填写（创建时间不是询问发生时间）\n地点：未填写\n询问人：未填写\n\n片段 1 [74bb60f4-ec30-5045-b05c-db0277c05520] · 询问人；原音内位置 60–5640 毫秒\n嗯，所以嘛，嗯，准备运动，嗯，一定要，一定要准备，让自己身体活动开。\n\n片段 2 [59e8d898-ed10-553d-9f82-21e3662aa71a] · 询问人；原音内位置 6060–14160 毫秒\n嗯，还有一个就是跑步是一种，像咱们平常看到的球类，比如打乒乓球啊，打羽毛球那些都是可以。\n\n片段 3 [8475c325-b620-58de-94e3-47f87ff7a715] · 询问人；原音内位置 14340–16920 毫秒\n嗯，但是准备运动一定要做好。\n\n片段 4 [27be4c31-3add-55ee-8bc1-0143f73746c3] · 询问人；原音内位置 17100–18180 毫秒\n对你怎么看呢？\n\n片段 5 [d4178b0e-9c8f-598d-9233-a8c512026422] · 被询问人；原音内位置 18960–22260 毫秒\n然后你刚不说球类的话，其实，\n\n片段 6 [e93840b6-fd39-57a5-aa5a-c5d957568f66] · 被询问人\n嗯，\n\n片段 7 [68c8f56a-1a20-562a-a3c5-91353d8ad0a2] · 被询问人；原音内位置 22920–28980 毫秒\n球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯。\n\n片段 8 [b94ce6d2-e253-5e40-acc8-4f9e4b012ee4] · 被询问人；原音内位置 30060–55380 毫秒\n可能也不怎么去打，也不怎么运动了，但是我还是有一那么一点爱好的，而且篮球比赛，嗯，也有很多的篮球明星，嗯，我就只知道一个什么叫科比的，然后据说他退役了嘛，就是感觉有很多男生会喜欢，当然篮球明星的话肯定很多，但是我不太去了解，\n\n片段 9 [37c5fc14-bc5b-5898-bba5-fc726a6e8efe] · 被询问人；原音内位置 55880–56060 毫秒\n嗯，\n\n片段 10 [85478e71-401d-57b7-9243-a2e88c742170] · 被询问人；原音内位置 57600–59400 毫秒\n篮球其实也是一个。\n\n片段 11 [9d7ff3ab-381f-5ebf-b431-b26ce81863ec] · 被询问人；原音内位置 60120–65220 毫秒\n很有趣的运动，又可以锻炼人，还可以还可以交朋友。\n\n片段 12 [1e20cbd9-54bb-5efc-a4b6-880c232e8743] · 被询问人；原音内位置 65700–66480 毫秒\n比如我就\n\n片段 13 [c032ff40-9571-5c5b-ab9d-59071abaa051] · 被询问人；原音内位置 66960–68160 毫秒\n报那个篮球社，\n\n片段 14 [9cf1f440-535f-55b8-a7cf-33b9c273af2d] · 被询问人；原音内位置 69180–75660 毫秒\n虽然我还不认识几几个人，但是我就先认识我们班上参加篮球社的人。\n\n片段 15 [a8020a62-34f5-568c-8fc7-d999f6d99734] · 被询问人；原音内位置 76020–76200 毫秒\n嗯，\n\n片段 16 [d558cd78-6b7a-5458-9761-87f2177ec86b] · 被询问人；原音内位置 77520–78840 毫秒\n篮球比赛，嗯，\n\n片段 17 [1017dc1a-87ad-5fe7-a166-db02bb2cf169] · 被询问人；原音内位置 79680–84300 毫秒\n就是有时候班级就是学校也会举行一些比赛吧。\n\n片段 18 [48947ae2-cb79-507a-a8b8-3eb548be3ae3] · 被询问人；原音内位置 84780–86820 毫秒\n嗯，感觉还可以，\n\n片段 19 [4dad5b48-1794-5d8a-91b3-c239594a282a] · 被询问人\n嗯，\n\n片段 20 [e2038374-cedc-5d43-bf8a-8a2ffbc51234] · 被询问人；原音内位置 87600–89160 毫秒\n发动一个班就是比较。\n\n片段 21 [ec0d46ed-847c-5cd2-a451-ba4a3a77f48f] · 被询问人；原音内位置 89160–90960 毫秒\n团结，为他们加油啊\n\n片段 22 [b15e3983-a927-5617-8ca1-0567395efa1a] · 被询问人；原音内位置 91460–92060 毫秒\n之类的，\n\n片段 23 [0342da8f-ad37-564f-bbe0-9290054f5420] · 被询问人；原音内位置 92660–92840 毫秒\n嗯。\n",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "error": "AI 笔录生成校验失败 [schema]：字段结构不符：key_facts.1(model_type), issues(missing)；本次结果未应用。"
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 0,
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "no_qa_options",
+            "status": "blocked",
+            "message": "未形成可回填的完整问答，请核对角色、声音和全部补充回答"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n比如打乒乓球啊，打羽毛球那些都是可以，嗯但是准备运动一定要做好，对你怎么看呢：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "reference_answer": "然后你刚不说球类的话其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动但是我还是有一那么一点爱好的，而且篮球比赛，嗯也有很多的篮球明星嗯我就只知道一个什么叫科比的，然后据说他退役了嘛就是感觉有很多男生会喜欢当然蓝球明星的话肯定有很多，但是我不太去了解嗯篮球其实也是一个很有趣的运动又可以锻炼人还可以还可以交朋友比如我就报那个篮球社虽然我还不认识几几个人，但是我就先认识了我们班上参加篮球社的人嗯篮球比赛嗯就是有时候班级就是学校也会举行一些比赛吧嗯，感觉还可以嗯发动一个班就是比较团结，为他们加油啊之类的嗯",
+      "faithful_after": false
+    },
+    {
+      "id": "11",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "question_in_answer",
+            "message": "回答中混入询问内容",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n然后呢，你知道天下第一行书是谁的作品吗：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "天下第一行书，\n莫非是王羲之？",
+        "candidate_values": [
+          "天下第一行书，\n莫非是王羲之？"
+        ],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "tentative_answer",
+            "message": "回答含疑问语气，已保留原文及问号，请回听核对，不作肯定陈述",
+            "status": "attention"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n然后呢，你知道天下第一行书是谁的作品吗：天下第一行书，\n莫非是王羲之？",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "天下第一行书，\n莫非是王羲之？",
+            "segment_ids": [
+              "a5804442-e641-5d71-ba88-d7953333a81a",
+              "d06b120a-1f85-56e3-bac2-a242d1037b35",
+              "e577f0e2-f205-5980-8cb4-0527cd2f2b70",
+              "703d280b-29b3-51cb-9a9a-c79377384014",
+              "df069644-f44d-5fd7-8449-b58dd1c67411",
+              "d2ae291f-78d4-54fd-aa19-4a95a0af054a"
+            ],
+            "evidence": [
+              {
+                "segment_id": "df069644-f44d-5fd7-8449-b58dd1c67411",
+                "question_segment_id": "703d280b-29b3-51cb-9a9a-c79377384014",
+                "start": 0,
+                "end": 7,
+                "question_start": 0,
+                "question": "然后呢，你知道天下第一行书是谁的作品吗？",
+                "answer": "天下第一行书，"
+              },
+              {
+                "segment_id": "d2ae291f-78d4-54fd-aa19-4a95a0af054a",
+                "question_segment_id": "703d280b-29b3-51cb-9a9a-c79377384014",
+                "start": 0,
+                "end": 7,
+                "question_start": 0,
+                "question": "然后呢，你知道天下第一行书是谁的作品吗？",
+                "answer": "莫非是王羲之？"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "df069644-f44d-5fd7-8449-b58dd1c67411",
+                "start": 0,
+                "end": 7,
+                "precision": "exact",
+                "question": "方便写，艺术性不高。\n但是草书是艺术性太强，不好写。\n如果没有练草书的人强行去写的话，那就在乱写，这是不好的。\n然后呢，你知道天下第一行书是谁的作品吗？",
+                "quote": "天下第一行书，",
+                "question_sources": [
+                  {
+                    "segment_id": "a5804442-e641-5d71-ba88-d7953333a81a",
+                    "start": 0,
+                    "end": 10,
+                    "precision": "exact"
+                  },
+                  {
+                    "segment_id": "d06b120a-1f85-56e3-bac2-a242d1037b35",
+                    "start": 0,
+                    "end": 15,
+                    "precision": "exact"
+                  },
+                  {
+                    "segment_id": "e577f0e2-f205-5980-8cb4-0527cd2f2b70",
+                    "start": 0,
+                    "end": 28,
+                    "precision": "exact"
+                  },
+                  {
+                    "segment_id": "703d280b-29b3-51cb-9a9a-c79377384014",
+                    "start": 0,
+                    "end": 20,
+                    "precision": "exact"
+                  }
+                ]
+              },
+              {
+                "segment_id": "d2ae291f-78d4-54fd-aa19-4a95a0af054a",
+                "start": 0,
+                "end": 7,
+                "precision": "exact",
+                "question": "方便写，艺术性不高。\n但是草书是艺术性太强，不好写。\n如果没有练草书的人强行去写的话，那就在乱写，这是不好的。\n然后呢，你知道天下第一行书是谁的作品吗？",
+                "quote": "莫非是王羲之？"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "天下第一行书莫非是王羲之",
+      "faithful_after": true
+    },
+    {
+      "id": "12",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n宋代你知道哪些有名的书法家嘛：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 0,
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "no_qa_options",
+            "status": "blocked",
+            "message": "未形成可回填的完整问答，请核对角色、声音和全部补充回答"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n宋代你知道哪些有名的书法家嘛：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "reference_answer": "宋代的书法家嘛让我想一想啊嗯，宋代嗯，宋代宋代的话，我知道那个就是瘦金体的创始人也就是他那个宋徽宗，赵佶，他的字体，然后嗯，他开通了就是瘦金体他写的字体算是皇帝中，嗯，中国历史上皇帝中写的书法算是很好的一位他即是皇帝又是一位书法家，嗯，他对艺术有的很高深的造诣然后其他的，我不是特别了解，还请你来补充一下",
+      "faithful_after": false
+    }
+  ],
+  "xingchen": [
+    {
+      "id": "03",
+      "before": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n他叫什么名字？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "我也不太清楚，哎，反正那个名字比较复杂。\n嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+        "candidate_values": [
+          "我也不太清楚，哎，反正那个名字比较复杂。\n嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。"
+        ],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "paused_reply",
+            "message": "同一人的回答中有较长停顿，已保留全部补充，请回听核对关联",
+            "status": "attention"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n他叫什么名字？：我也不太清楚，哎，反正那个名字比较复杂。\n嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "我也不太清楚，哎，反正那个名字比较复杂。\n嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+            "segment_ids": [
+              "46efad26-90a3-5ed7-8039-458f87403d83",
+              "856b1d3f-74ba-5821-bbc2-acd3af7f250b",
+              "a2ca264a-ecd2-5f86-b5b5-ba103c4161a6"
+            ],
+            "evidence": [
+              {
+                "segment_id": "856b1d3f-74ba-5821-bbc2-acd3af7f250b",
+                "question_segment_id": "46efad26-90a3-5ed7-8039-458f87403d83",
+                "start": 0,
+                "end": 20,
+                "question_start": 0,
+                "question": "忘了叫什么名字了？",
+                "answer": "我也不太清楚，哎，反正那个名字比较复杂。"
+              },
+              {
+                "segment_id": "a2ca264a-ecd2-5f86-b5b5-ba103c4161a6",
+                "question_segment_id": "46efad26-90a3-5ed7-8039-458f87403d83",
+                "start": 0,
+                "end": 28,
+                "question_start": 0,
+                "question": "忘了叫什么名字了？",
+                "answer": "嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "856b1d3f-74ba-5821-bbc2-acd3af7f250b",
+                "start": 0,
+                "end": 20,
+                "precision": "exact",
+                "question": "忘了叫什么名字了？",
+                "quote": "我也不太清楚，哎，反正那个名字比较复杂。"
+              },
+              {
+                "segment_id": "a2ca264a-ecd2-5f86-b5b5-ba103c4161a6",
+                "start": 0,
+                "end": 28,
+                "precision": "exact",
+                "question": "忘了叫什么名字了？",
+                "quote": "嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "我也不太清楚唉，反正那个名字比较复杂，是个外国人诶，那个名字有点是俄国人的那种感觉，好长好长，我都忘了",
+      "faithful_after": false
+    }
+  ],
+  "sensevoice": [
+    {
+      "id": "05",
+      "before": {
+        "status": 200,
+        "value": null,
+        "candidate_values": [],
+        "model": "Qwen/Qwen3-8B",
+        "facts": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "question_in_answer",
+            "message": "回答中混入询问内容",
+            "status": "blocked"
+          }
+        ],
+        "attempts": [
+          200
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n哦，就说起这个，说起这个你你有没有想到那个太乙真人他那个坐骑是什么？：________（待补充）"
+      },
+      "after": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "cloud_calls": 1,
+        "value": "猪啊？",
+        "candidate_values": [
+          "猪啊？"
+        ],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "tentative_answer",
+            "message": "回答含疑问语气，已保留原文及问号，请回听核对，不作肯定陈述",
+            "status": "attention"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n哦，就说起这个，说起这个你你有没有想到那个太乙真人他那个坐骑是什么？：猪啊？",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "猪啊？",
+            "segment_ids": [
+              "d0cdcdb8-d328-5289-93fd-3b1eab255615",
+              "8e02847b-1683-54e8-b484-f0c3419cd3bd"
+            ],
+            "evidence": [
+              {
+                "segment_id": "8e02847b-1683-54e8-b484-f0c3419cd3bd",
+                "question_segment_id": "d0cdcdb8-d328-5289-93fd-3b1eab255615",
+                "start": 0,
+                "end": 3,
+                "question_start": 0,
+                "question": "说的这个，所以这个你你有没有想到那个泰征他那个坐骑是什么",
+                "answer": "猪啊？"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "8e02847b-1683-54e8-b484-f0c3419cd3bd",
+                "start": 0,
+                "end": 3,
+                "precision": "exact",
+                "question": "说的这个，所以这个你你有没有想到那个泰征他那个坐骑是什么",
+                "quote": "猪啊？"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      },
+      "reference_answer": "猪啊",
+      "faithful_after": true
+    }
+  ]
+}

@@ -87,7 +87,7 @@ def pair_qa(segments, template):
             if cut is not None:
                 turn['text'] = turn['text'][cut:]
                 turn['source']['start'] += cut
-            if mixed_answer(pending['question'], turn['text']):
+            if mixed_answer(pending['question'], turn['text'], confirmed=True):
                 # The rest of this turn may qualify an earlier answer.
                 pending = previous = None
                 continue

@@ -47,16 +47,16 @@ def reviewed_word_times(data, start, end):
     return (left, right) if left is not None and right is not None and left < right else (None, None)
 
 
-def same_contiguous_voice(a, b):
+def same_contiguous_voice(a, b, *, max_gap_ms=2000):
     keys = ('recognition_run_id', 'channel_id', 'speaker_id')
     if not a.get('recognition_run_id') or a.get('speaker_id') is None or any(a.get(k) != b.get(k) for k in keys):
         return False
-    if a.get('end_ms') is None or b.get('start_ms') is None or not 0 <= b['start_ms'] - a['end_ms'] <= 2000:
+    if a.get('end_ms') is None or b.get('start_ms') is None or not 0 <= b['start_ms'] - a['end_ms'] <= max_gap_ms:
         return False
     left, right = a.get('session_intervals', []), b.get('session_intervals', [])
     if len(left) > 1 or len(right) > 1 or bool(left) != bool(right):
         return False
-    return not left or 0 <= right[0]['start_ms'] - left[-1]['end_ms'] <= 2000
+    return not left or 0 <= right[0]['start_ms'] - left[-1]['end_ms'] <= max_gap_ms
 
 
 def voice_continuation_hint(previous, current):
