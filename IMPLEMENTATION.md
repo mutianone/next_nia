@@ -152,7 +152,7 @@ TXT/DOCX 完全本地生成，无新增外部转换依赖。draft 导出保留�
 | `POST /{id}/audio` | multipart `file,expected_revision,duration_ms?`，保存原音及 SHA-256，返回完整详情及 201 |
 | `GET /{id}/audio/{audio_id}/file` | 当前笔录归属检查后回听；`download=true` 为附件下载，支持单一 HTTP byte range |
 | `GET /{id}/revisions/{revision}` | `{revision,action,created_at,snapshot}`，只读查看当时快照，不回滚当前版本 |
-| `POST /{id}/audio/{audio_id}/transcribe` | `{expected_revision,confirmed:true}`，转写所选音频；成功保留原文并追加人工修订段 |
+| `POST /{id}/audio/{audio_id}/transcribe` | `{expected_revision,confirmed:true,speaker_count?,recognition_request_id?}`，转写所选音频并保留识别版本。同一来源已有正文时，新结果留待核对 |
 | `POST /{id}/analyze` | `{expected_revision,confirmed:true}`，摘要当前已保存的修订文字；成功返回包含独立分析结果的完整详情 |
 | `GET /{id}/export.txt` / `GET /{id}/export.docx` | 本地导出，`include_ai=false` 默认为不含 AI 附录；选入时要求存在未过期的成功分析 |
 
@@ -160,11 +160,11 @@ TXT/DOCX 完全本地生成，无新增外部转换依赖。draft 导出保留�
 
 `scenario` / `template_id` 的范围为 `study,marriage,residence,violation,other`；仅修改场景时默认同步对应模板，显式指定的 `template_id` 优先。模板是本地整理结构，不代表业务审定的法定版式。笔录状态为 `draft,reviewed,archived`。draft 可编辑、上传、转写、分析；reviewed 须有非空正文、核对意见、`confirmed=true`，核对时固定成文文本。reviewed 只能归档，不能直接恢复为草稿。归档后只允许以单独状态操作恢复到 `archived_from`，原先已核对的稿件恢复后仍锁定。归档不删除资料，归档期间停止正文导出，仍可回听及查看历史。
 
-片段字段为 `id?,audio_id?,start_ms?,end_ms?,speaker,text`。`speaker` 为 `interviewer,interviewee,interpreter,unknown`；角色由人工填写。起止毫秒需同时有值或同时为空，结束晚于开始；有时间必须关联本笔录音频，不能超过已有声明时长。`source:manual|asr` 与 `transcription_id` 由服务器保留，`timestamp_source:manual|none` 不冒充模型时间对齐。新增 ASR 片段无自动角色或时间。
+片段字段为 `id?,audio_id?,start_ms?,end_ms?,speaker,text`。`speaker` 为 `interviewer,interviewee,interpreter,unknown`，由人工确认业务角色。手工起止毫秒需同时有值或同时为空，结束晚于开始，有时间必须关联本笔录音频且符合声明时长。`source` 和 `transcription_id` 由服务端保留。识别版本另存供应商返回或本机估计的时间及其来源。
 
 最多 500 段，每段 20,000 字、合计 100,000 字；摘要最多 30,000 字，超限拒绝而非截断。单原音最多 20 MiB，每份笔录最多 30 段 / 500 MiB。支持格式签名为 WAV、MP3、WebM、Ogg、M4A、FLAC，不接受远端 URL 或无头独立录音块。保存阶段不完整解码音频；`duration_ms` 为 1–86,400,000 的可选声明值，`duration_source:declared|unknown`，不声称服务器测量。声明超过一小时的音频不能发起转写。
 
-转写固定调用硅基流动 `/v1/audio/transcriptions`，multipart 仅传 `model` 和音频 `file`，不用原始文件名、人员属性或其他录音补充请求。MP3 原件直传；其他格式经本地 FFmpeg 转成单声道 16 kHz / 48 kbit/s MP3，原件不变。`CRJ_FFMPEG_BIN` 可指定执行路径，否则查找 `PATH` 中的 `ffmpeg`，不自动安装。转换超时 90 秒、达到一小时或接近输出 20 MiB 时拒绝，不发送截断内容；直接 MP3 不重新测量时长。没有 FFmpeg 不影响本地保存及手工整理。
+转写按配置使用硅基流动或阿里云 Fun-ASR。硅基流动的 multipart 请求仅传模型和音频文件，使用生成的文件名。MP3 可直传，其他受支持格式经本地 FFmpeg 转成单声道 16 kHz / 48 kbit/s MP3，原件保留。`CRJ_FFMPEG_BIN` 可指定执行路径，默认在 `PATH` 中查找。转换超时 90 秒、时长或输出大小超限时拒绝发送截断内容。直接发送 MP3 时沿用声明时长。未安装 FFmpeg 时仍可保存原音和手工整理。
 
 分析只发送按顺序排列的 `{segment_id,text}`，不加入角色、手工时间、原音、关联人员或其他笔录。模型输出为 `{summary,key_facts:[{label,value,segment_ids}],issues}`；本地校验结构、长度、纯文本和实际输入片段 ID。JSON 成功与 ID 合法不代表内容已获得语义或法律验证。片段 ID、文字、角色、音频关联、时间位置或顺序发生实质修改时，通过本地内容哈希标记过期，旧结果保留输入快照；角色和时间只参与本地失效判断，不在模型输入中。
 
@@ -174,7 +174,16 @@ TXT/DOCX 完全本地生成，无新增外部转换依赖。draft 导出保留�
 
 已有笔录的内容/状态变更、音频上传和 AI 请求传递当前 `expected_revision`，SQLite 写事务使用 `BEGIN IMMEDIATE`，PostgreSQL 对笔录行加锁，同时使用 SQLAlchemy 版本列；409 冲突不覆盖已有新版本。这不表示多人生产压测已完成。文件下载设置 `nosniff`、`no-store` 与固定附件名；TXT/DOCX 沿用草稿/未签发标识，AI 附录单独标明辅助整理。
 
-浏览器录音使用 MediaRecorder，运行时检测 MIME，停止后合并全部数据块为完整音频再上传；每段以 5 分钟停止为目标。麦克风需要安全上下文及权限，移动端普通 HTTP 局域网地址不可替代 HTTPS；后台计时与锁屏连续性未验收。未调用浏览器 `SpeechRecognition`，没有自动说话人识别、逐字时间戳、本地 ASR 或流式转写。真实云模型及目标华为手机尚未验收。
+浏览器连续录音使用 AudioWorklet 采集 16 kHz 单声道 PCM，按批送转写。麦克风需要安全上下文及权限，移动端锁屏连续性仍待真机验收。分片保存、断点恢复及重试见[连续录音说明](docs/continuous-recording.md)。
+
+### 多人笔录的说话人与回填依据
+
+- 上传和连续录音共用可选的 `speaker_count`（2–100）。它是实际发言总人数的提示，包含每位民警、群众及参与发言的翻译。连续录音按会话保存提示，批次和重试沿用同一值。人数上限仅是参数范围。
+- 按 `recognition_run_id + channel_id + speaker_id` 区分匿名声音。同一笔录可以有多位询问人，各自保留声音编号并分别确认同一业务角色。重新转写或换批次后重新核对映射。缺少声学依据时保留未知，语序、问号和音色编号均不足以确认身份。
+- 供应商原文、人工修订和回填依据分别留存。本机对齐以供应商原文为准，时间标记为 `LOCAL_ESTIMATE`，无依据的位置留空。漏词、声音冲突或切换边界有疑点时保留 `voice_review` 和回听入口。争议句逐句核对，批量角色映射不能消除疑点。
+- 规则匹配和模型生成的回填值都要能定位到回答原文的片段和字符范围。例如前一问是“确定没偷渡吗？”，下一段是“偷渡吗我确定”，只有相邻问答角色明确且回答开头与上一问的短疑问尾逐字重合等校验通过，才可仅取“我确定”。保留原始转写和回答中的否定、限定、补充或转述。角色不明、肯否存疑或边界粘连时，保留待核对项。拆句后重新核对相关角色，重建草稿或复用旧批次时也要校验原文依据。
+
+修改声音切换与漏词处理时，从[声学证据与原文对齐](backend/app/record_voice_alignment.py)入手。修改回填时，规则和模型路径共用[原文范围选择](backend/app/record_selection.py)与[回答质量校验](backend/app/record_quality.py)。配置、回归命令和逐句对照方法见[语音转写与多人笔录](docs/fun-asr.md)。
 
 ## 工作台与界面
 
