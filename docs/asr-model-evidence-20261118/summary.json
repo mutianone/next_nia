@@ -1,0 +1,68 @@
+{
+  "models": [
+    {
+      "model": "FunAudioLLM/SenseVoiceSmall",
+      "edits": 81,
+      "characters": 961,
+      "stable": 3,
+      "exact": 6,
+      "short": 5,
+      "saved": 4,
+      "faithful": 2,
+      "complete_asr": 4,
+      "blank": 6,
+      "failed": 2,
+      "supplements": 1
+    },
+    {
+      "model": "Qwen/Qwen3-ASR-1.7B",
+      "edits": 55,
+      "characters": 961,
+      "stable": 2,
+      "exact": 6,
+      "short": 5,
+      "saved": 5,
+      "faithful": 4,
+      "complete_asr": 5,
+      "blank": 6,
+      "failed": 1,
+      "supplements": 1
+    },
+    {
+      "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+      "edits": 140,
+      "characters": 961,
+      "stable": 2,
+      "exact": 1,
+      "short": 1,
+      "saved": 2,
+      "faithful": 0,
+      "complete_asr": 2,
+      "blank": 9,
+      "failed": 1,
+      "supplements": 0
+    }
+  ],
+  "original_wav": {
+    "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+    "edits": 157,
+    "characters": 961,
+    "stable": 3,
+    "exact": 2,
+    "short": 2
+  },
+  "short_cases": [
+    "01",
+    "04",
+    "05",
+    "06",
+    "09"
+  ],
+  "supplement_cases": [
+    "03",
+    "07",
+    "10",
+    "12"
+  ],
+  "actual_analysis_model": "Qwen/Qwen3-8B"
+}

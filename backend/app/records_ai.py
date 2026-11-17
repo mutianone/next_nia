@@ -113,7 +113,8 @@ def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Set
     turns = normalize_turns(payload)
     if turns:
         # Keep anonymous acoustic identities, never silently call speaker 1 the interviewer.
-        return {"provider": provider, "model": model, "text": "\n".join(t['text'] for t in turns), "segments": turns}
+        return {"provider": provider, "model": model, "text": "\n".join(t['text'] for t in turns),
+                "segments": turns, "raw_result": payload}
     output = {"provider": provider, "model": model, "text": text}
     if use_local:
         output['raw_result'] = payload

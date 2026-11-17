@@ -113,6 +113,15 @@ def acoustic_proposal(sources):
 
 
 def propose(sources,settings,provider,model,key):
+    # Native provider turns carry identities separately from the transcript.
+    # Reuse only unchanged source boundaries; roles still require confirmation.
+    if settings.ai.speech.provider != 'aliyun' and sources and all(
+        s.get('recognition_run_id') and s.get('speaker_id') is not None
+        and s.get('asr_timestamp_source') == 'PROVIDER'
+        and s['text'] == s.get('asr_original_text') for s in sources
+    ):
+        return validate_turns({'turns':[{'segment_id':s['id'],'text':s['text'],
+                                       'suggested_role':'unknown'} for s in sources]},sources)
     acoustic=acoustic_proposal(sources)
     if acoustic is not None and settings.ai.speech.provider == 'aliyun':
         # Hide unreliable acoustic labels from semantic inference, but restore them

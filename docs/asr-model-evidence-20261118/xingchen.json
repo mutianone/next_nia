@@ -1,0 +1,1399 @@
+{
+  "input_processing": "application_two_speaker_normalization",
+  "cases": [
+    {
+      "id": "01",
+      "score": {
+        "id": "01",
+        "title": "看过电影吗",
+        "cut": 0,
+        "reference_answer": "我看过啊",
+        "transcribed_answer": "我看过啊。",
+        "character_edits": 5,
+        "characters": 9,
+        "stable": false,
+        "qstable": false,
+        "exact_answer": true,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 1
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "2c74c024660ee1e1c3ec82fa0cde5a1aa282b6c5235c5379d533838fc7c756b4",
+        "text": "我看过啊。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "我看过啊。",
+            "start_ms": 1790,
+            "end_ms": 2430,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 2.772,
+          "text": "1: 我看过啊。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 1.79,
+              "end": 2.43,
+              "text": "我看过啊。",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 3
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n你没看过吗？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "02",
+      "score": {
+        "id": "02",
+        "title": "配音演员名字",
+        "cut": 1,
+        "reference_answer": "敖丙是瀚墨配的音",
+        "transcribed_answer": "敖丙是汉末配。",
+        "character_edits": 8,
+        "characters": 20,
+        "stable": true,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 1,
+        "local_value": "敖丙是汉末配。",
+        "full_fill": true,
+        "checks": [],
+        "review": false,
+        "qparts": 1
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "a11768d2673c43edea1a20d9155ef2f0cf5de6bc5b0af10ce39c74c8fe60f9ea",
+        "text": "是嗯，什哪位老师配的你去啊？\n敖丙是汉末配。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "是嗯，什哪位老师配的你去啊？",
+            "start_ms": 330,
+            "end_ms": 2570,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "敖丙是汉末配。",
+            "start_ms": 2580,
+            "end_ms": 4080,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 4.752,
+          "text": "1: 是嗯，什哪位老师配的你去啊？\n2: 敖丙是汉末配。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.33,
+              "end": 2.57,
+              "text": "是嗯，什哪位老师配的你去啊？",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 2.58,
+              "end": 4.08,
+              "text": "敖丙是汉末配。",
+              "speaker": "2"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 5
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "敖丙是汉末配。",
+        "candidate_values": [
+          "敖丙是汉末配。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n是嗯什么哪位老师配的音效？：敖丙是汉末配。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "敖丙是汉末配。",
+            "segment_ids": [
+              "68f8bdae-c6f7-516e-890c-c727a37b3ef8",
+              "4543389a-ec3a-52c1-8261-014a96a39a5f"
+            ],
+            "evidence": [
+              {
+                "segment_id": "4543389a-ec3a-52c1-8261-014a96a39a5f",
+                "question_segment_id": "68f8bdae-c6f7-516e-890c-c727a37b3ef8",
+                "start": 0,
+                "end": 7,
+                "question_start": 0,
+                "question": "是嗯，什哪位老师配的你去啊？",
+                "answer": "敖丙是汉末配。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "4543389a-ec3a-52c1-8261-014a96a39a5f",
+                "start": 0,
+                "end": 7,
+                "precision": "exact",
+                "question": "是嗯，什哪位老师配的你去啊？",
+                "quote": "敖丙是汉末配。"
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      }
+    },
+    {
+      "id": "03",
+      "score": {
+        "id": "03",
+        "title": "姓名不确定并补充",
+        "cut": 1,
+        "reference_answer": "我也不太清楚唉，反正那个名字比较复杂，是个外国人诶，那个名字有点是俄国人的那种感觉，好长好长，我都忘了",
+        "transcribed_answer": "我也不太清楚，哎，反正那个名字比较复杂。\n嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+        "character_edits": 10,
+        "characters": 52,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 1
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "30a40a888fca96d8ed0d0195d6647c14c0bd6153251f6c0d4c5d7ff1c863cb7d",
+        "text": "忘了叫什么名字了？\n我也不太清楚，哎，反正那个名字比较复杂。\n嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "忘了叫什么名字了？",
+            "start_ms": 40,
+            "end_ms": 1800,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "我也不太清楚，哎，反正那个名字比较复杂。",
+            "start_ms": 2280,
+            "end_ms": 4660,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+            "start_ms": 8840,
+            "end_ms": 13320,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 13.608,
+          "text": "1: 忘了叫什么名字了？\n1: 我也不太清楚，哎，反正那个名字比较复杂。\n1: 嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.04,
+              "end": 1.8,
+              "text": "忘了叫什么名字了？",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 2.28,
+              "end": 4.66,
+              "text": "我也不太清楚，哎，反正那个名字比较复杂。",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "2",
+              "start": 8.84,
+              "end": 13.32,
+              "text": "嗯，那个名字有点是俄国人的那种，感觉好长好长，我都忘了。",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 14
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n他叫什么名字？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "04",
+      "score": {
+        "id": "04",
+        "title": "是否知道奥斯卡",
+        "cut": 2,
+        "reference_answer": "知道知道",
+        "transcribed_answer": "",
+        "character_edits": 16,
+        "characters": 41,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 3
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "8cfe29583a85fa74cd15529c93557a39ad5ef40776f3dc659cf4d9e35c8442bf",
+        "text": "二嗯，20年的那个92992届奥斯卡最佳国际影片。\n奥斯卡，你应该知道是什么？",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "二嗯，20年的那个92992届奥斯卡最佳国际影片。",
+            "start_ms": 1690,
+            "end_ms": 8090,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "奥斯卡，你应该知道是什么？",
+            "start_ms": 8450,
+            "end_ms": 10010,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 10.656,
+          "text": "1: 二嗯，20年的那个92992届奥斯卡最佳国际影片。\n1: 奥斯卡，你应该知道是什么？",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 1.69,
+              "end": 8.09,
+              "text": "二嗯，20年的那个92992届奥斯卡最佳国际影片。",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 8.45,
+              "end": 10.01,
+              "text": "奥斯卡，你应该知道是什么？",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 11
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n奥斯卡应该知道是什么吧？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "05",
+      "score": {
+        "id": "05",
+        "title": "太乙真人的坐骑",
+        "cut": 2,
+        "reference_answer": "猪啊",
+        "transcribed_answer": "",
+        "character_edits": 20,
+        "characters": 56,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 3
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "35b7715aef586ad88f26651162697af60f03659e25f457b7aecd7cce6b6fe3ed",
+        "text": "感觉憨态可掬，那样是真的。\n真的感觉像感觉像是哦，说说起这个说起这个你，你有没有想到那个泰囧？",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "感觉憨态可掬，那样是真的。",
+            "start_ms": 370,
+            "end_ms": 2610,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "真的感觉像感觉像是哦，说说起这个说起这个你，你有没有想到那个泰囧？",
+            "start_ms": 4990,
+            "end_ms": 12349,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 14.04,
+          "text": "1: 感觉憨态可掬，那样是真的。\n1: 真的感觉像感觉像是哦，说说起这个说起这个你，你有没有想到那个泰囧？",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.37,
+              "end": 2.61,
+              "text": "感觉憨态可掬，那样是真的。",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 4.99,
+              "end": 12.349,
+              "text": "真的感觉像感觉像是哦，说说起这个说起这个你，你有没有想到那个泰囧？",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 14
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n哦，就说起这个，说起这个你你有没有想到那个太乙真人他那个坐骑是什么？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "06",
+      "score": {
+        "id": "06",
+        "title": "能否离开危险地点",
+        "cut": 1,
+        "reference_answer": "肯定不能啊",
+        "transcribed_answer": "",
+        "character_edits": 12,
+        "characters": 53,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 2
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "780e6381b29fdc85ba17730b989e640d6995263f0c4cd6f1604fa5b7ea91518d",
+        "text": "也就带了大量蜀军，然后去那里的时候去那里的时候，结果那里发现，然后发现那布布满了很多炸弹，你觉得觉得能？",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "也就带了大量蜀军，然后去那里的时候去那里的时候，结果那里发现，然后发现那布布满了很多炸弹，你觉得觉得能？",
+            "start_ms": 30,
+            "end_ms": 8990,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 10.692,
+          "text": "1: 也就带了大量蜀军，然后去那里的时候去那里的时候，结果那里发现，然后发现那布布满了很多炸弹，你觉得觉得能？",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.03,
+              "end": 8.99,
+              "text": "也就带了大量蜀军，然后去那里的时候去那里的时候，结果那里发现，然后发现那布布满了很多炸弹，你觉得觉得能？",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 11
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n啊，发现那布布满了很多炸弹，你觉得觉得能走吗？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "07",
+      "score": {
+        "id": "07",
+        "title": "足球场条件与补充",
+        "cut": 1,
+        "reference_answer": "而且你需要足球场，这个很难找其实对大学生来说，足球场还是可以的",
+        "transcribed_answer": "你学校足球场这个很。\n其实对大学生来说，足球场是",
+        "character_edits": 11,
+        "characters": 34,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 1
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "d399ad64c06213da9574498b89dfb437e37546676d854cf050aa2e83149895f3",
+        "text": "条件苛刻\n你学校足球场这个很。\n其实对大学生来说，足球场是",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "条件苛刻",
+            "start_ms": 170,
+            "end_ms": 810,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "你学校足球场这个很。",
+            "start_ms": 1980,
+            "end_ms": 3480,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "3",
+            "text": "其实对大学生来说，足球场是",
+            "start_ms": 4360,
+            "end_ms": 5860,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 6.408,
+          "text": "1: 条件苛刻\n2: 你学校足球场这个很。\n3: 其实对大学生来说，足球场是",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.17,
+              "end": 0.81,
+              "text": "条件苛刻",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 1.98,
+              "end": 3.48,
+              "text": "你学校足球场这个很。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "2",
+              "start": 4.36,
+              "end": 5.86,
+              "text": "其实对大学生来说，足球场是",
+              "speaker": "3"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 6
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n条件苛刻吗？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "08",
+      "score": {
+        "id": "08",
+        "title": "健身是否属于运动",
+        "cut": null,
+        "reference_answer": "健身呢也算一种体育运动",
+        "transcribed_answer": null,
+        "character_edits": 8,
+        "characters": 59,
+        "stable": false,
+        "qstable": false,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 3
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "b0828cf86e4129e5d33c5678c04cf7c54765c4698f7a9dfbed12dc6382af6d0e",
+        "text": "嗯，体育运动\n怎么说呢？体育运动它？\n目的就是也是让你强身健体，那么说健身，你觉得健身的算不算一种体育运动，健身的也算一种",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "嗯，体育运动",
+            "start_ms": 380,
+            "end_ms": 1880,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "怎么说呢？体育运动它？",
+            "start_ms": 4280,
+            "end_ms": 7120,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "目的就是也是让你强身健体，那么说健身，你觉得健身的算不算一种体育运动，健身的也算一种",
+            "start_ms": 7560,
+            "end_ms": 15160,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 15.912,
+          "text": "1: 嗯，体育运动\n1: 怎么说呢？体育运动它？\n1: 目的就是也是让你强身健体，那么说健身，你觉得健身的算不算一种体育运动，健身的也算一种",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.38,
+              "end": 1.88,
+              "text": "嗯，体育运动",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 4.28,
+              "end": 7.12,
+              "text": "怎么说呢？体育运动它？",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "2",
+              "start": 7.56,
+              "end": 15.16,
+              "text": "目的就是也是让你强身健体，那么说健身，你觉得健身的算不算一种体育运动，健身的也算一种",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 16
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n目的就是也是让你强身健体，那么说健身，你觉得健身呢算不算一种体育运动？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "09",
+      "score": {
+        "id": "09",
+        "title": "休闲娱乐的短答",
+        "cut": 1,
+        "reference_answer": "对",
+        "transcribed_answer": "",
+        "character_edits": 11,
+        "characters": 49,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 3
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "93fb06f27322cb1986d7a56015b9725f2b11c1a6e18dbaf6264b926f53dbc1ad",
+        "text": "那还有一个说叫休闲娱乐功能，嗯，体育运动可以作为在人们闲暇时间自由的自愿的去嗯，一个愉悦身心。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "那还有一个说叫休闲娱乐功能，嗯，体育运动可以作为在人们闲暇时间自由的自愿的去嗯，一个愉悦身心。",
+            "start_ms": 180,
+            "end_ms": 12340,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 13.824,
+          "text": "1: 那还有一个说叫休闲娱乐功能，嗯，体育运动可以作为在人们闲暇时间自由的自愿的去嗯，一个愉悦身心。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.18,
+              "end": 12.34,
+              "text": "那还有一个说叫休闲娱乐功能，嗯，体育运动可以作为在人们闲暇时间自由的自愿的去嗯，一个愉悦身心。",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 14
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n呃一个愉悦身心的活动是吧？：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    },
+    {
+      "id": "10",
+      "score": {
+        "id": "10",
+        "title": "喜欢的球类与长回答",
+        "cut": 1,
+        "reference_answer": "然后你刚不说球类的话其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动但是我还是有一那么一点爱好的，而且篮球比赛，嗯也有很多的篮球明星嗯我就只知道一个什么叫科比的，然后据说他退役了嘛就是感觉有很多男生会喜欢当然蓝球明星的话肯定有很多，但是我不太去了解嗯篮球其实也是一个很有趣的运动又可以锻炼人还可以还可以交朋友比如我就报那个篮球社虽然我还不认识几几个人，但是我就先认识了我们班上参加篮球社的人嗯篮球比赛嗯就是有时候班级就是学校也会举行一些比赛吧嗯，感觉还可以嗯发动一个班就是比较团结，为他们加油啊之类的嗯",
+        "transcribed_answer": "然后你刚不说球类的话，其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动，但是我还是有一那么一点爱好的，而且篮球比赛。\n嗯，也有很多的篮球明星。嗯，我就只知道一个什么叫科比的，然后据说他退役了嘛，就是感觉有很多男生会喜欢。当然，篮球明星的话肯定很多，但是我不太去。\n篮球其实也是一个很有趣的运动，又可以锻炼人，还可以还可以交朋友。\n比如我就报那个篮球社，虽然我还不认识几几个人，但是我就先认识我们班上参加篮球。\n篮球比赛嗯，就是有时候班级就是学校，也会举行一些比赛吧。\n嗯，感觉还可以，嗯，发动一个班就是比较团结为他们加油啊。\n之类的嗯。",
+        "character_edits": 15,
+        "characters": 345,
+        "stable": true,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 3
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "f54127e165d8ccad629631d19557cf989834231ce8333f38466dddfcffa4c469",
+        "text": "所以嘛，呃，准备运动呃，一定要一定要准备让自己的身体活动开。嗯，还一个就是跑步是一种像咱们平常看到的球类，比如说打乒乓球啊，打羽毛球，那些都是可以。嗯，但是准备运动一定要做好对，你怎么看呢？\n然后你刚不说球类的话，其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动，但是我还是有一那么一点爱好的，而且篮球比赛。\n嗯，也有很多的篮球明星。嗯，我就只知道一个什么叫科比的，然后据说他退役了嘛，就是感觉有很多男生会喜欢。当然，篮球明星的话肯定很多，但是我不太去。\n篮球其实也是一个很有趣的运动，又可以锻炼人，还可以还可以交朋友。\n比如我就报那个篮球社，虽然我还不认识几几个人，但是我就先认识我们班上参加篮球。\n篮球比赛嗯，就是有时候班级就是学校，也会举行一些比赛吧。\n嗯，感觉还可以，嗯，发动一个班就是比较团结为他们加油啊。\n之类的嗯。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "所以嘛，呃，准备运动呃，一定要一定要准备让自己的身体活动开。嗯，还一个就是跑步是一种像咱们平常看到的球类，比如说打乒乓球啊，打羽毛球，那些都是可以。嗯，但是准备运动一定要做好对，你怎么看呢？",
+            "start_ms": 490,
+            "end_ms": 18050,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "然后你刚不说球类的话，其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动，但是我还是有一那么一点爱好的，而且篮球比赛。",
+            "start_ms": 19010,
+            "end_ms": 37570,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "嗯，也有很多的篮球明星。嗯，我就只知道一个什么叫科比的，然后据说他退役了嘛，就是感觉有很多男生会喜欢。当然，篮球明星的话肯定很多，但是我不太去。",
+            "start_ms": 37730,
+            "end_ms": 55100,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "篮球其实也是一个很有趣的运动，又可以锻炼人，还可以还可以交朋友。",
+            "start_ms": 57720,
+            "end_ms": 65680,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "比如我就报那个篮球社，虽然我还不认识几几个人，但是我就先认识我们班上参加篮球。",
+            "start_ms": 65760,
+            "end_ms": 75240,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "篮球比赛嗯，就是有时候班级就是学校，也会举行一些比赛吧。",
+            "start_ms": 77690,
+            "end_ms": 84730,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "嗯，感觉还可以，嗯，发动一个班就是比较团结为他们加油啊。",
+            "start_ms": 85010,
+            "end_ms": 91370,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "2",
+            "text": "之类的嗯。",
+            "start_ms": 91490,
+            "end_ms": 93630,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 93.708,
+          "text": "1: 所以嘛，呃，准备运动呃，一定要一定要准备让自己的身体活动开。嗯，还一个就是跑步是一种像咱们平常看到的球类，比如说打乒乓球啊，打羽毛球，那些都是可以。嗯，但是准备运动一定要做好对，你怎么看呢？\n2: 然后你刚不说球类的话，其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动，但是我还是有一那么一点爱好的，而且篮球比赛。\n2: 嗯，也有很多的篮球明星。嗯，我就只知道一个什么叫科比的，然后据说他退役了嘛，就是感觉有很多男生会喜欢。当然，篮球明星的话肯定很多，但是我不太去。\n2: 篮球其实也是一个很有趣的运动，又可以锻炼人，还可以还可以交朋友。\n2: 比如我就报那个篮球社，虽然我还不认识几几个人，但是我就先认识我们班上参加篮球。\n2: 篮球比赛嗯，就是有时候班级就是学校，也会举行一些比赛吧。\n2: 嗯，感觉还可以，嗯，发动一个班就是比较团结为他们加油啊。\n2: 之类的嗯。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.49,
+              "end": 18.05,
+              "text": "所以嘛，呃，准备运动呃，一定要一定要准备让自己的身体活动开。嗯，还一个就是跑步是一种像咱们平常看到的球类，比如说打乒乓球啊，打羽毛球，那些都是可以。嗯，但是准备运动一定要做好对，你怎么看呢？",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 19.01,
+              "end": 37.57,
+              "text": "然后你刚不说球类的话，其实嗯球类的话，我有一点喜欢打篮球，虽然虽然说我是个女生，嗯，可能也不怎么去打，也不怎么运动，但是我还是有一那么一点爱好的，而且篮球比赛。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "2",
+              "start": 37.73,
+              "end": 55.1,
+              "text": "嗯，也有很多的篮球明星。嗯，我就只知道一个什么叫科比的，然后据说他退役了嘛，就是感觉有很多男生会喜欢。当然，篮球明星的话肯定很多，但是我不太去。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "3",
+              "start": 57.72,
+              "end": 65.68,
+              "text": "篮球其实也是一个很有趣的运动，又可以锻炼人，还可以还可以交朋友。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "4",
+              "start": 65.76,
+              "end": 75.24,
+              "text": "比如我就报那个篮球社，虽然我还不认识几几个人，但是我就先认识我们班上参加篮球。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "5",
+              "start": 77.69,
+              "end": 84.73,
+              "text": "篮球比赛嗯，就是有时候班级就是学校，也会举行一些比赛吧。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "6",
+              "start": 85.01,
+              "end": 91.37,
+              "text": "嗯，感觉还可以，嗯，发动一个班就是比较团结为他们加油啊。",
+              "speaker": "2"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "7",
+              "start": 91.49,
+              "end": 93.63,
+              "text": "之类的嗯。",
+              "speaker": "2"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 94
+          }
+        }
+      },
+      "actual_template": {
+        "status": 422,
+        "stage": "role_confirmation",
+        "error": "片段位置超过该原音声明的时长，请核实后填写。",
+        "attempts": []
+      }
+    },
+    {
+      "id": "11",
+      "score": {
+        "id": "11",
+        "title": "第一行书作者",
+        "cut": 2,
+        "reference_answer": "天下第一行书莫非是王羲之",
+        "transcribed_answer": "天下第一行书莫非是王。",
+        "character_edits": 7,
+        "characters": 79,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 1,
+        "local_value": "天下第一行书莫非是王。",
+        "full_fill": true,
+        "checks": [],
+        "review": false,
+        "qparts": 3
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "b03f3ca34b3120de696f65fb829c0f93269cd44867a3592d9e014acebd54ca19",
+        "text": "方便写艺术性不高，但是草书是艺术性太强不好写，如果没有练草书的人强行去写的话，那就在乱写，这是不好的。\n然后呢，你知道天下第一行书是谁的作品吗？\n天下第一行书莫非是王。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "方便写艺术性不高，但是草书是艺术性太强不好写，如果没有练草书的人强行去写的话，那就在乱写，这是不好的。",
+            "start_ms": 210,
+            "end_ms": 12050,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "然后呢，你知道天下第一行书是谁的作品吗？",
+            "start_ms": 12410,
+            "end_ms": 16930,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "天下第一行书莫非是王。",
+            "start_ms": 17410,
+            "end_ms": 20370,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 21.204,
+          "text": "1: 方便写艺术性不高，但是草书是艺术性太强不好写，如果没有练草书的人强行去写的话，那就在乱写，这是不好的。\n1: 然后呢，你知道天下第一行书是谁的作品吗？\n1: 天下第一行书莫非是王。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.21,
+              "end": 12.05,
+              "text": "方便写艺术性不高，但是草书是艺术性太强不好写，如果没有练草书的人强行去写的话，那就在乱写，这是不好的。",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 12.41,
+              "end": 16.93,
+              "text": "然后呢，你知道天下第一行书是谁的作品吗？",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "2",
+              "start": 17.41,
+              "end": 20.37,
+              "text": "天下第一行书莫非是王。",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 21
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": "天下第一行书莫非是王。",
+        "candidate_values": [
+          "天下第一行书莫非是王。"
+        ],
+        "quality_checks": [],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n然后呢，你知道天下第一行书是谁的作品吗：天下第一行书莫非是王。",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": [
+          {
+            "label": "q001",
+            "value": "天下第一行书莫非是王。",
+            "segment_ids": [
+              "8218da04-e5b6-505e-ab6e-c7952531e897",
+              "502697f6-fa43-5ae3-b330-51b8116818af",
+              "e7c34f16-fef1-5816-b2ac-e1c72f7b269a"
+            ],
+            "evidence": [
+              {
+                "segment_id": "e7c34f16-fef1-5816-b2ac-e1c72f7b269a",
+                "question_segment_id": "502697f6-fa43-5ae3-b330-51b8116818af",
+                "start": 0,
+                "end": 11,
+                "question_start": 0,
+                "question": "然后呢，你知道天下第一行书是谁的作品吗？",
+                "answer": "天下第一行书莫非是王。"
+              }
+            ],
+            "evidence_spans": [
+              {
+                "segment_id": "e7c34f16-fef1-5816-b2ac-e1c72f7b269a",
+                "start": 0,
+                "end": 11,
+                "precision": "exact",
+                "question": "方便写艺术性不高，但是草书是艺术性太强不好写，如果没有练草书的人强行去写的话，那就在乱写，这是不好的。\n然后呢，你知道天下第一行书是谁的作品吗？",
+                "quote": "天下第一行书莫非是王。",
+                "question_sources": [
+                  {
+                    "segment_id": "8218da04-e5b6-505e-ab6e-c7952531e897",
+                    "start": 0,
+                    "end": 51,
+                    "precision": "exact"
+                  },
+                  {
+                    "segment_id": "502697f6-fa43-5ae3-b330-51b8116818af",
+                    "start": 0,
+                    "end": 20,
+                    "precision": "exact"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "equals_complete_asr_answer": true
+      }
+    },
+    {
+      "id": "12",
+      "score": {
+        "id": "12",
+        "title": "宋代书法家与保留意见",
+        "cut": 1,
+        "reference_answer": "宋代的书法家嘛让我想一想啊嗯，宋代嗯，宋代宋代的话，我知道那个就是瘦金体的创始人也就是他那个宋徽宗，赵佶，他的字体，然后嗯，他开通了就是瘦金体他写的字体算是皇帝中，嗯，中国历史上皇帝中写的书法算是很好的一位他即是皇帝又是一位书法家，嗯，他对艺术有的很高深的造诣然后其他的，我不是特别了解，还请你来补充一下",
+        "transcribed_answer": "宋代的书法家吗？让我想一想啊嗯，宋代\n宋代的话，我知道那个就是瘦晶体的创始人，也就是他那个宋徽宗赵吉他的字体。然后嗯，他开封的就是瘦晶体，他写的字体算是皇帝宗，然后中国历史上皇帝中写的书法算是很好的一位。\n他既是皇帝，又是一位书法家，嗯，他对艺术有着很高深的造诣，然后其他的我不是特别了解，还请你来补充。",
+        "character_edits": 17,
+        "characters": 164,
+        "stable": false,
+        "qstable": true,
+        "exact_answer": false,
+        "raw_options": 0,
+        "options": 0,
+        "local_value": null,
+        "full_fill": false,
+        "checks": [],
+        "review": false,
+        "qparts": 2
+      },
+      "asr": {
+        "provider": "siliconflow",
+        "model": "XingChenAGI/XingChenASR-Diarize-V3.0",
+        "sha256": "50156318511c2d1265fd1aaeb446ba6654a1a53b9768205e294fb82331cc223e",
+        "text": "然后呢？接下来就到了宋代，宋代，你知道哪些有名的书法家吗？\n宋代的书法家吗？让我想一想啊嗯，宋代\n宋代的话，我知道那个就是瘦晶体的创始人，也就是他那个宋徽宗赵吉他的字体。然后嗯，他开封的就是瘦晶体，他写的字体算是皇帝宗，然后中国历史上皇帝中写的书法算是很好的一位。\n他既是皇帝，又是一位书法家，嗯，他对艺术有着很高深的造诣，然后其他的我不是特别了解，还请你来补充。",
+        "segments": [
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "然后呢？接下来就到了宋代，宋代，你知道哪些有名的书法家吗？",
+            "start_ms": 270,
+            "end_ms": 5990,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "宋代的书法家吗？让我想一想啊嗯，宋代",
+            "start_ms": 6310,
+            "end_ms": 10829,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "宋代的话，我知道那个就是瘦晶体的创始人，也就是他那个宋徽宗赵吉他的字体。然后嗯，他开封的就是瘦晶体，他写的字体算是皇帝宗，然后中国历史上皇帝中写的书法算是很好的一位。",
+            "start_ms": 13680,
+            "end_ms": 31880,
+            "timestamp_source": "PROVIDER"
+          },
+          {
+            "speaker": "unknown",
+            "speaker_id": "1",
+            "text": "他既是皇帝，又是一位书法家，嗯，他对艺术有着很高深的造诣，然后其他的我不是特别了解，还请你来补充。",
+            "start_ms": 32600,
+            "end_ms": 42480,
+            "timestamp_source": "PROVIDER"
+          }
+        ],
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "raw_result": {
+          "duration": 43.092,
+          "text": "1: 然后呢？接下来就到了宋代，宋代，你知道哪些有名的书法家吗？\n1: 宋代的书法家吗？让我想一想啊嗯，宋代\n1: 宋代的话，我知道那个就是瘦晶体的创始人，也就是他那个宋徽宗赵吉他的字体。然后嗯，他开封的就是瘦晶体，他写的字体算是皇帝宗，然后中国历史上皇帝中写的书法算是很好的一位。\n1: 他既是皇帝，又是一位书法家，嗯，他对艺术有着很高深的造诣，然后其他的我不是特别了解，还请你来补充。",
+          "segments": [
+            {
+              "type": "transcript.text.segment",
+              "id": "0",
+              "start": 0.27,
+              "end": 5.99,
+              "text": "然后呢？接下来就到了宋代，宋代，你知道哪些有名的书法家吗？",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "1",
+              "start": 6.31,
+              "end": 10.829,
+              "text": "宋代的书法家吗？让我想一想啊嗯，宋代",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "2",
+              "start": 13.68,
+              "end": 31.88,
+              "text": "宋代的话，我知道那个就是瘦晶体的创始人，也就是他那个宋徽宗赵吉他的字体。然后嗯，他开封的就是瘦晶体，他写的字体算是皇帝宗，然后中国历史上皇帝中写的书法算是很好的一位。",
+              "speaker": "1"
+            },
+            {
+              "type": "transcript.text.segment",
+              "id": "3",
+              "start": 32.6,
+              "end": 42.48,
+              "text": "他既是皇帝，又是一位书法家，嗯，他对艺术有着很高深的造诣，然后其他的我不是特别了解，还请你来补充。",
+              "speaker": "1"
+            }
+          ],
+          "usage": {
+            "type": "duration",
+            "seconds": 43
+          }
+        }
+      },
+      "actual_template": {
+        "status": 200,
+        "stage": "analysis",
+        "attempts": [
+          {
+            "status": 200
+          }
+        ],
+        "value": null,
+        "candidate_values": [],
+        "quality_checks": [
+          {
+            "field_id": "q001",
+            "code": "missing_evidence",
+            "message": "缺少逐字问答依据",
+            "status": "blocked"
+          }
+        ],
+        "rendered_text": "真人对话试题\n示例模板 · 待提供正式模板并人工核对\n\n宋代你知道哪些有名的书法家嘛：________（待补充）",
+        "role_confirmation": "reference_annotations",
+        "model": "Qwen/Qwen3-8B",
+        "facts": []
+      }
+    }
+  ]
+}

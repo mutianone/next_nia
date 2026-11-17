@@ -6,7 +6,8 @@ from backend.app.record_qa_review import acoustic_proposal,validate_turns
 
 def test_turns_preserve_anonymous_identity_and_timestamps():
     turns=normalize_turns({'segments':[{'text':'没有。但日期不确定。','speaker':'2','start':1.2,'end':3.5}]})
-    assert turns==[{'text':'[说话人 2] 没有。但日期不确定。','speaker':'unknown','speaker_id':'2','start_ms':1200,'end_ms':3500}]
+    assert turns==[{'text':'没有。但日期不确定。','speaker':'unknown','speaker_id':'2',
+                   'start_ms':1200,'end_ms':3500,'timestamp_source':'PROVIDER'}]
 
 
 @pytest.mark.parametrize('patch',[{'start':float('nan')},{'end':-1},{'speaker':'../../secret'},{'text':''}])
@@ -30,22 +31,32 @@ def test_diarized_upload_preserves_time_then_confirmed_roles_reach_document(clie
     enable_ai(client);row=with_audio(client)
     cloud.respond=lambda _:httpx.Response(200,json={'text':'原始聚合文本','segments':[
         {'text':'请说一下护照情况。','speaker':'1','start':0,'end':1},
-        {'text':'我带了护照。但有效期记不住。','speaker':'2','start':1.2,'end':4}]})
+        {'text':'我带了护照。','speaker':'2','start':1.2,'end':2.5},
+        {'text':'但有效期记不住。','speaker':'2','start':2.6,'end':4}]})
     response=asr(client,row);assert response.status_code==200,response.text
-    row=response.json();assert len(row['segments'])==2
+    row=response.json();assert len(row['segments'])==3
     assert all(x['speaker']=='unknown' and x['timestamp_source']=='asr' for x in row['segments'])
     assert row['segments'][1]['start_ms']==1200
     response=client.post(f"/api/records/{row['id']}/qa-proposal",json={'expected_revision':row['revision'],'confirmed':True})
     assert response.status_code==200,response.text
     assert len(cloud.calls)==1  # Acoustic boundaries require no second cloud guessing call.
-    assert len(response.json()['turns'])==2
-    row=segments(client,row,[editable(row['segments'][0],text='问：请说一下护照情况。',speaker='interviewer'),
-        editable(row['segments'][1],text='答：我带了护照。但有效期记不住。',speaker='interviewee')]).json()
-    from backend.app.records import input_segments
-    from types import SimpleNamespace
-    from backend.app.record_selection import paired_options
-    inputs=input_segments([SimpleNamespace(**x) for x in row['segments']])
+    assert len(response.json()['turns'])==3
+    assert [s['text'] for s in row['segments']]==['请说一下护照情况。','我带了护照。','但有效期记不住。']
+    from backend.app import records
+    from backend.app.record_selection import paired_options,resolve_selections
+    with records.Session(client.app.state.engine) as session:
+        recognition=session.get(records.asr_results.RecognitionRun,row['segments'][0]['recognition_run_id'])
+        assert recognition.raw_result['text']=='原始聚合文本'
+        assert recognition.raw_result['segments'][2]['text']=='但有效期记不住。'
+        assert not paired_options(records.input_segments(records.ordered_segments(session,row['id'])))
+    row=segments(client,row,[editable(s,speaker='interviewer' if i==0 else 'interviewee')
+                             for i,s in enumerate(row['segments'])]).json()
+    with records.Session(client.app.state.engine) as session:
+        inputs=records.input_segments(records.ordered_segments(session,row['id']))
     assert inputs[0]['speaker']=='interviewer' and len(paired_options(inputs))==1
+    resolved=resolve_selections({'key_facts':[{'label':'q001','qa_ids':['p0001']}]},inputs)
+    assert resolved['key_facts'][0]['value']=='我带了护照。\n但有效期记不住。'
+    assert len(resolved['key_facts'][0]['evidence'])==2
 
 
 def test_fun_asr_does_not_skip_semantic_boundary_review(monkeypatch):
