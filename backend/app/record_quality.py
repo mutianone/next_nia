@@ -1,10 +1,10 @@
 """Conservative extractive checks, not a semantic truth or legal classifier."""
 import re
 
-from .record_selection import QUOTED_SPEECH, officer_question_contexts, repeated_particle_cut, source_units
+from .record_selection import QUOTED_SPEECH, answer_blocks, officer_question_contexts, repeated_particle_cut, source_units
 from .record_qa_boundaries import contains_question_prompt, question_answer_cuts, question_tail_cut, short_reply_question_cuts
 
-POLICY = 'extractive-qa-v7'
+POLICY = 'extractive-qa-v8'
 BOUNDARY = '。！？!?；;\n'
 CONDITIONS = re.compile(r'不确定|记不清|记不住|不知道|可能|好像|但是|但|需要核|请.*核|不对|不是|没有|未')
 
@@ -29,9 +29,25 @@ def adjacent_evidence(question, answer, gap, confirmed_pair):
     return confirmed_pair and repeated_particle_cut(question, gap + answer) == len(gap)
 
 
+def covers_answer_block(block, evidence, indexed):
+    """Every clip must be quoted in full and cite the very same question."""
+    if not block or len(evidence) != len(block):
+        return False
+    def question_ref(item):
+        return item.get('question_segment_id') or item['segment_id'], item.get('question_start'), item['question']
+    anchor = question_ref(evidence[0])
+    for part, (sid, start, end) in zip(evidence, block):
+        if (part['segment_id'] != sid or question_ref(part) != anchor
+                or part['answer'] != indexed[sid][start:end]
+                or part.get('start') not in (None,start) or part.get('end') not in (None,end)):
+            return False
+    return True
+
+
 def check_answers(facts, segments, template, semantic_matches=frozenset()):
     indexed = {s['segment_id']:s['text'] for s in segments}
     units=source_units(segments)
+    blocks=answer_blocks(segments, units)
     contexts=officer_question_contexts(segments)
     raw_asr = {s['segment_id'] for s in segments if s.get('recognition_run_id') and
                s.get('speaker', 'unknown') == 'unknown'}
@@ -57,7 +73,9 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
         context_ids = set()
         if not evidence:
             reason = ('missing_evidence', '缺少逐字问答依据')
-        for item in evidence:
+        continuation_end = 0
+        used_blocks = set()
+        for number,item in enumerate(evidence):
             text = indexed.get(item['segment_id'], '')
             question, answer = item['question'], item['answer']
             qid=item.get('question_segment_id') or item['segment_id']
@@ -80,11 +98,21 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 reason=('role_mismatch','发言角色未确认或问答角色不匹配'); break
             gap=offsets[item['segment_id']]+ai-(offsets[qid]+qi+len(question))
             confirmed = answer_roles == {'interviewee'} and question_roles == {'interviewer'}
+            continuation = number < continuation_end
+            block = blocks.get(answer_units[0]['id'])
+            if block is not None and not continuation:
+                # Legacy model-supplied evidence must cover the same complete
+                # reply as a server-generated selection, in the same order.
+                selected = evidence[number:number+len(block)]
+                if not confirmed or block in used_blocks or not covers_answer_block(block,selected,indexed):
+                    reason = ('incomplete_answer', '连续回答的来源不完整或说话人有疑点，请核对全部补充'); break
+                used_blocks.add(block)
+                continuation_end = number+len(block)
             if answer_roles != {'interviewee'} and contains_question_prompt(answer):
                 reason = ('question_in_answer', '疑似将提问人的补充说明纳入回答，请回听核对'); break
             skipped = (qtext[qi+len(question):ai] if qid == item['segment_id'] else
                        qtext[qi+len(question):] + '\n' + text[:ai])
-            if (gap < 0 or gap != len(skipped) or
+            if not continuation and (gap < 0 or gap != len(skipped) or
                     not adjacent_evidence(question, answer, skipped, confirmed)):
                 reason = ('unpaired_answer', '问题与回答的位置无法可靠配对'); break
             context = contexts.get(qid)
@@ -93,7 +121,8 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
                 if not context or not confirmed or question.strip() != qtext.strip():
                     reason = ('unpaired_answer', '连续问话与回答的对应关系需要核对'); break
                 question = '\n'.join(s['text'] for s in context)
-                question_sources = [{'segment_id':s['segment_id'],'start':0,'end':len(s['text']),'precision':'exact'} for s in context]
+                if not continuation:
+                    question_sources = [{'segment_id':s['segment_id'],'start':0,'end':len(s['text']),'precision':'exact'} for s in context]
                 context_ids.update(s['segment_id'] for s in context)
             if item['segment_id'] in raw_asr and not confirmed:
                 reply = re.sub(r'[\W_]+', '', answer)

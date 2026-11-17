@@ -7,7 +7,7 @@ from sqlalchemy import select
 from . import records as r
 from .record_templates import SYSTEM_FIELDS
 
-from .record_selection import ACOUSTIC_MARKER, officer_question_contexts, repeated_particle_cut, role_ranges
+from .record_selection import ACOUSTIC_MARKER, answer_blocks, officer_question_contexts, repeated_particle_cut, role_ranges, source_units
 from .record_quality import mixed_answer
 
 FOLLOWUP = re.compile(r'你刚才|刚才说|你是说|你的意思|是否就是说|再确认|补充说明')
@@ -25,7 +25,14 @@ def pair_qa(segments, template):
             for alias in [field['label'], *field.get('question_aliases', [])]:
                 aliases[normalize(alias)].add(field['id'])
     turns = []
-    contexts = officer_question_contexts(r.input_segments(segments))
+    inputs = r.input_segments(segments)
+    contexts = officer_question_contexts(inputs)
+    units = source_units(inputs)
+    blocks = answer_blocks(inputs, units)
+    ambiguous = defaultdict(list)
+    for u in units:
+        if blocks.get(u['id']) == ():
+            ambiguous[u['segment_id']].append((u['start'],u['end']))
     leadins = {s['segment_id'] for context in contexts.values() for s in context[:-1]}
     for segment in segments:
         if segment.id in leadins:
@@ -53,7 +60,8 @@ def pair_qa(segments, template):
             if start == end:
                 continue
             content = text[start:end]
-            if ACOUSTIC_MARKER.search(content) or role not in ('interviewer', 'interviewee'):
+            if (ACOUSTIC_MARKER.search(content) or role not in ('interviewer', 'interviewee')
+                    or any(a<end and b>start for a,b in ambiguous.get(segment.id, ()))):
                 turns.append({'role': 'unknown'})
                 continue
             turns.append({'role': 'question' if role == 'interviewer' else 'answer',

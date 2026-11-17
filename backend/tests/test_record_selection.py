@@ -232,3 +232,76 @@ def test_confirmed_officer_context_is_available_to_model_rules_and_evidence(monk
     assert not rule_facts(pair_qa(segments,template))
     from backend.app.record_selection import paired_options
     assert not paired_options(input_segments(segments))
+
+
+def split_reply():
+    lines = ['你们学校有什么专业呢？', '我们学校有就公路系，', '还有信息。', '不过我不确定。']
+    sources = [dict(segment_id=str(i), text=line, recognition_run_id='r', channel_id=0,
+                    speaker='interviewer' if i==0 else 'interviewee', speaker_id=1 if i==0 else 2,
+                    start_ms=i*1000, end_ms=i*1000+900) for i,line in enumerate(lines)]
+    return sources, {'fields':[{'id':'q001','label':lines[0]}]}
+
+
+def test_split_answer_preserves_each_quote_and_rejects_incomplete_legacy_evidence():
+    sources,template=split_reply()
+    selection={'key_facts':[{'label':'q001','qa_ids':['p0001']}]}
+    fact,=resolve_selections(selection,sources)['key_facts']
+    accepted,_=check_answers([fact],sources,template)
+    assert accepted[0]['value']=='我们学校有就公路系，\n还有信息。\n不过我不确定。'
+    assert [(s['segment_id'],s['quote']) for s in accepted[0]['evidence_spans']]==[
+        (s['segment_id'],s['text']) for s in sources[1:]]
+    for order in ([0], [1,2], [0,2], [2,1,0], [0,0,2]):
+        partial=[fact['evidence'][i] for i in order]
+        bad=dict(fact,evidence=partial,value='\n'.join(e['answer'] for e in partial))
+        accepted,checks=check_answers([bad],sources,template)
+        assert not accepted and checks[0]['code']=='incomplete_answer'
+
+
+@pytest.mark.parametrize('changed', [dict(speaker_id=None), dict(speaker_id=3), dict(channel_id=1),
+    dict(recognition_run_id='other'),dict(start_ms=6000,end_ms=6500)])
+def test_unverified_continuation_cannot_leave_a_partial_answer(changed):
+    from backend.app.record_selection import paired_options
+    sources,_=split_reply()
+    sources[2].update(changed)
+    assert paired_options(sources)==[]
+
+
+def test_next_officer_starts_a_separate_pair_after_supplement():
+    from backend.app.record_selection import paired_options
+    sources,_=split_reply()
+    sources += [{**sources[0],'segment_id':'q2','text':'你从哪里来？'},
+                {**sources[1],'segment_id':'a2','text':'北京。'}]
+    pairs=paired_options(sources)
+    assert [p['answer_ids'] for p in pairs]==[['u0002','u0003','u0004'],['u0006']]
+
+
+def test_split_answer_reaches_ordinary_template_and_saved_evidence(client,cloud):
+    import httpx,json
+    from backend.app import records as r
+    from backend.tests.test_qa_drafts import seed
+    sources,template=split_reply()
+    row,_=seed(client,tuple(s['text'] for s in sources),tuple(s['speaker_id'] for s in sources))
+    with r.write_session(client.app.state.engine) as db:
+        rec=db.get(r.RecordSession,row['id'])
+        rec.template_snapshot={**template,'id':'eval','version':'1','name':'专业询问'}
+        for seg,s in zip(r.ordered_segments(db,rec.id),sources):
+            seg.speaker=s['speaker']
+    def choose(request):
+        prompt=json.loads(json.loads(request.content)['messages'][1]['content'])
+        option,=prompt['qa_options']
+        assert '还有信息。' in option['answer'] and '不过我不确定。' in option['answer']
+        return httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'content':json.dumps({
+            'summary':'匹配','key_facts':[{'label':'q001','qa_ids':[option['id']]}],'issues':[]})}}]})
+    enable_ai(client,'deepseek')
+    cloud.respond=choose
+    url=f"/api/records/{row['id']}"
+    revision=client.get(url).json()['revision']
+    res=client.post(url+'/analyze',json={'confirmed':True,'expected_revision':revision})
+    assert res.status_code==200,res.text
+    saved=client.get(url).json()
+    expected='\n'.join(s['text'] for s in sources[1:])
+    assert saved['template_snapshot']['values']['q001']==saved['candidates'][0]['value']==expected
+    assert expected in saved['rendered_text']
+    evidence=saved['analysis']['key_facts'][0]['evidence_spans']
+    assert [(s['segment_id'],s['start'],s['end']) for s in evidence]==[
+        (s['id'],0,len(s['text'])) for s in saved['segments'][1:]]

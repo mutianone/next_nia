@@ -1,4 +1,5 @@
 """Resolve model-selected utterance IDs to immutable source text, never model prose."""
+from itertools import groupby, pairwise
 import re
 
 from .record_qa_boundaries import contains_question_prompt, question_answer_cuts, question_tail_cut
@@ -75,41 +76,82 @@ def source_units(segments):
     return units
 
 
+def source_spans(units):
+    """Exact text ranges for an ordered sequence of units."""
+    spans = []
+    for sid, group in groupby(units, key=lambda u: u['segment_id']):
+        clip = list(group)
+        spans.append((sid, clip[0]['start'], clip[-1]['end']))
+    return tuple(spans)
+
+
+def answer_blocks(segments, units):
+    """Index multi-clip replies by unit. An empty block requires boundary review."""
+    from .record_speaker_turns import same_contiguous_voice
+    positions = {s['segment_id']: i for i, s in enumerate(segments)}
+    blocks = {}
+    for role, sequence in groupby(units, key=lambda u: u['role']):
+        if role != 'interviewee':
+            continue
+        members = list(sequence)
+        spans = source_spans(members)
+        if len(spans) == 1:
+            continue
+        indices = [positions[sid] for sid, _, _ in spans]
+        # Historical manually entered clips can describe different topics and
+        # have no ASR run from which to verify a shared speaker.
+        if not any(segments[i].get('recognition_run_id') for i in indices):
+            continue
+        verified = all(b == a+1 and same_contiguous_voice(segments[a], segments[b]) for a,b in pairwise(indices))
+        block = spans if verified else ()
+        for u in members:
+            blocks[u['id']] = block
+    return blocks
+
+
 def resolve_selections(data, segments):
     if not isinstance(data,dict): return data
     if 'qa_pairs' not in data:
         if not any(isinstance(f,dict) and 'qa_ids' in f for f in data.get('key_facts',[])): return data
         data['qa_pairs']=paired_options(segments)
     units=source_units(segments); indexed={u['id']:(i,u) for i,u in enumerate(units)}
+    blocks=answer_blocks(segments,units)
     pairs=data.pop('qa_pairs')
     if not isinstance(pairs,list) or len(pairs)>128: raise ValueError('invalid pairs')
     table={}
-    def span(ids):
+    texts = {s['segment_id']:s['text'] for s in segments}
+    def selected(ids):
         if not isinstance(ids,list) or not ids or len(ids)>100: raise ValueError('invalid units')
-        positions=[indexed[x][0] for x in ids]
-        if positions!=list(range(positions[0],positions[0]+len(ids))): raise ValueError('noncontiguous units')
-        selected=[indexed[x][1] for x in ids]
-        if len({u['segment_id'] for u in selected})!=1: raise ValueError('span crosses clips')
-        first,last=selected[0],selected[-1]
-        text=next(s['text'] for s in segments if s['segment_id']==first['segment_id'])
-        return first['segment_id'],text[first['start']:last['end']]
+        first=indexed[ids[0]][0]
+        members=units[first:first+len(ids)]
+        if ids!=[u['id'] for u in members]: raise ValueError('noncontiguous units')
+        return members
     for pair in pairs:
         if not isinstance(pair,dict) or set(pair)!={'id','question_ids','answer_ids'}: raise ValueError('invalid pair')
         if not isinstance(pair['id'],str) or pair['id'] in table: raise ValueError('duplicate pair')
-        qid,question=span(pair['question_ids']); aid,answer=span(pair['answer_ids'])
-        if indexed[pair['answer_ids'][0]][0]!=indexed[pair['question_ids'][-1]][0]+1: raise ValueError('unpaired units')
-        table[pair['id']]={'segment_id':aid,'question_segment_id':qid,'question':question,'answer':answer,
-                          'start':indexed[pair['answer_ids'][0]][1]['start'],
-                          'end':indexed[pair['answer_ids'][-1]][1]['end'],
-                          'question_start':indexed[pair['question_ids'][0]][1]['start']}
+        questions = selected(pair['question_ids'])
+        answers = selected(pair['answer_ids'])
+        if indexed[answers[0]['id']][0] != indexed[questions[-1]['id']][0]+1:
+            raise ValueError('unpaired units')
+        (qid, start, end), = source_spans(questions)
+        spans = source_spans(answers)
+        block = blocks.get(answers[0]['id'])
+        if (block is not None or len(spans)>1) and spans != block:
+            raise ValueError('incomplete or unverified reply')
+        evidence = [{'segment_id':sid, 'question_segment_id':qid, 'question':texts[qid][start:end],
+                     'answer':texts[sid][a:b], 'start':a, 'end':b, 'question_start':start} for sid,a,b in spans]
+        table[pair['id']] = evidence
     for fact in data.get('key_facts',[]):
         if 'qa_ids' not in fact: continue
         if set(fact)!={'label','qa_ids'} or not str(fact['label']).startswith('q'): raise ValueError('invalid selection')
         ids=fact.pop('qa_ids')
         if not isinstance(ids,list) or not ids or len(ids)>30 or len(set(ids))!=len(ids): raise ValueError('invalid qa refs')
-        evidence=[table[x] for x in ids]
-        fact.update(value='\n'.join(e['answer'] for e in evidence), evidence=evidence,
-                    segment_ids=list(dict.fromkeys(s for e in evidence for s in (e['question_segment_id'],e['segment_id']))))
+        evidence=[item for x in ids for item in table[x]]
+        value = '\n'.join(e['answer'] for e in evidence)
+        source_ids = list(dict.fromkeys(s for e in evidence for s in (e['question_segment_id'], e['segment_id'])))
+        if len(evidence)>30 or len(source_ids)>30 or len(value)>2000:
+            raise ValueError('reply exceeds field limits')
+        fact.update(value=value, evidence=evidence, segment_ids=source_ids)
     return data
 
 
@@ -141,6 +183,7 @@ def paired_options(segments):
     """Confirmed turn boundaries outrank punctuation. Unknown voices never imply roles."""
     units=source_units(segments); pairs=[];i=0
     contexts=officer_question_contexts(segments)
+    blocks=answer_blocks(segments, units)
     while i<len(units):
         unit=units[i]; role=unit['role']
         if role=='interviewer':
@@ -148,9 +191,13 @@ def paired_options(segments):
             while j<len(units) and units[j]['role']=='interviewer' and units[j]['segment_id']==unit['segment_id']:
                 questions.append(units[j]);j+=1
             answers=[]
-            while j<len(units) and units[j]['role']=='interviewee' and (not answers or units[j]['segment_id']==answers[0]['segment_id']):
+            while j<len(units) and units[j]['role']=='interviewee':
+                if answers and units[j]['segment_id']!=answers[0]['segment_id'] and answers[0]['id'] not in blocks:
+                    break
                 answers.append(units[j]);j+=1
-            i=j if answers else i+len(questions)
+            i=j
+            if answers and blocks.get(answers[0]['id']) == ():
+                continue
         elif role=='unknown' and is_question_unit(unit['text']):
             questions=[unit];answers=[];j=i+1
             while j<len(units):
