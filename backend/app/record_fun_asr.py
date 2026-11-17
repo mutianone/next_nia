@@ -36,11 +36,15 @@ def _cache(fingerprint,task=None,delete=False):
         return row[0] if row else None
 
 
-def transcribe(raw,fmt,mime,key,workspace='',request_key=''):
+def transcribe(raw,fmt,mime,key,workspace='',request_key='',speaker_count=None):
     from .records_ai import RecordAIError
     from .record_asr_results import normalize_funasr
     from .documents import plain_text
     base=f'https://{workspace}.cn-beijing.maas.aliyuncs.com/api/v1' if workspace else BASE
+    parameters = {'channel_id': [0], 'diarization_enabled': True}
+    if speaker_count is not None:
+        parameters['speaker_count'] = speaker_count
+        request_key += f':speakers={speaker_count}'
     fingerprint=hashlib.sha256(key.encode()+b'\0'+workspace.encode()+b'\0'+request_key.encode()+b'\0'+raw).hexdigest()
     deadline=time.monotonic()+MAX_WAIT
     auth={'Authorization':f'Bearer {key}'}
@@ -72,7 +76,7 @@ def transcribe(raw,fmt,mime,key,workspace='',request_key=''):
                 request(client,'POST',host,decode=False,data=form,files={'file':(name,raw,mime)})
                 output=request(client,'POST',base+'/services/audio/asr/transcription',
                     headers={**auth,'X-DashScope-Async':'enable','X-DashScope-OssResourceResolve':'enable'},
-                    json={'model':'fun-asr','input':{'file_urls':['oss://'+object_key]},'parameters':{'channel_id':[0],'diarization_enabled':True}})['output']
+                    json={'model':'fun-asr','input':{'file_urls':['oss://'+object_key]},'parameters':parameters})['output']
                 task=output['task_id']
                 if not isinstance(task,str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,100}',task):raise ValueError()
                 _cache(fingerprint,task)

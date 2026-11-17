@@ -116,5 +116,7 @@ def sentence_parts(session, sentence):
         edges = [0, *cuts, len(text)] if len(cuts) < 100 else [0, len(text)]
         return [{'start': start, 'end': end, 'role': 'UNKNOWN', 'intent': 'UNKNOWN'}
                 for start, end in zip(edges, edges[1:])], 'unreviewed'
+    if d.get('voice_review'):
+        return [{'start': 0, 'end': len(text), 'role': 'UNKNOWN', 'intent': 'UNKNOWN'}], 'unreviewed'
     mapping = latest_mapping(session, sentence.run_id, d.get('channel_id'), d.get('speaker_id')) if d.get('speaker_id') is not None else None
     return [{'start': 0, 'end': len(d['text']), 'role': mapping.business_role if mapping else 'UNKNOWN', 'intent': 'UNKNOWN'}], f'mapping:{mapping.id}' if mapping else 'unreviewed'

@@ -324,7 +324,11 @@ class SegmentsUpdate(Input):
         return value
 
 
+SpeakerCount = Annotated[int, Field(strict=True, ge=2, le=100)]
+
+
 class TranscribeRequest(Input):
+    speaker_count: SpeakerCount | None = None
     expected_revision: int = Field(ge=1)
     confirmed: bool = Field(default=False, strict=True)
     recognition_request_id: str | None = Field(default=None, pattern=r"^[a-f0-9-]{36}$")
@@ -443,7 +447,7 @@ def record_json(session, row):
 
 def input_segments(segments):
     return [{"segment_id": item.id, "text": item.text, "speaker": item.speaker,
-             **({"speaker_id": meta.get("speaker_id"), "recognition_run_id": meta["recognition_run_id"]} if (meta := asr_results.metadata(item)) else {})} for item in segments]
+             **({"speaker_id": meta.get("speaker_id"), "recognition_run_id": meta["recognition_run_id"], **({"voice_review": True} if meta.get("voice_review") else {})} if (meta := asr_results.metadata(item)) else {})} for item in segments]
 
 
 def content_hash(segments):
@@ -541,6 +545,8 @@ def capabilities(request: Request):
         providers['asr'].update(speaker_diarization='supported',word_timestamps='supported',
             capability_source='https://help.aliyun.com/zh/model-studio/fun-asr-recorded-speech-recognition-http-api',
             format_note='原音本地保留；转写使用阿里云Fun-ASR，返回说话人分段与时间戳。')
+    from .record_voice_audio import available as voice_available
+    providers["asr"]["speaker_count_available"] = settings.ai.speech.provider == "aliyun" or voice_available()
     from .record_template_config import available as available_templates
     from .record_pdf import available as pdf_available
     with Session(request.app.state.engine) as session:
@@ -963,7 +969,8 @@ def transcribe(record_id: str, audio_id: str, body: TranscribeRequest, request: 
         identifier = attempt.id
         audit(session, "transcription_started", record_id=row.id, attempt_id=identifier, audio_id=audio_id)
     try:
-        output = transcribe_audio(raw, file_format, mime_type, settings, **({"request_key": body.recognition_request_id} if body.recognition_request_id else {}))
+        options = {key: value for key, value in (("request_key", body.recognition_request_id), ("speaker_count", body.speaker_count)) if value is not None}
+        output = transcribe_audio(raw, file_format, mime_type, settings, **options)
     except RecordAIError as error:
         mark_failed(engine, TranscriptionAttempt, identifier, error.message)
         raise HTTPException(error.status, error.message) from None
@@ -994,6 +1001,8 @@ def transcribe(record_id: str, audio_id: str, body: TranscribeRequest, request: 
             version(session, row, "transcribed")
         session.flush()
         result = detail(session, row)
+        if body.speaker_count is not None:
+            result['recognition_version'] = {'id':recognition.id, 'applied':recognition.applied}
     if stale or limited:
         raise HTTPException(409 if stale else 422, "原始转写已留存，但因笔录版本变化或正文达到上限未自动加入；请重新读取并核对。")
     return result

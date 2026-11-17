@@ -6,7 +6,7 @@ from backend.app.record_qa_review import acoustic_proposal,validate_turns
 
 def test_turns_preserve_anonymous_identity_and_timestamps():
     turns=normalize_turns({'segments':[{'text':'没有。但日期不确定。','speaker':'2','start':1.2,'end':3.5}]})
-    assert turns==[{'text':'[说话人 2] 没有。但日期不确定。','speaker':'unknown','start_ms':1200,'end_ms':3500}]
+    assert turns==[{'text':'[说话人 2] 没有。但日期不确定。','speaker':'unknown','speaker_id':'2','start_ms':1200,'end_ms':3500}]
 
 
 @pytest.mark.parametrize('patch',[{'start':float('nan')},{'end':-1},{'speaker':'../../secret'},{'text':''}])

@@ -177,7 +177,8 @@ def origin_run(session, record_id, origin):
 
 def analysis_inputs(session, run):
     return [{'segment_id': item.id, 'text': item.data['text'], 'speaker': 'unknown',
-             'speaker_id': item.data.get('speaker_id'), 'recognition_run_id': run.id} for item in sentences(session, run)]
+             'speaker_id': item.data.get('speaker_id'), 'recognition_run_id': run.id,
+             **({'voice_review': True} if item.data.get('voice_review') else {})} for item in sentences(session, run)]
 
 
 def coverage(data, run):
@@ -242,6 +243,7 @@ def metadata(row):
     return {k: data.get(k) for k in ('recognition_run_id', 'raw_result_ref', 'sentence_id', 'speaker_id',
              'speaker_scope', 'channel_id', 'words', 'timestamp_unit', 'session_intervals', 'word_session_intervals')} | {
              'asr_timestamp_source': data.get('timestamp_source', 'UNKNOWN'),
+             **({'voice_review': True, 'listen_start_ms': data.get('listen_start_ms', data.get('start_ms'))} if data.get('voice_review') else {}),
              'asr_original_text': data['text'], 'asr_start_ms': data.get('start_ms'), 'asr_end_ms': data.get('end_ms')}
 
 

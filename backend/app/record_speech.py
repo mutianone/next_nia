@@ -17,7 +17,7 @@ def normalize_turns(payload):
             if start<previous or start<0 or end<=start or end>86400:raise ValueError()
             previous=start
             # Some providers repeat labels in the aggregate text. Never use that aggregate to reconstruct boundaries.
-            turns.append({'speaker':'unknown','text':f'[说话人 {speaker}] '+text.strip(),
+            turns.append({'speaker':'unknown','speaker_id':speaker,'text':f'[说话人 {speaker}] '+text.strip(),
                           'start_ms':round(start*1000),'end_ms':round(end*1000)})
             if turns[-1]['end_ms']<=turns[-1]['start_ms']:raise ValueError()
         if sum(len(t['text']) for t in turns)>20000:raise ValueError()

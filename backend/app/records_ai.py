@@ -72,15 +72,33 @@ def bounded_post(url, key, *, limit, timeout=90.0, **kwargs):
         raise RecordAIError(502, "AI 响应无法读取，本次结果未应用。") from None
 
 
-def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Settings, *, request_key: str = '') -> dict:
+def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Settings, *, request_key: str = '', speaker_count: int | None = None) -> dict:
+    from . import record_voice_audio as voices
     provider, model, key = provider_config(settings, "asr")
+    use_local = speaker_count is not None and voices.available()
+    if speaker_count is not None and not use_local and provider != 'aliyun':
+        raise RecordAIError(422, '多人转写需要安装本机分人模型或配置阿里云 Fun-ASR。')
+    original, original_format = raw, file_format
     try:
         raw, file_format, mime_type = normalize_for_asr(raw, file_format)
     except RecordMediaError as error:
         raise RecordAIError(422, str(error)) from None
     if provider == 'aliyun':
         from .record_fun_asr import transcribe
-        return transcribe(raw,file_format,mime_type,key,settings.ai.speech.workspace_id,request_key=request_key)
+        output = transcribe(raw,file_format,mime_type,key,settings.ai.speech.workspace_id,request_key=request_key,speaker_count=speaker_count)
+        if speaker_count is not None:
+            for segment in output['segments']:
+                segment['word_boundaries'] = True
+                words = segment.get('words') or []
+                segment['voice_review'] = (segment.get('speaker_id') is None or not words or
+                                           any(w.get('begin_time') is None or w.get('end_time') is None for w in words))
+        if use_local:
+            from .record_asr_results import fingerprint
+            from uuid import uuid5, NAMESPACE_URL
+            voices.annotate(original,original_format,output,speaker_count)
+            # Keep a distinct immutable version when local review evidence changes.
+            output['recognition_run_id'] = str(uuid5(NAMESPACE_URL, output['recognition_run_id'] + fingerprint(output['segments'])))
+        return output
     # Never send the original filename, person details, other clips or metadata.
     payload = bounded_post(ASR_URL, key, limit=128 * 1024,
                            data={"model": model}, files={"file": (f"recording.{file_format}", raw, mime_type)})
@@ -96,7 +114,11 @@ def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Set
     if turns:
         # Keep anonymous acoustic identities, never silently call speaker 1 the interviewer.
         return {"provider": provider, "model": model, "text": "\n".join(t['text'] for t in turns), "segments": turns}
-    return {"provider": provider, "model": model, "text": text}
+    output = {"provider": provider, "model": model, "text": text}
+    if use_local:
+        output['raw_result'] = payload
+        return voices.annotate(original,original_format,output,speaker_count)
+    return output
 
 
 class AnswerEvidence(BaseModel):

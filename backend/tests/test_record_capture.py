@@ -177,3 +177,27 @@ def test_busy_speech_at_sixty_seconds_waits_for_pause_without_losing_chunks(clie
     c.schedule(client.app.state.engine)
     with Session(client.app.state.engine) as s:
         batch=s.scalar(select(c.Batch));assert batch.first==0 and batch.last==12 and batch.samples==65*16000
+
+
+def test_capture_reuses_speaker_count_for_audio_processing(client,cloud,monkeypatch):
+    from backend.app import record_voice_audio
+    monkeypatch.setattr(record_voice_audio,'available',lambda:True)
+    counts=[]
+    def transcribe(raw,fmt,mime,settings,*,speaker_count):
+        counts.append(speaker_count)
+        return {'text':'它是谁的？'}
+    monkeypatch.setattr(c,'transcribe_audio',transcribe)
+    rec=create(client)
+    cid=str(uuid4())
+    path=f'/api/records/{rec["id"]}/captures'
+    payload={'id':cid,'expected_revision':rec['revision'],'confirmed':True,
+             'started_at':'2026-11-04T10:00:00+08:00','speaker_count':3}
+    assert client.post(path,json=payload).status_code==201
+    assert client.post(path,json=payload).status_code==201
+    assert client.post(path,json={**payload,'speaker_count':2}).status_code==409
+    assert put(client,rec,cid,0).is_success
+    assert finish(client,rec,cid,1).is_success
+    engine=client.app.state.engine
+    c.schedule(engine)
+    c.process(engine,*c.claim(engine),client.app.state.store.current)
+    assert counts==[3]

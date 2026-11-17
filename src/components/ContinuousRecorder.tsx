@@ -1,3 +1,4 @@
+import { SpeakerCount } from './SpeakerCount';
 import './ContinuousRecorder.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api';
@@ -9,7 +10,8 @@ type Batch={id:string;state:string;error:string;text:string;seconds:number;offse
 type Capture={id:string;state:string;error:string;partial:boolean;saved_count:number;received_sequences:number[];saved_seconds:number;final_count:number|null;started_at:string;batches:Batch[]};
 const terminal=(state?:string)=>['completed','partial','cancelled'].includes(state||'');
 const duration=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
-export function ContinuousRecorder({recordId,revision,disabled,visible,onActive,onCompleted}:{recordId:string;revision:number;disabled:boolean;visible:boolean;onActive:(v:boolean)=>void;onCompleted:()=>void}){
+export function ContinuousRecorder({recordId,revision,disabled,visible,onActive,onCompleted,multiSpeaker}:{multiSpeaker?:boolean;recordId:string;revision:number;disabled:boolean;visible:boolean;onActive:(v:boolean)=>void;onCompleted:()=>void}){
+ const [speakerCount,setSpeakerCount]=useState<number|null>(null);
  const {user}=useAuth();const key=`${user?.id}:${recordId}`;
  const [capture,setCapture]=useState<Capture|null>(null),[recording,setRecording]=useState(false),[starting,setStarting]=useState(false),[error,setError]=useState(''),[pending,setPending]=useState(0),[elapsed,setElapsed]=useState(0),[recovered,setRecovered]=useState(false);
  const cache=useRef<CaptureCache|null>(null),context=useRef<AudioContext|null>(null),node=useRef<AudioWorkletNode|null>(null),stream=useRef<MediaStream|null>(null),writing=useRef<Promise<void>>(Promise.resolve()),uploading=useRef(false),mounted=useRef(true),live=useRef(false),samples=useRef(0),memory=useRef<{sequence:number;pcm:ArrayBuffer}[]>([]),writeBytes=useRef(0),closed=useRef(false),finishRequested=useRef(false),completed=useRef(''),sawActive=useRef(false),stopTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -53,7 +55,7 @@ export function ContinuousRecorder({recordId,revision,disabled,visible,onActive,
    const clicked=new Date().toISOString();const media=await navigator.mediaDevices.getUserMedia({audio:true});stream.current=media;
    const ctx=new AudioContext();context.current=ctx;await ctx.audioWorklet.addModule('/audio/capture-worklet.js');await ctx.resume();
    const value:CaptureCache={key,captureId:crypto.randomUUID(),count:0,startedAt:clicked,capturedAt:new Date().toISOString()};await captureStore.save(value);cache.current=value;
-   const result=await api<Capture>(endpoint,{method:'POST',body:JSON.stringify({id:value.captureId,started_at:clicked,captured_at:value.capturedAt,expected_revision:revision,confirmed:true})});setCapture(result);
+   const result=await api<Capture>(endpoint,{method:'POST',body:JSON.stringify({id:value.captureId,started_at:clicked,captured_at:value.capturedAt,expected_revision:revision,confirmed:true,...(multiSpeaker && speakerCount ? {speaker_count:speakerCount} : {})})});setCapture(result);
    const processor=new AudioWorkletNode(ctx,'crj-capture');node.current=processor;samples.current=0;closed.current=false;live.current=true;setRecording(true);setRecovered(false);
    processor.port.onmessage=e=>{
     if(e.data.pcm){const pcm=e.data.pcm as ArrayBuffer;const sequence=cache.current!.count++;writeBytes.current+=pcm.byteLength;if(writeBytes.current>8*1024*1024){cache.current!.incomplete=true;setError('保存队列积压过多，正在安全停止以保留已有录音。');stop();}samples.current+=pcm.byteLength/2;setElapsed(samples.current/16000);const saved={...cache.current!};
@@ -106,6 +108,7 @@ export function ContinuousRecorder({recordId,revision,disabled,visible,onActive,
   <div className="rec-continuous-metrics"><div><small>本次采集</small><strong>{duration(recording?elapsed:capture?.saved_seconds||0)}</strong></div><div><small>后端已保存</small><strong>{duration(capture?.saved_seconds||0)}</strong></div><div><small>已有转写</small><strong>{duration(capture?.batches.filter(b=>Boolean(b.text)).reduce((n,b)=>n+b.seconds,0)||0)}</strong></div><div><small>待上传分片</small><strong>{pending}<small> 段</small></strong></div></div>
   <p role="status">{capture?.state==='processing'?'正在合并回填':capture?.state==='completed'?'生成完成，等待人工核对':capture?.state==='partial'?'部分录音已生成，须补充核对':active?'后台处理中':'准备录音'}</p>
   <div className="rec-record-controls">
+   {multiSpeaker&&!active&&!recovered&&!recording&&<SpeakerCount value={speakerCount} onChange={setSpeakerCount} disabled={disabled||starting}/>}
    {!active&&!recovered&&!recording&&<button className="btn btn-primary" disabled={disabled||starting} onClick={()=>void start()}>{starting?'正在启动…':'开始连续录音'}</button>}
    {recording&&<button className="btn rec-stop" disabled={closed.current} onClick={stop}>结束录音并生成笔录</button>}
    {(active||recovered)&&!recording&&<button className="btn btn-secondary" onClick={()=>void finishRecovered().catch(e=>setError(e.message))}>处理已保存部分</button>}

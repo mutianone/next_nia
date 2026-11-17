@@ -3,6 +3,7 @@ from uuid import uuid5, NAMESPACE_URL
 from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
+from .record_asr_results import map_interval
 from .record_speaker_roles import sentence_parts, scope
 
 
@@ -25,6 +26,27 @@ def suggest_intent(text):
     return 'UNKNOWN'
 
 
+def reviewed_word_times(data, start, end):
+    """Resolve a manual split only at complete token boundaries in exact text."""
+    if not data.get('word_boundaries'):
+        return None, None
+    words = data.get('words') or []
+    if any(not isinstance(w.get('punctuation') or '',str) for w in words):
+        return None, None
+    pieces = [w['text'] + (w.get('punctuation') or '') for w in words]
+    if ''.join(pieces) != data['text']:
+        return None, None
+    cursor = 0
+    left = right = None
+    for value, word in zip(pieces, words):
+        if cursor == start:
+            left = word.get('begin_time')
+        cursor += len(value)
+        if cursor == end:
+            right = word.get('end_time')
+    return (left, right) if left is not None and right is not None and left < right else (None, None)
+
+
 def build_turns(session, runs_and_sentences):
     result=[]
     for run, sentences in runs_and_sentences:
@@ -34,10 +56,13 @@ def build_turns(session, runs_and_sentences):
             for part in parts:
                 whole=part['start']==0 and part['end']==len(d['text'])
                 text=d['text'][part['start']:part['end']]
+                start, end = ((d.get('start_ms'),d.get('end_ms')) if whole else
+                              reviewed_word_times(d,part['start'],part['end']))
+                intervals = d.get('session_intervals',[]) if whole else map_interval(start,end,run.interval_map)
                 source={'sentence_id':sentence.id,'recognition_run_id':run.id,'start':part['start'],'end':part['end'],
                         'audio_id':run.audio_id,'channel_id':d.get('channel_id'),'speaker_id':d.get('speaker_id'),
-                        'start_ms':d.get('start_ms') if whole else None,'end_ms':d.get('end_ms') if whole else None,
-                        'listen_start_ms':d.get('start_ms'),'session_intervals':d.get('session_intervals',[]) if whole else [],
+                        'start_ms':start,'end_ms':end,
+                        'listen_start_ms':start if not whole and start is not None else d.get('listen_start_ms',d.get('start_ms')),'session_intervals':intervals,
                         'source_intervals':d.get('session_intervals',[]),'timestamp_source':d.get('timestamp_source','UNKNOWN'),'timestamp_unit':'ms',
                         'review_revision':revision,'origin_key':run.origin_key,'role':part['role']}
                 intent=part['intent'];role=part['role']

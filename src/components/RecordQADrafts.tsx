@@ -8,7 +8,7 @@ import type { RecordDetail } from '../record-types';
 type Role = 'OFFICER'|'INTERVIEWEE'|'OTHER'|'UNKNOWN';
 type Intent = 'QUESTION'|'ANSWER'|'FOLLOW_UP'|'CONTINUATION'|'INSTRUCTION'|'CLARIFICATION'|'OTHER'|'UNKNOWN';
 type Part = {start:number;end:number;role:Role;intent:Intent};
-type Sentence = {id:string;recognition_run_id:string;text:string;parts:Part[];revision:number;audio_id:string|null;start_ms:number|null};
+type Sentence = {voice_review?:boolean;listen_start_ms?:number|null;speaker_id?:string|number|null;id:string;recognition_run_id:string;text:string;parts:Part[];revision:number;audio_id:string|null;start_ms:number|null};
 type Mapping = {recognition_run_id:string;channel_id:string|number|null;speaker_id:string|number;business_role:Role;revision:number};
 type Material = {runs?:{id:string;origin_key:string;applied:boolean}[];revision:number;items:Mapping[];sentences:Sentence[];history:{id:string;role:Role;actor:string;at:string}[];sentence_history:{sentence_id:string;revision:number;actor:string;at:string}[]};
 type Draft = {turns:{id:string;role:Role;intent:Intent;text:string}[];id:string;version:number;revision:number;status:string;stale?:boolean;pairs:{id:string;question:string;answer:string;state:string;sources:{sentence_id:string}[]}[]};
@@ -29,10 +29,21 @@ export function RecordQADrafts({record,disabled,onPending,onApplied}:{record:Rec
   const load=async(discard:string[]=[])=>{
     const [m,d,i]=await Promise.all([api<Material>(`${root}/speaker-mappings`),api<{items:Draft[]}>(`${root}/qa-drafts`),api<{items:Issue[]}>(`${root}/qa-review-issues`)]);
     setMaterial(previous=>({...m,sentences:m.sentences.map(sentence=>dirty.has(sentence.id)&&!discard.includes(sentence.id)?previous?.sentences.find(s=>s.id===sentence.id)??sentence:sentence)}));setDrafts(d.items);setIssues(i.items);setDirty(previous=>new Set([...previous].filter(id=>!discard.includes(id))));
+    return m;
   };
   const perform=async(work:()=>Promise<unknown>,discard:string[]=[])=>{setBusy(true);setError('');try{await work();await load(discard);}catch(e){setError(recordError(e));}finally{setBusy(false);}};
   const post=(path:string,data:object)=>api(`${root}/${path}`,{method:'POST',body:JSON.stringify({expected_revision:material?.revision??record.revision,...data})});
-  const show=()=>{setRunIds(null);setOpen(true);onPending(true);void perform(async()=>{});};
+  const show=async()=>{
+    setRunIds(null);setOpen(true);onPending(true);setBusy(true);setError('');
+    try {
+      const m=await load();
+      const version=m.runs?.find(r=>r.id===record.recognition_version?.id);
+      if(version && !version.applied) {
+        const others=m.runs!.filter(r=>r.applied && r.origin_key!==version.origin_key);
+        setRunIds([...others.map(r=>r.id),version.id]);
+      }
+    } catch(e) {setError(recordError(e));} finally {setBusy(false);}
+  };
   const close=()=>{if(busy)return;if(dirty.size){setError('请先保存逐句核对，或撤销修改。');return;}setOpen(false);onPending(false);};
   const update=(id:string,parts:Part[])=>{setMaterial(m=>m&&({...m,sentences:m.sentences.map(s=>s.id===id?{...s,parts}:s)}));setDirty(d=>new Set(d).add(id));};
   const split=(s:Sentence,index:number)=>{
@@ -60,7 +71,7 @@ export function RecordQADrafts({record,disabled,onPending,onApplied}:{record:Rec
           }}/>运行 {run.id.slice(0,8)}{run.applied?' · 当前正文来源':''}
         </label>)}</details>}
         <details open><summary>说话人角色</summary>
-          {material.items.map((m,i)=><label key={JSON.stringify([m.recognition_run_id,m.channel_id,m.speaker_id])}>运行 {m.recognition_run_id.slice(0,8)} · 通道 {m.channel_id??'未知'} · 说话人 {m.speaker_id}
+          {material.items.filter(m=>runIds===null || runIds.includes(m.recognition_run_id)).map((m,i)=><label key={JSON.stringify([m.recognition_run_id,m.channel_id,m.speaker_id])}>运行 {m.recognition_run_id.slice(0,8)} · 通道 {m.channel_id??'未知'} · 说话人 {m.speaker_id}
             <select aria-label={`说话人映射${i+1}`} value={m.business_role} disabled={busy||dirty.size>0} onChange={e=>void perform(()=>post('speaker-mappings',{recognition_run_id:m.recognition_run_id,channel_id:m.channel_id,speaker_id:m.speaker_id,business_role:e.target.value,mapping_revision:m.revision}))}>
               {Object.entries(roles).map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
@@ -68,8 +79,8 @@ export function RecordQADrafts({record,disabled,onPending,onApplied}:{record:Rec
         </details>
         {clip&&<audio controls autoPlay key={`${playing?.id}:${playing?.start}`} src={clip.playback_url} onLoadedMetadata={e=>{e.currentTarget.currentTime=(playing?.start??0)/1000;}}/>}
         <details><summary>逐句核对与拆分</summary>
-          <div className="qa-review-turns">{material.sentences.map((s,si)=><article key={s.id} className="qa-review-turn">
-            <header><strong>发言 {si+1}</strong>{s.audio_id&&<button type="button" className="text-button" onClick={()=>setPlaying({id:s.audio_id!,start:s.start_ms??0})}>{s.start_ms===null?'回听原音':'回听原句'}</button>}</header>
+          <div className="qa-review-turns">{material.sentences.filter(s=>runIds===null || runIds.includes(s.recognition_run_id)).map((s,si)=><article key={s.id} className="qa-review-turn">
+            <header><strong>发言 {si+1}{s.speaker_id!=null && ` · 声音 ${s.speaker_id}`}</strong>{s.voice_review && <span>{s.revision ? '声音边界已人工核对' : '声音边界待回听'}</span>}{s.audio_id&&<button type="button" className="text-button" onClick={()=>setPlaying({id:s.audio_id!,start:s.listen_start_ms??s.start_ms??0})}>{s.start_ms===null?'回听原音':'回听原句'}</button>}</header>
             {s.parts.map((p,index)=><div key={index}>
               <label>角色<select aria-label={`发言${si+1}第${index+1}段角色`} disabled={busy} value={p.role} onChange={e=>update(s.id,s.parts.map((q,j)=>j===index?{...q,role:e.target.value as Role}:q))}>{Object.entries(roles).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
               <label>讲话意图<select aria-label={`发言${si+1}第${index+1}段意图`} disabled={busy} value={p.intent} onChange={e=>update(s.id,s.parts.map((q,j)=>j===index?{...q,intent:e.target.value as Intent}:q))}>{Object.entries(intents).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>

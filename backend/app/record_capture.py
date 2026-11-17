@@ -49,6 +49,12 @@ class Capture(r.Base):
     error: Mapped[str] = mapped_column(String(400), default='')
     expected_revision: Mapped[int] = mapped_column(Integer)
 
+class CaptureSpeakerCount(r.Base):
+    __tablename__ = 'record_capture_speaker_counts'
+    capture_id: Mapped[str] = mapped_column(ForeignKey('record_captures.id'), primary_key=True)
+    speaker_count: Mapped[int] = mapped_column(Integer)
+
+
 class Chunk(r.Base):
     __tablename__ = 'record_capture_chunks'
     capture_id: Mapped[str] = mapped_column(ForeignKey('record_captures.id'), primary_key=True)
@@ -80,6 +86,7 @@ class Batch(r.Base):
     __table_args__ = (UniqueConstraint('capture_id','first'),)
 
 class Begin(r.AIRequest):
+    speaker_count: r.SpeakerCount | None = None
     id: str = Field(pattern=r'^[a-f0-9-]{36}$')
     started_at: datetime
     captured_at: datetime | None = None
@@ -140,12 +147,22 @@ def snapshot(session,c):
 
 @r.router.post('/{record_id}/captures',status_code=201)
 def begin(record_id:str, body:Begin, request:Request):
-    r.confirmed_settings(request,body,'asr');r.confirmed_settings(request,body,'analysis')
+    _, provider, _ = r.confirmed_settings(request,body,'asr')
+    r.confirmed_settings(request,body,'analysis')
     if not r.conversion_available():raise HTTPException(422,'连续转写需要服务器安装 FFmpeg。')
     with r.write_session(request.app.state.engine) as s:
         row=r.get_record(s,record_id,True)
         old=s.get(Capture,body.id)
-        if old:return snapshot(s,own(s,record_id,body.id,request))
+        if old:
+            capture = own(s,record_id,body.id,request)
+            previous = s.get(CaptureSpeakerCount,capture.id)
+            if (previous.speaker_count if previous else None) != body.speaker_count:
+                raise HTTPException(409,'同一录音会话的预计发言人数已确定。')
+            return snapshot(s,capture)
+        if body.speaker_count is not None and provider != 'aliyun':
+            from .record_voice_audio import available
+            if not available():
+                raise HTTPException(422,'多人转写需要安装本机分人模型或配置阿里云 Fun-ASR。')
         r.mutable(row,body.expected_revision)
         if s.scalar(select(r.RecordAnalysis.id).where(r.RecordAnalysis.record_id==record_id,r.RecordAnalysis.status=='processing')):raise HTTPException(409,'已有生成任务，请等待完成。')
         existing=r.ordered_segments(s,row.id)
@@ -155,7 +172,10 @@ def begin(record_id:str, body:Begin, request:Request):
                 raise HTTPException(409,'补录前请先根据当前文字生成模板，以便复用已有结果；当前文字不会丢弃。')
         c=Capture(id=body.id,record_id=record_id,owner_id=str(request.state.user['id']),started_at=body.started_at,captured_at=body.captured_at or body.started_at,
                   template=deepcopy(row.template_snapshot),expected_revision=row.revision)
-        s.add(c);s.flush();r.audit(s,'capture_started',record_id=record_id,capture_id=c.id)
+        s.add(c);s.flush()
+        if body.speaker_count is not None:
+            s.add(CaptureSpeakerCount(capture_id=c.id, speaker_count=body.speaker_count))
+        r.audit(s,'capture_started',record_id=record_id,capture_id=c.id)
         return snapshot(s,c)
 
 
@@ -310,6 +330,8 @@ def process(engine,identifier,token,settings):
             provider_config(settings,purpose)
         with Session(engine) as s:
             b,c=valid(s);text=b.text;template=deepcopy(c.template)
+            count = s.get(CaptureSpeakerCount, c.id)
+            options = {"speaker_count": count.speaker_count} if count else {}
             pcm=None
             if not text:
                 chunks=list(s.scalars(select(Chunk).where(Chunk.capture_id==c.id,Chunk.sequence>=b.first,Chunk.sequence<=b.last).order_by(Chunk.sequence)))
@@ -318,7 +340,7 @@ def process(engine,identifier,token,settings):
                     raise RecordAIError(409,'识别批次音频区间不完整或偏移不一致，未发送音频。')
                 pcm=b''.join(x.pcm for x in chunks)
         if not text:
-            output=transcribe_audio(wav(pcm),'wav','audio/wav',settings);text=output['text'].strip()
+            output=transcribe_audio(wav(pcm),'wav','audio/wav',settings,**options);text=output['text'].strip()
             if not text:raise RecordAIError(422,'本段未识别到文字，请试听后重试；未跳过原音。')
             with r.write_session(engine) as s:
                 b,c=valid(s)
@@ -331,7 +353,7 @@ def process(engine,identifier,token,settings):
             previous=s.scalar(select(Batch).where(Batch.capture_id==c.id,Batch.first<b.first).order_by(Batch.first.desc()))
             inputs=(batch_inputs(s,c,previous) if previous and previous.text else [])+batch_inputs(s,c,b)
             if not b.groups:
-                pairs=pair_qa([SimpleNamespace(id=x['segment_id'],text=x['text'],speaker='unknown') for x in inputs],template)
+                pairs=pair_qa([SimpleNamespace(id=x['segment_id'],text=x['text'],speaker='unknown',voice_review=x.get('voice_review',False)) for x in inputs],template)
                 # Carry context for unfinished questions, but do not duplicate an identical answer.
                 distinct=[]
                 for pair in pairs:

@@ -34,6 +34,7 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
     units=source_units(segments)
     raw_asr = {s['segment_id'] for s in segments if s.get('recognition_run_id') and
                s.get('speaker', 'unknown') == 'unknown'}
+    disputed = {s['segment_id'] for s in segments if s.get('voice_review') and s.get('speaker','unknown') == 'unknown'}
     quotes = {sid: [m.span() for m in QUOTED_SPEECH.finditer(text)] for sid, text in indexed.items()}
     offsets={};cursor=0
     for source in segments:
@@ -43,6 +44,10 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
     for fact in facts:
         field = fields.get(fact['label'], {})
         if not fact['label'].startswith('q'):
+            if disputed.intersection(fact.get('segment_ids', [])):
+                checks.append({'field_id':fact['label'], 'code':'voice_boundary_review', 'status':'blocked',
+                               'message':'字词与声音边界需要回听核对，暂不回填'})
+                continue
             accepted.append(fact)
             continue
         reason = None
@@ -54,6 +59,8 @@ def check_answers(facts, segments, template, semantic_matches=frozenset()):
             text = indexed.get(item['segment_id'], '')
             question, answer = item['question'], item['answer']
             qid=item.get('question_segment_id') or item['segment_id']
+            if qid in disputed or item['segment_id'] in disputed:
+                reason = ('voice_boundary_review', '字词与声音边界需要回听核对，暂不回填'); break
             qtext=indexed.get(qid,'')
             exact=item.get('start') is not None and item.get('end') is not None and item.get('question_start') is not None
             ai=item['start'] if exact else text.find(answer)

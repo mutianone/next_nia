@@ -25,6 +25,11 @@ def pair_qa(segments, template):
                 aliases[normalize(alias)].add(field['id'])
     turns = []
     for segment in segments:
+        if segment.speaker == 'unknown':
+            from .record_asr_results import metadata
+            if getattr(segment, 'voice_review', False) or metadata(segment).get('voice_review'):
+                turns.append({'role':'unknown'})
+                continue
         text = segment.text
         for start, end, role in role_ranges(text, segment.speaker):
             while start < end and text[start].isspace():

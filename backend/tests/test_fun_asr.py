@@ -85,3 +85,12 @@ def test_config_secret_and_legacy():
 def test_no_silent_fallback():
     s=Settings();s.ai.enabled=True;s.ai.speech.provider='aliyun'
     with pytest.raises(RecordAIError):provider_config(s,'asr')
+
+
+def test_speaker_count_scopes_resumed_tasks(cloud):
+    counts = [None,3,3,2]
+    for count in counts:
+        asr.transcribe(b'fixture','mp3','audio/mpeg','secret-key',speaker_count=count)
+    submitted = [json.loads(r.content)['parameters'] for r in cloud['calls']
+                 if r.url.path.endswith('/transcription') and r.method == 'POST']
+    assert [p.get('speaker_count') for p in submitted] == [None,3,2]

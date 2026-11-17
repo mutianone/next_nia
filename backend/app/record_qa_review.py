@@ -75,12 +75,16 @@ def validate_turns(data, sources):
                    else f"{source['audio_id'] or source['id']}:{voice[1]}" if voice else None)
             if source.get('recognition_run_id') and source.get('channel_id') is not None and label is not None:
                 group=f"{source['recognition_run_id']}:channel={json.dumps(source['channel_id'])}:{label}"
+            if source.get('voice_review'):
+                group = None
+                item['suggested_role'] = 'unknown'
+                issues.append({'segment_id':source['id'],'message':'字词与声音边界有疑点，请回听后逐句确认。'})
             if group and (len(items)>1 or not complete):
                 unsafe.add(group)
             turns.append({'source_id':source['id'],'source_start':cursor,'source_end':end,
                           'text':item['text'],'suggested_role':item['suggested_role'], 'speaker':'unknown',
                           'voice_group':group, 'voice_label':str(label) if label is not None else None,
-                          'audio_id':source['audio_id'], 'listen_start_ms':source['start_ms'],
+                          'audio_id':source['audio_id'], 'listen_start_ms':source.get('listen_start_ms',source['start_ms']),
                           'start_ms':source['start_ms'] if len(items)==1 else None,
                           'end_ms':source['end_ms'] if len(items)==1 else None})
             cursor=end
