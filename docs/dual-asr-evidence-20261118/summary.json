@@ -1,0 +1,154 @@
+{
+  "cases": [
+    {
+      "id": "01",
+      "provider": "siliconflow",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": true,
+      "checks": [],
+      "status": 200
+    },
+    {
+      "id": "02",
+      "provider": "siliconflow",
+      "groups": 1,
+      "saved": false,
+      "complete_selected_answer": false,
+      "faithful": false,
+      "checks": [
+        "no_qa_options"
+      ],
+      "status": 200
+    },
+    {
+      "id": "03",
+      "provider": "volcengine",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": false,
+      "checks": [
+        "paused_reply"
+      ],
+      "status": 200
+    },
+    {
+      "id": "04",
+      "provider": "siliconflow",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": true,
+      "checks": [],
+      "status": 200
+    },
+    {
+      "id": "05",
+      "provider": "siliconflow",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": true,
+      "checks": [],
+      "status": 200
+    },
+    {
+      "id": "06",
+      "provider": "siliconflow",
+      "groups": 1,
+      "saved": false,
+      "complete_selected_answer": false,
+      "faithful": false,
+      "checks": [
+        "no_qa_options"
+      ],
+      "status": 200
+    },
+    {
+      "id": "07",
+      "provider": "volcengine",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": false,
+      "checks": [],
+      "status": 200
+    },
+    {
+      "id": "08",
+      "provider": "volcengine",
+      "groups": 3,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": false,
+      "checks": [],
+      "status": 200
+    },
+    {
+      "id": "09",
+      "provider": "siliconflow",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": true,
+      "checks": [],
+      "status": 200
+    },
+    {
+      "id": "10",
+      "provider": "volcengine",
+      "groups": 1,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": false,
+      "checks": [
+        "qualification"
+      ],
+      "status": 200
+    },
+    {
+      "id": "11",
+      "provider": "volcengine",
+      "groups": 3,
+      "saved": true,
+      "complete_selected_answer": true,
+      "faithful": true,
+      "checks": [
+        "tentative_answer"
+      ],
+      "status": 200
+    },
+    {
+      "id": "12",
+      "provider": "volcengine",
+      "groups": 1,
+      "saved": false,
+      "complete_selected_answer": false,
+      "faithful": false,
+      "checks": [
+        "question_in_answer"
+      ],
+      "status": 200
+    }
+  ],
+  "characters": 961,
+  "character_edits": {
+    "siliconflow": 55,
+    "volcengine": 51,
+    "reviewed_selection": 52
+  },
+  "windows": {
+    "text_agrees": 8,
+    "untimed": 7,
+    "conflict": 1
+  },
+  "asr_both_succeeded": 12,
+  "pending_fill_blocked": 12,
+  "saved": 9,
+  "faithful": 5,
+  "complete_selected_answer": 9,
+  "analysis_calls": 10,
+  "asr_elapsed_seconds": 95.21
+}

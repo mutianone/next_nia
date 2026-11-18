@@ -49,4 +49,11 @@ it('saves independent Volcengine credentials and preserves them while switching 
   await waitFor(() => expect(writes).toHaveLength(2));
   expect(writes[1].ai.speech.volcengine.clear_api_key).toBe(true);
   expect(writes[1].ai.speech.volcengine.clear_tos_secret_key).toBe(false);
+  await waitFor(() => expect(screen.getByLabelText('清空火山语音 API Key')).not.toBeChecked());
+  fireEvent.change(screen.getByLabelText('语音服务'), {target:{value:'dual'}});
+  expect(screen.getByText(/同一录音并行发送火山和硅基流动/)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', {name:/保存/}));
+  await waitFor(() => expect(writes).toHaveLength(3));
+  expect(writes[2].ai.speech.provider).toBe('dual');
+  expect(writes[2].ai.speech.volcengine.api_key).toBe('');
 });

@@ -77,6 +77,8 @@ def field_versions(session,record):
     return versions
 
 def plan(session,record,batch_id,candidate_ids):
+    from .record_dual_asr import require_reviewed
+    require_reviewed(session, record.id)
     batch=session.get(FillBatch,batch_id)
     if not batch or batch.record_id!=record.id:raise ValueError('回填批次不存在。')
     current(session,record,batch)

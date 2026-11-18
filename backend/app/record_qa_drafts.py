@@ -49,6 +49,8 @@ def material(session,record,run_ids=None):
     origins=[r.origin_key for r in rows]
     if len(origins)!=len(set(origins)):raise ValueError('同一音频只能选择一个识别版本。')
     sources=[(r,sentences(session,r)) for r in rows]
+    if any(r.provider == 'dual' for r, _ in sources):
+        raise ValueError('请先完成双引擎核对，再确认角色并构建草稿。')
     if sum(len(ss) for _,ss in sources)>2000:raise ValueError('单次草稿最多支持2000个识别句子。')
     digest=fingerprint({'schema':2,'runs':[(r.id,r.digest,[(s.id,sentence_parts(session,s)) for s in ss]) for r,ss in sources],
                         'body':[(s.id,s.text,s.speaker,s.start_ms,s.end_ms) for s in body]})

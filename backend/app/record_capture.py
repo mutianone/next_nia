@@ -148,6 +148,8 @@ def snapshot(session,c):
 @r.router.post('/{record_id}/captures',status_code=201)
 def begin(record_id:str, body:Begin, request:Request):
     _, provider, _ = r.confirmed_settings(request,body,'asr')
+    if provider == 'dual':
+        raise HTTPException(422, '双引擎模式需逐段核对，请先保存录音再上传转写；连续自动回填请选单引擎。')
     r.confirmed_settings(request,body,'analysis')
     if not r.conversion_available():raise HTTPException(422,'连续转写需要服务器安装 FFmpeg。')
     with r.write_session(request.app.state.engine) as s:
@@ -325,6 +327,8 @@ def process(engine,identifier,token,settings):
         if c.state not in ('recording','finishing'):raise RuntimeError('capture_stopped')
         return b,c
     try:
+        if settings.ai.speech.provider == 'dual':
+            raise RecordAIError(409, '连续录音不使用双引擎自动回填；请选择单引擎后重试，原音仍保留。')
         for purpose in ('asr','analysis'):
             if not getattr(settings.ai.external_permissions,purpose):raise RecordAIError(403,'云端外发权限已关闭，请配置后重试。')
             provider_config(settings,purpose)

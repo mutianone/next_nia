@@ -541,6 +541,11 @@ def capabilities(request: Request):
     settings = settings_copy(request)
     providers = {}
     for purpose in ("asr", "analysis"):
+        if purpose == 'asr' and settings.ai.speech.provider == 'dual':
+            from .record_dual_asr import ready, MODEL
+            providers[purpose] = {'provider': 'dual', 'model': MODEL,
+                'allowed': settings.ai.external_permissions.asr, 'ready': ready(settings)}
+            continue
         if purpose == 'asr' and settings.ai.speech.provider == 'volcengine':
             from .record_volcengine import ready, MODEL
             providers[purpose] = {'provider': 'volcengine', 'model': MODEL,
@@ -567,7 +572,9 @@ def capabilities(request: Request):
         providers['asr'].update(speaker_diarization='supported', word_timestamps='supported',
             capability_source='https://docs.volcengine.com/docs/doubao-voice/task-submission-http-1?lang=zh',
             format_note='转写副本上传火山私有 TOS，通过限时链接识别；原音本地保留。返回匿名声音编号与时间，角色须核对。人数仅用于选择分人场景，不保证返回指定人数。')
-    providers["asr"]["speaker_count_available"] = settings.ai.speech.provider in ("aliyun", "volcengine") or voice_available()
+    if settings.ai.speech.provider == 'dual':
+        providers['asr'].update(format_note='同一录音并行发送火山和硅基流动 Qwen3-ASR，两边分别计费。逐段回听选择后再确认角色与回填；文字一致不代表识别正确。暂用于上传录音。')
+    providers["asr"]["speaker_count_available"] = settings.ai.speech.provider in ("aliyun", "volcengine", "dual") or voice_available()
     from .record_template_config import available as available_templates
     from .record_pdf import available as pdf_available
     with Session(request.app.state.engine) as session:
@@ -655,6 +662,8 @@ def update_record(record_id: str, body: RecordUpdate, request: Request):
                 if not template.get("enabled",True): raise HTTPException(422,"此模板已停用。")
                 row.template_snapshot = template
             if row.status == "reviewed":
+                from .record_dual_asr import require_reviewed
+                require_reviewed(session, record_id)
                 segments = ordered_segments(session, row.id)
                 if not body.confirmed or not row.review_note.strip() or not segments:
                     raise HTTPException(422, "核对须有非空正文、核对说明，并明确确认已人工核对；不自动签发。")
@@ -1036,6 +1045,8 @@ def analyze(record_id: str, body: AIRequest, request: Request):
     with write_session(engine) as session:
         row = get_record(session, record_id, True)
         mutable(row, body.expected_revision)
+        from .record_dual_asr import require_reviewed
+        require_reviewed(session, record_id)
         if session.scalar(select(RecordAnalysis.id).where(RecordAnalysis.record_id == record_id, RecordAnalysis.status == "processing")):
             raise HTTPException(409, "本笔录已有生成请求，请等待完成。")
         segments = ordered_segments(session, row.id)
@@ -1181,3 +1192,4 @@ from . import record_qa_draft_api  # noqa: E402,F401
 from . import record_fill_api  # noqa: E402,F401
 
 from . import record_fill_apply_api  # noqa: E402,F401
+from . import record_dual_review_api  # noqa: E402,F401

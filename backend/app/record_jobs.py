@@ -149,6 +149,8 @@ def start(record_id: str, body: r.AIRequest, request: Request):
     with r.write_session(request.app.state.engine) as session:
         row = r.get_record(session, record_id, True)
         r.mutable(row, body.expected_revision)
+        from .record_dual_asr import require_reviewed
+        require_reviewed(session, record_id)
         existing = session.scalar(select(GenerationJob).where(GenerationJob.record_id == record_id, GenerationJob.status.in_(ACTIVE)))
         if existing:
             return public(existing)
@@ -202,6 +204,8 @@ def resume(record_id: str, job_id: str, body: r.AIRequest, request: Request):
     with r.write_session(request.app.state.engine) as session:
         row = r.get_record(session, record_id, True)
         r.mutable(row, body.expected_revision)
+        from .record_dual_asr import require_reviewed
+        require_reviewed(session, record_id)
         job = session.get(GenerationJob, job_id)
         if not job or job.record_id != record_id:
             raise HTTPException(404, '未找到生成任务。')

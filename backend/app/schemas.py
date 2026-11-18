@@ -156,7 +156,7 @@ class VolcengineUpdate(VolcengineSettings):
 
 
 class SpeechSettings(StrictModel):
-    provider: Literal["siliconflow", "aliyun", "volcengine"] = "siliconflow"
+    provider: Literal["siliconflow", "aliyun", "volcengine", "dual"] = "siliconflow"
     volcengine: VolcengineSettings = Field(default_factory=VolcengineSettings)
     api_key: SecretStr = SecretStr("")
     workspace_id: str = Field(default="", max_length=100, pattern=r"^[A-Za-z0-9-]*$")

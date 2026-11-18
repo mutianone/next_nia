@@ -38,6 +38,22 @@ npm run build
 
 随后配置火山及 TOS 凭据，完成同一批 12 条真人录音和实际普通模板测试，详见[火山与 Qwen 对比报告](volcengine-asr-comparison-20261118.md)。火山全文 CER 为 5.41%，整轮分人稳定 6/12；5 条短答文字都在，但全部与问话粘连。实际模板有值 5/12，逐字正确 1/12；3/4 补充样本完整保存 ASR 回答。第 09 条末尾超过原 WAV 30 毫秒，角色保存被拦截，未放宽校验。不能仅凭全文 CER 或长回答分人指标就认定更适合短问短答。`python3 scripts/verify-volcengine-comparison.py` 可离线复核证据。该轮没有修改用户当前的火山配置。
 
+## 火山 + Qwen3-ASR 双引擎核对
+
+在“系统设置 → AI 服务 → 笔录语音转写”选择“火山 + Qwen3-ASR 双引擎核对”。需同时配置火山/TOS，以及已启用的硅基流动密钥。Qwen 通过硅基流动调用 `Qwen/Qwen3-ASR-1.7B`，不是阿里百炼直连接口；单引擎模型配置不会被覆盖。两家独立计费，保存此设置不会改变对话/回填模型。
+
+上传并转写后，在“文字修订 → 双引擎核对”逐窗口回听，明确选择候选，确认后保存为新识别版本，再核对角色与问答边界、生成模板。不自动推断哪个结果必然正确；相同文本也可能共同识别错误或分错人。缺少时间时按整条录音核对，只有一方返回时明确显示不构成一致。原文与已有人工作品保留，存在其他已应用版本或人工修订时拒绝覆盖。
+
+当前只支持已保存/上传的录音。连续录音的自动回填需选用单引擎；录音过程中切换到双引擎会停止云端批次处理并保留原音，切回单引擎后重试。新投影中若供应商时间超出原音声明时长，保留原始时间在来源证据中，新时间置为未知并标记回听，不裁造词级时间。
+
+12 条真实公共录音已完成双引擎转写、核对选择接口及实际普通模板复测。标注辅助选择后有值 9/12、逐字正确 5/12，不代表自动择优准确率。方法、限制和逐条结果见[双引擎核对实测](dual-asr-comparison-20261118.md)。本轮没有自动切换用户当前默认服务。
+
+```sh
+backend/.venv/bin/python -m pytest -q backend/tests/test_dual_asr.py backend/tests/test_record_capture.py backend/tests/test_record_jobs.py backend/tests/test_qa_drafts.py backend/tests/test_fill_apply.py
+npm test -- src/VolcengineSettings.test.tsx src/components/RecordDualReview.test.tsx src/components/RecordQAReview.test.tsx
+PYTHONPATH=. backend/.venv/bin/python scripts/report-dual-asr.py --verify
+```
+
 ## 阿里云任务与识别版本
 
 沿用现有录音分段保存及后台任务流程。音频规范化后上传阿里云私有临时存储，提交异步识别任务，启用 diarization_enabled，查询结果后保存每个说话人的句子和句级时间戳。模板回填继续经过现有问答整理、依据校验及人工审核。
