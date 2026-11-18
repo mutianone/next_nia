@@ -34,6 +34,14 @@ export function RecordDualReview({record,disabled,onApplied,onPending}:{record:R
     try{const updated=await api<{revision:number;groups:Group[]}>(`/records/${record.id}/dual-review/${run.id}/recommend`,{method:'POST',body:JSON.stringify({expected_revision:material.revision,confirmed:true})});setMaterial(m=>m&&({...m,runs:m.runs.map(r=>r.id===run.id?{...r,groups:updated.groups}:r)}));setChoices(presets(updated.groups));setConfirmed(false);}
     catch(e){setError(recordError(e));}finally{setBusy(false);}
   };
+  const prefill=async()=>{
+    if(!run||!material||busy)return;
+    setBusy(true);setError('');
+    try {
+      const result=await api<RecordDetail>(`/records/${record.id}/dual-review/${run.id}/prefill`,{method:'POST',body:JSON.stringify({expected_revision:material.revision})});
+      onApplied(result);setOpen(false);onPending(false);
+    } catch(e){setError(recordError(e));}finally{setBusy(false);}
+  };
   const close=()=>{if(!busy){setOpen(false);onPending(false);}};
   const apply=async()=>{
     if(!run||!material||!confirmed||busy||run.groups.some(g=>!choices[g.group]))return;
@@ -47,6 +55,7 @@ export function RecordDualReview({record,disabled,onApplied,onPending}:{record:R
       <p>系统会自动预选有依据的候选草稿，您可更换选择；未选中的分歧请回听。文字一致也可能同时识别错误；两家的声音编号互不对应。选择后再在“整理问答”或“角色与 QA 草稿”确认角色、拆分问答及修订错字。</p>
       {error&&<p role="alert">{error}</p>}{busy&&<p role="status">正在读取或保存…</p>}
       {!!material?.runs.length&&<label>识别版本<select disabled={busy} value={selected} onChange={e=>{setSelected(e.target.value);setChoices(presets(material.runs.find(r=>r.id===e.target.value)?.groups??[]));setConfirmed(false);setPlaying(null);}}>{material.runs.map(r=><option key={r.id} value={r.id}>{r.id.slice(0,8)}{r.applied?' · 待核对正文':' · 保留版本'}</option>)}</select></label>}
+      {run?.applied&&<button type="button" className="btn btn-secondary" disabled={busy} onClick={()=>void prefill()}>将一致回答预填到模板</button>}
       {run&&<button type="button" className="btn btn-secondary" disabled={busy} onClick={()=>void judge()}>自动比对并预选候选</button>}
       {material&&!material.runs.length&&<p>暂无双引擎识别结果。</p>}
       {clip&&playing!==null&&<audio controls autoPlay key={`${selected}-${playing}`} src={clip.playback_url} onLoadedMetadata={e=>{e.currentTarget.currentTime=playing/1000;}}/>}

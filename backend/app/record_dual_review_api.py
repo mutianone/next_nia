@@ -50,6 +50,34 @@ def material(record_id: str, request: Request):
             for run in runs]}
 
 
+@r.router.post('/{record_id}/dual-review/{run_id}/prefill')
+def prefill_saved(record_id: str, run_id: str, body: Write, request: Request):
+    from .record_dual_prefill import prefill
+    actor(request)
+    with r.write_session(request.app.state.engine) as session:
+        record = r.get_record(session, record_id, True)
+        r.mutable(record, body.expected_revision)
+        run = session.get(ar.RecognitionRun, run_id)
+        if not run or run.record_id != record_id or run.provider != 'dual':
+            raise HTTPException(404, '未找到双引擎识别版本。')
+        if not run.applied or run.interval_map:
+            raise HTTPException(409, '请选择已应用的上传录音版本。')
+        originals = ar.sentences(session, run)
+        current = [s for s in r.ordered_segments(session, record_id) if s.audio_id == run.audio_id]
+        if len(originals) != len(current) or any(
+            s.id != o.id or s.text != o.data['text'] or s.speaker != 'unknown'
+            or s.start_ms != o.data.get('start_ms') or s.end_ms != o.data.get('end_ms')
+            for s, o in zip(current, originals)
+        ):
+            raise HTTPException(409, '正文已有修订，无法按旧版本预填。')
+        updated, fields = prefill(record.template_snapshot, [(o.id, o.data['dual_review']) for o in originals])
+        if fields:
+            record.template_snapshot = updated
+            r.version(session, record, 'dual_template_prefilled')
+            r.audit(session, 'dual_template_prefilled', record_id=record_id, field_ids=fields)
+        return r.detail(session, record)
+
+
 @r.router.post('/{record_id}/dual-review/{run_id}')
 def apply(record_id: str, run_id: str, body: Choice, request: Request):
     who = actor(request)
@@ -112,6 +140,18 @@ def apply(record_id: str, run_id: str, body: Choice, request: Request):
         ordered[index:index] = [s for s in added if s is not None]
         for position, s in enumerate(ordered):
             s.position = position
+        if record.template_snapshot.get('dual_prefill'):
+            # Both originals contained each provisional answer. Rebind its evidence
+            # to the human-selected projection, including one-to-many replacements.
+            replacements = {}
+            for old, choice in zip(originals, body.choices):
+                group = old.data['dual_review']['group']
+                replacements[old.id] = [s.id for s, part in zip(added, parts) if part['dual_source']['group'] == group]
+            template = record.template_snapshot
+            sources = dict(template.get('sources', {}))
+            for field in template['dual_prefill']:
+                sources[field] = [new for sid in sources.get(field, []) for new in replacements.get(sid, [sid])]
+            record.template_snapshot = {**template, 'sources': sources}
         r.version(session, record, 'dual_asr_reviewed')
         r.audit(session, 'dual_asr_reviewed', record_id=record_id, source_run_id=run.id, actor_id=who)
         return r.detail(session, record)

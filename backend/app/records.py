@@ -721,6 +721,7 @@ def replace_segments(record_id: str, body: SegmentsUpdate, request: Request):
         existing = {item.id: item for item in ordered_segments(session, row.id)}
         clips = {item.id: item for item in session.scalars(select(AudioClip).where(AudioClip.record_id == row.id))}
         seen = set()
+        changed_audio = set()
         for position, item in enumerate(body.segments):
             if item.id and (item.id not in existing or item.id in seen):
                 raise HTTPException(422, "片段编号重复、不存在或不属于当前笔录。")
@@ -731,12 +732,19 @@ def replace_segments(record_id: str, body: SegmentsUpdate, request: Request):
             target = existing.get(item.id) if item.id else RecordSegment(id=str(uuid4()), record_id=row.id, source="manual")
             seen.add(target.id)
             for key, value in item.model_dump(exclude={"id"}).items():
+                if getattr(target, key) != value or target.position != position:
+                    changed_audio.update((target.audio_id, item.audio_id))
                 setattr(target, key, value)
             target.position = position
             session.add(target)
         for identifier, target in existing.items():
             if identifier not in seen:
+                changed_audio.add(target.audio_id)
                 session.delete(target)
+        if row.template_snapshot.get('dual_prefill') and changed_audio:
+            from .record_dual_prefill import retire_prefill
+            affected = {s.id for s in existing.values() if s.audio_id in changed_audio} | (set(existing) - seen)
+            row.template_snapshot = retire_prefill(row.template_snapshot, affected)
         session.flush()
         version(session, row, "segments_updated")
         return detail(session, row)
@@ -912,7 +920,7 @@ def add_library_audio(record_id: str, body: AIRequest, request: Request):
 
 def cleared_generated_template(template):
     return {key: value for key, value in template.items()
-            if key not in {"values", "sources", "source_hash", "generated", "locked_fields", "human_edited", "time_source"}}
+            if key not in {"values", "sources", "dual_prefill", "source_hash", "generated", "locked_fields", "human_edited", "time_source"}}
 
 
 @router.delete("/{record_id}/audio/{audio_id}")
@@ -1031,7 +1039,13 @@ def transcribe(record_id: str, audio_id: str, body: TranscribeRequest, request: 
             audit(session, "ai_failed", record_id=row.id, attempt_id=identifier)
         else:
             attempt.status = "succeeded"
-            asr_results.project(session, recognition, row, audio_id, identifier, len(segments))
+            applied = asr_results.project(session, recognition, row, audio_id, identifier, len(segments))
+            if applied and recognition.provider == 'dual':
+                from .record_dual_prefill import prefill
+                groups = [(s.id, s.data['dual_review']) for s in asr_results.sentences(session, recognition)]
+                row.template_snapshot, prefilled = prefill(row.template_snapshot, groups)
+                if prefilled:
+                    audit(session, 'dual_template_prefilled', record_id=row.id, field_ids=prefilled)
             session.flush()
             version(session, row, "transcribed")
         session.flush()

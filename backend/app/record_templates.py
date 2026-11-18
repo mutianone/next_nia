@@ -26,6 +26,8 @@ def filled_template(template, facts, source_hash):
     for key in set(template.get('locked_fields', [])) & allowed:
         values[key] = template.get('values', {}).get(key, '')
         sources.pop(key, None)  # Human corrections are not falsely attributed to AI sources.
+    template = template.copy()
+    template.pop('dual_prefill', None)
     return {**template,'values':values,'sources':sources,'source_hash':source_hash,'generated':True}
 
 def render(template):

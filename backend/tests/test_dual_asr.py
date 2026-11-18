@@ -165,3 +165,45 @@ def test_pending_gate_survives_deleting_projection_and_other_record_isolation(cl
     assert client.post(root+'/generation-jobs', json={'expected_revision':updated['revision'],'confirmed':True}).status_code == 409
     response = client.post(root+'/dual-review/'+run_id, json={'expected_revision':updated['revision'],'confirmed':True,'choices':['siliconflow']*3})
     assert response.status_code == 200 and len(response.json()['segments']) == 3
+
+
+@pytest.mark.parametrize('review', [True, False])
+def test_mixed_conflict_prefills_independent_template_answers(client, monkeypatch, review):
+    enable_ai(client)
+    client.app.state.store.current = settings()
+    row = upload(client, create(client, scenario='marriage', template_id='bride'), duration=30000).json()
+    questions = {f['id']: f['label'] for f in row['template_snapshot']['fields']}
+    engines = {}
+    for provider, disputed in [('siliconflow', '是的。'), ('volcengine', '不是。')]:
+        texts = [questions['q004'], '我有两个孩子。', '还有信息。', questions['q005'], disputed]
+        engines[provider] = output(texts, provider)
+        for part, voice in zip(engines[provider]['segments'], ['甲', '乙', '乙', '甲', '乙']):
+            part['speaker_id'] = voice
+    monkeypatch.setattr(records, 'transcribe_audio', lambda *a, **kw: dual.combine(engines))
+    root = f"/api/records/{row['id']}"
+    result = client.post(root + f"/audio/{row['audio_clips'][0]['id']}/transcribe",
+                         json={'expected_revision': row['revision'], 'confirmed': True, 'speaker_count': 2})
+    assert result.status_code == 200, result.text
+    saved = client.get(root).json()
+    template = saved['template_snapshot']
+    assert template['dual_prefill'] == {'q004': '我有两个孩子。\n还有信息。'}
+    assert template['values']['q004'] == template['dual_prefill']['q004']
+    assert not template['values'].get('q005')
+    assert template['sources']['q004'] == [s['id'] for s in saved['segments'][:3]]
+    run = client.get(root + '/dual-review').json()['runs'][0]
+    url = root + '/dual-review/' + run['id']
+    again = client.post(url + '/prefill', json={'expected_revision': saved['revision']})
+    assert again.status_code == 200 and again.json()['revision'] == saved['revision']
+    if review:
+        reviewed = client.post(url, json={'expected_revision': saved['revision'], 'confirmed': True,
+                                          'choices': ['volcengine'] * len(run['groups'])})
+        assert reviewed.status_code == 200, reviewed.text
+        saved = reviewed.json()
+        assert saved['template_snapshot']['values']['q004'] == template['dual_prefill']['q004']
+        assert saved['template_snapshot']['sources']['q004'] == [s['id'] for s in saved['segments'][:3]]
+    # Editing the evidence invalidates the provisional answer.
+    segments = [editable(s) for s in saved['segments']]
+    segments[1]['text'] = '我有三个孩子。'
+    edited = client.patch(root + '/segments', json={'expected_revision': saved['revision'], 'segments': segments})
+    assert edited.status_code == 200, edited.text
+    assert not edited.json()['template_snapshot']['values'].get('q004')
