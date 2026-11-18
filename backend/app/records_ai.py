@@ -21,6 +21,13 @@ class RecordAIError(Exception):
 
 
 def provider_config(settings: Settings, purpose: str):
+    if purpose == 'asr' and settings.ai.speech.provider == 'volcengine':
+        from .record_volcengine import ready, MODEL
+        if not settings.ai.enabled:
+            raise RecordAIError(409, '请先启用AI，未发送资料。')
+        if not ready(settings.ai.speech.volcengine):
+            raise RecordAIError(409, '请在系统设置中填写火山语音 API Key、TOS 私有桶、地域和上传凭据，未发送原音。')
+        return 'volcengine', MODEL, reveal(settings.ai.speech.volcengine.api_key)
     if purpose == "asr" and settings.ai.speech.provider == "aliyun":
         if not settings.ai.enabled:raise RecordAIError(409,"请先启用AI，未发送资料。")
         key=reveal(settings.ai.speech.api_key)
@@ -76,13 +83,17 @@ def transcribe_audio(raw: bytes, file_format: str, mime_type: str, settings: Set
     from . import record_voice_audio as voices
     provider, model, key = provider_config(settings, "asr")
     use_local = speaker_count is not None and voices.available()
-    if speaker_count is not None and not use_local and provider != 'aliyun':
-        raise RecordAIError(422, '多人转写需要安装本机分人模型或配置阿里云 Fun-ASR。')
+    if speaker_count is not None and not use_local and provider not in ('aliyun', 'volcengine'):
+        raise RecordAIError(422, '多人转写需要安装本机分人模型或配置支持分人的语音服务。')
     original, original_format = raw, file_format
     try:
         raw, file_format, mime_type = normalize_for_asr(raw, file_format, level_pair=speaker_count == 2)
     except RecordMediaError as error:
         raise RecordAIError(422, str(error)) from None
+    if provider == 'volcengine':
+        from .record_volcengine import transcribe
+        return transcribe(raw, file_format, mime_type, settings.ai.speech.volcengine,
+                          request_key=request_key, speaker_count=speaker_count)
     if provider == 'aliyun':
         from .record_fun_asr import transcribe
         output = transcribe(raw,file_format,mime_type,key,settings.ai.speech.workspace_id,request_key=request_key,speaker_count=speaker_count)

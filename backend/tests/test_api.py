@@ -23,6 +23,8 @@ def payload(client):
     settings = client.get("/api/settings").json()["settings"]
     settings["environment"]["postgres"].pop("password_configured")
     settings["ai"]["speech"].pop("api_key_configured", None)
+    for name in ('api_key', 'tos_access_key', 'tos_secret_key'):
+        settings['ai']['speech']['volcengine'].pop(name + '_configured', None)
     for provider in settings["ai"]["providers"].values():
         provider.pop("api_key_configured")
     return settings
@@ -39,6 +41,32 @@ def test_first_start_creates_private_local_configuration(client, tmp_path):
     assert health.headers["cache-control"] == "no-store"
     public = client.get("/api/settings").json()["settings"]
     assert public["ai"]["providers"]["deepseek"]["chat_model"] == "deepseek-flash"
+
+
+def test_volcengine_settings_persist_without_public_or_audit_secrets(client, tmp_path):
+    body = payload(client)
+    body['ai']['speech']['provider'] = 'volcengine'
+    body['ai']['speech']['volcengine'].update(api_key='volc-api-secret', tos_access_key='tos-access-secret',
+        tos_secret_key='tos-private-secret', tos_bucket='test-bucket', tos_region='cn-beijing')
+    result = client.put('/api/settings', json=body)
+    assert result.status_code == 200, result.text
+    for secret in ('volc-api-secret', 'tos-access-secret', 'tos-private-secret'):
+        assert secret not in result.text
+    public = result.json()['settings']['ai']['speech']['volcengine']
+    assert public['api_key_configured'] and public['tos_secret_key_configured']
+    store = SettingsStore(tmp_path); stored = store.load()
+    assert stored.ai.speech.volcengine.api_key.get_secret_value() == 'volc-api-secret'
+    assert stored.ai.speech.volcengine.tos_secret_key.get_secret_value() == 'tos-private-secret'
+    body = payload(client); body['ai']['speech']['provider'] = 'siliconflow'
+    assert client.put('/api/settings', json=body).status_code == 200
+    assert store.load().ai.speech.volcengine.api_key.get_secret_value() == 'volc-api-secret'
+    body['ai']['speech']['volcengine']['clear_tos_secret_key'] = True
+    assert client.put('/api/settings', json=body).status_code == 200
+    assert not store.load().ai.speech.volcengine.tos_secret_key.get_secret_value()
+    with sqlite3.connect(tmp_path / 'test.sqlite3') as db:
+        audit = str(db.execute('SELECT action,details FROM audit_events').fetchall())
+    for secret in ('volc-api-secret', 'tos-access-secret', 'tos-private-secret'):
+        assert secret not in audit
 
 
 def test_secrets_are_saved_retained_and_cleared_without_response_or_audit_leak(client, tmp_path):

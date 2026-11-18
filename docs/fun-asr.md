@@ -1,12 +1,38 @@
 # 语音转写与多人笔录
 
-录音由配置的语音服务商转写。硅基流动只返回纯文本时，可用本机模型辅助分人；返回带声音编号的原生分段时，保留服务商分段和时间。阿里云百炼北京地域 Fun-ASR 支持原生说话人分离。对话和笔录模板回填使用单独配置的文字模型。
+录音由配置的语音服务商转写。硅基流动只返回纯文本时，可用本机模型辅助分人；返回带声音编号的原生分段时，保留服务商分段和时间。阿里云百炼北京地域 Fun-ASR、火山豆包录音识别 2.0 支持原生说话人分离。对话和笔录模板回填使用单独配置的文字模型。
 
 ## 配置
 
 用 `root` 登录，在“系统设置 → AI 服务 → 笔录语音转写”选择语音服务商。使用阿里云时填写北京地域百炼 API Key，按需填写业务空间 ID。使用 DeepSeek 回填时，在同页配置 DeepSeek 凭据、启用服务并选择它为默认对话服务商。转写成功后若回填提示“凭证或模型权限”错误，应检查对话服务商的 Key、模型权限及文字外发设置，保留已有转写，单独重试回填。以有写权限的业务账号进入“智能笔录”测试。
 
 配置保存在 `backend/data/settings.sqlite3`，密钥不通过普通设置查询返回。不要直接编辑数据库或将密钥提交到仓库。没有密钥时，转写会明确提示配置缺失，不会偷偷转用其他服务商。
+
+## 火山录音识别 2.0 配置与验证
+
+在“系统设置 → AI 服务 → 笔录语音转写”选择“火山引擎 · 豆包录音识别 2.0”。已有硅基流动和阿里云配置保留，切换服务商不会覆盖另一家的密钥；不自动改变当前默认语音服务。
+
+需要填写同一已开通语音项目下的 API Key，以及 TOS 私有桶名称、桶所在地域（例如 `cn-beijing`）、TOS Access Key ID 和 Secret Access Key。语音 Key 与对象存储 AK/SK 是不同的凭据。TOS 凭据需具备该桶 `next-nia-asr/` 前缀下的上传、读取、删除权限；请设置此前缀的 1 天生命周期过期规则。不需要公开桶，也不需要开放本地业务 API 到公网。
+
+火山标准版要求音频 URL。本地规范化的转写副本由后端上传到私有 TOS 对象，使用 24 小时 GET 预签名链接供语音接口读取。终态任务尝试删除对象；网络错误、中断或进程退出可能留下对象，由桶的生命周期兜底清理。限时链接失效本身不等于对象已删除。密钥和预签名链接不写入识别正文、业务日志或任务缓存。
+
+固定调用 `/api/v3/auc/bigmodel/submit` 与 `/query`，资源 ID 为 `volc.seedasr.auc`，鉴权为 `X-Api-Key`。默认开启说话人分离、分句和标点，关闭语义顺滑；默认及 2–5 人采用 `ssd_version=200`，超过 5 人采用会议模式 `300`。预计人数用于选择场景和隔离重试，不作为云端精确人数参数，不能保证编号数等于所选人数。火山原生分人不要求安装本地声学模型，也不会被本机模型覆盖。
+
+任务缓存默认位于 `backend/data/volc-asr-tasks.sqlite3`，可通过 `CRJ_VOLC_ASR_CACHE` 调整，保留 23 小时。相同音频、配置、请求键及人数的重试复用任务；连续录音按批次隔离。等待 180 秒仍未结束时明确提示重试查询。提交响应丢失或缓存落盘失败时，重试可能重复提交；没有宣称严格的只调用一次保证。
+
+每次识别保留原始响应、运行编号、匿名声音、分句及逐字时间。零时长词不扩造时间，标记待核对；缺少声音编号或逐字依据时同样提示回听。分句未覆盖全文、时间异常、静音、凭据或权限错误均不应用不完整结果。角色仍需人工确认，同人的连续短答和补充段分别留存引用。
+
+回归命令：
+
+```sh
+backend/.venv/bin/python -m pytest -q backend/tests/test_volcengine_asr.py backend/tests/test_fun_asr.py backend/tests/test_asr_results.py backend/tests/test_record_capture.py
+npm test -- src/VolcengineSettings.test.tsx src/Presentation.test.tsx src/components/RecordQAReview.test.tsx src/components/RecordQADrafts.test.tsx
+npm run build
+```
+
+2026-11-18 接入验证：相关后端 302 项、前端 16 项通过，生产构建通过。这些测试使用协议模拟，包含实际上传转写路由和数据库保存、任务继续查询、凭据独立保存/清空、分人和补充回答。尚未配置真实火山及 TOS 凭据，不能据此声称已验证火山的识别准确率；配置完成后需再跑冻结的 12 条真人录音和实际模板回填对照。
+
+官方依据：[任务提交](https://docs.volcengine.com/docs/doubao-voice/task-submission-http-1?lang=zh)、[结果查询](https://docs.volcengine.com/docs/doubao-voice/result-query-http-1?lang=zh)、[分人模式](https://docs.volcengine.com/docs/doubao-voice/speaker-separation?lang=zh)、[TOS 预签名](https://docs.volcengine.com/docs/torch-object-storage/generalpresigned-python-sdk?lang=zh)。
 
 ## 阿里云任务与识别版本
 

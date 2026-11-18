@@ -135,8 +135,29 @@ class ExternalPermissions(StrictModel):
     analysis: bool = True
 
 
+class VolcengineSettings(StrictModel):
+    api_key: SecretStr = SecretStr("")
+    tos_access_key: SecretStr = SecretStr("")
+    tos_secret_key: SecretStr = SecretStr("")
+    tos_bucket: str = Field(default="", max_length=63, pattern=r"^(?:[a-z0-9][a-z0-9-]{1,61}[a-z0-9])?$")
+    tos_region: str = Field(default="cn-beijing", max_length=40, pattern=r"^[a-z]+-[a-z0-9]+(?:-[a-z0-9]+)*$")
+    model: Literal["volc.seedasr.auc"] = "volc.seedasr.auc"
+
+    @field_validator("api_key", "tos_access_key", "tos_secret_key")
+    @classmethod
+    def validate_key(cls, value: SecretStr) -> SecretStr:
+        return ProviderSettings.valid_api_key(value)
+
+
+class VolcengineUpdate(VolcengineSettings):
+    clear_api_key: bool = False
+    clear_tos_access_key: bool = False
+    clear_tos_secret_key: bool = False
+
+
 class SpeechSettings(StrictModel):
-    provider: Literal["siliconflow", "aliyun"] = "siliconflow"
+    provider: Literal["siliconflow", "aliyun", "volcengine"] = "siliconflow"
+    volcengine: VolcengineSettings = Field(default_factory=VolcengineSettings)
     api_key: SecretStr = SecretStr("")
     workspace_id: str = Field(default="", max_length=100, pattern=r"^[A-Za-z0-9-]*$")
     model: Literal["fun-asr"] = "fun-asr"
@@ -148,6 +169,7 @@ class SpeechSettings(StrictModel):
 
 
 class SpeechUpdate(SpeechSettings):
+    volcengine: VolcengineUpdate = Field(default_factory=VolcengineUpdate)
     clear_api_key: bool = False
 
 
@@ -195,6 +217,8 @@ def persisted_settings(settings: Settings) -> dict:
     value = settings.model_dump(mode="json")
     value["environment"]["postgres"]["password"] = reveal(settings.environment.postgres.password)
     value["ai"]["speech"]["api_key"] = reveal(settings.ai.speech.api_key)
+    for name in ("api_key", "tos_access_key", "tos_secret_key"):
+        value["ai"]["speech"]["volcengine"][name] = reveal(getattr(settings.ai.speech.volcengine, name))
     for name in ("siliconflow", "deepseek"):
         value["ai"]["providers"][name]["api_key"] = reveal(getattr(settings.ai.providers, name).api_key)
     return value
@@ -204,6 +228,10 @@ def public_settings(settings: Settings) -> dict:
     value = settings.model_dump(mode="json")
     value["ai"]["speech"].pop("api_key")
     value["ai"]["speech"]["api_key_configured"] = bool(reveal(settings.ai.speech.api_key))
+    for name in ("api_key", "tos_access_key", "tos_secret_key"):
+        volc = value["ai"]["speech"]["volcengine"]
+        volc.pop(name)
+        volc[name + "_configured"] = bool(reveal(getattr(settings.ai.speech.volcengine, name)))
     postgres = value["environment"]["postgres"]
     postgres.pop("password")
     postgres["password_configured"] = bool(reveal(settings.environment.postgres.password))
@@ -231,6 +259,15 @@ def merge_settings(update: SettingsUpdate, current: Settings) -> Settings:
         speech=data['ai']['speech'];speech.pop('clear_api_key',None)
         if update.ai.speech.clear_api_key:speech['api_key']=''
         elif not reveal(update.ai.speech.api_key):speech['api_key']=current.ai.speech.api_key
+        if 'volcengine' not in update.ai.speech.model_fields_set:
+            speech['volcengine'] = current.ai.speech.volcengine.model_dump()
+        else:
+            for name in ('api_key', 'tos_access_key', 'tos_secret_key'):
+                clear = speech['volcengine'].pop('clear_' + name, False)
+                if clear:
+                    speech['volcengine'][name] = ''
+                elif not reveal(getattr(update.ai.speech.volcengine, name)):
+                    speech['volcengine'][name] = getattr(current.ai.speech.volcengine, name)
     if "external_permissions" not in update.ai.model_fields_set:
         data["ai"]["external_permissions"] = current.ai.external_permissions.model_dump()
     data["environment"]["postgres"] = merge_postgres(update.environment.postgres, current.environment.postgres)

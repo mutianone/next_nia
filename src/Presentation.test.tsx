@@ -17,13 +17,13 @@ describe('real execution in populated workspaces',()=>{
     vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>settings})));
     render(<Assistant onKnowledge={vi.fn()} onSettings={vi.fn()}/>);
     expect(screen.queryByRole('button',{name:'查找依据'})).not.toBeInTheDocument();
-    await screen.findByText('请先配置 API 密钥，并启用 AI 和默认服务商。');
+    await screen.findByText('请联系 root 管理员配置 API 密钥，并启用 AI 和默认服务商。');
     fireEvent.change(screen.getByLabelText('法规问题'),{target:{value:'签证延期'}});
     expect(screen.getByRole('button',{name:'生成回答'})).toBeDisabled();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
   it('keeps real API configuration and capability tests visible',async()=>{
-    vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>url.endsWith('/settings')?settings:url.includes('/knowledge?')?{items:[],total:0}:{counts:{},events:[]}})));
+    vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>url.endsWith('/settings')?settings:url.endsWith('/ai-credentials')?{siliconflow:'',deepseek:''}:url.includes('/knowledge?')||url.endsWith('/record-templates')?{items:[],total:0}:{counts:{},events:[]}})));
     render(<Settings/>);
     await screen.findByText('数据库切换');
     fireEvent.click(screen.getByRole('tab',{name:/AI 服务/}));

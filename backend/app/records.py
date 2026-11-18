@@ -541,6 +541,12 @@ def capabilities(request: Request):
     settings = settings_copy(request)
     providers = {}
     for purpose in ("asr", "analysis"):
+        if purpose == 'asr' and settings.ai.speech.provider == 'volcengine':
+            from .record_volcengine import ready, MODEL
+            providers[purpose] = {'provider': 'volcengine', 'model': MODEL,
+                'allowed': settings.ai.external_permissions.asr,
+                'ready': settings.ai.enabled and ready(settings.ai.speech.volcengine)}
+            continue
         if purpose == "asr" and settings.ai.speech.provider == "aliyun":
             providers[purpose]={"provider":"aliyun","model":"fun-asr","allowed":settings.ai.external_permissions.asr,
                 "ready":settings.ai.enabled and bool(reveal(settings.ai.speech.api_key))}
@@ -557,7 +563,11 @@ def capabilities(request: Request):
             capability_source='https://help.aliyun.com/zh/model-studio/fun-asr-recorded-speech-recognition-http-api',
             format_note='原音本地保留；转写使用阿里云Fun-ASR，返回说话人分段与时间戳。')
     from .record_voice_audio import available as voice_available
-    providers["asr"]["speaker_count_available"] = settings.ai.speech.provider == "aliyun" or voice_available()
+    if settings.ai.speech.provider == 'volcengine':
+        providers['asr'].update(speaker_diarization='supported', word_timestamps='supported',
+            capability_source='https://docs.volcengine.com/docs/doubao-voice/task-submission-http-1?lang=zh',
+            format_note='转写副本上传火山私有 TOS，通过限时链接识别；原音本地保留。返回匿名声音编号与时间，角色须核对。人数仅用于选择分人场景，不保证返回指定人数。')
+    providers["asr"]["speaker_count_available"] = settings.ai.speech.provider in ("aliyun", "volcengine") or voice_available()
     from .record_template_config import available as available_templates
     from .record_pdf import available as pdf_available
     with Session(request.app.state.engine) as session:

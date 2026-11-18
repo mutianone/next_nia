@@ -159,10 +159,10 @@ def begin(record_id:str, body:Begin, request:Request):
             if (previous.speaker_count if previous else None) != body.speaker_count:
                 raise HTTPException(409,'同一录音会话的预计发言人数已确定。')
             return snapshot(s,capture)
-        if body.speaker_count is not None and provider != 'aliyun':
+        if body.speaker_count is not None and provider not in ('aliyun', 'volcengine'):
             from .record_voice_audio import available
             if not available():
-                raise HTTPException(422,'多人转写需要安装本机分人模型或配置阿里云 Fun-ASR。')
+                raise HTTPException(422,'多人转写需要安装本机分人模型或配置支持分人的语音服务。')
         r.mutable(row,body.expected_revision)
         if s.scalar(select(r.RecordAnalysis.id).where(r.RecordAnalysis.record_id==record_id,r.RecordAnalysis.status=='processing')):raise HTTPException(409,'已有生成任务，请等待完成。')
         existing=r.ordered_segments(s,row.id)
@@ -332,6 +332,8 @@ def process(engine,identifier,token,settings):
             b,c=valid(s);text=b.text;template=deepcopy(c.template)
             count = s.get(CaptureSpeakerCount, c.id)
             options = {"speaker_count": count.speaker_count} if count else {}
+            if settings.ai.speech.provider == 'volcengine':
+                options['request_key'] = batch_origin(b)
             pcm=None
             if not text:
                 chunks=list(s.scalars(select(Chunk).where(Chunk.capture_id==c.id,Chunk.sequence>=b.first,Chunk.sequence<=b.last).order_by(Chunk.sequence)))

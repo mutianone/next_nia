@@ -7,3 +7,4 @@ pydantic==2.11.3
 pytest==8.3.5
 pypdf==6.21.1
 python-multipart==0.0.32
+tos==2.9.3

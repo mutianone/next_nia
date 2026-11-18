@@ -1,3 +1,4 @@
+import { VolcengineSpeechSettings, defaultVolcengine, emptyVolcengineSecrets, type VolcengineConfig } from '../components/VolcengineSpeechSettings';
 import { RecordTemplateManager } from '../components/RecordTemplateManager';
 import { aiLabel } from '../lib/aiLabel';
 import { KnowledgePermissions } from '../components/KnowledgePermissions';
@@ -40,7 +41,7 @@ type PostgresSettings = {
 type AppSettings = {
   general: { system_name: string; organization: string; interview_locations?: string[] }
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
-  ai: { speech?: {provider:'siliconflow'|'aliyun';model:'fun-asr';workspace_id:string;api_key_configured:boolean}; external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
+  ai: { speech?: {provider:'siliconflow'|'aliyun'|'volcengine';volcengine?:VolcengineConfig;model:'fun-asr';workspace_id:string;api_key_configured:boolean}; external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
 type Runtime = { sample_workspace?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
@@ -95,6 +96,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   const mobile = useMediaQuery('(max-width: 700px)')
   const [notice, setNotice] = useState<Notice | null>(null)
   const [speechKey,setSpeechKey]=useState('');
+  const [volcSecrets, setVolcSecrets] = useState({...emptyVolcengineSecrets});
   const [clearSpeechKey,setClearSpeechKey]=useState(false);
   const [keys, setKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
   const [savedKeys, setSavedKeys] = useState<Record<ProviderId, string>>({ siliconflow: '', deepseek: '' })
@@ -123,7 +125,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
     return () => { cancelled = true }
   }, [reload])
 
-  const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || speechKey || clearSpeechKey || password || clearPassword || keys.siliconflow !== savedKeys.siliconflow || keys.deepseek !== savedKeys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
+  const dirty = Boolean(draft && saved && (JSON.stringify(draft) !== JSON.stringify(saved) || speechKey || clearSpeechKey || JSON.stringify(volcSecrets) !== JSON.stringify(emptyVolcengineSecrets) || password || clearPassword || keys.siliconflow !== savedKeys.siliconflow || keys.deepseek !== savedKeys.deepseek || clearKeys.siliconflow || clearKeys.deepseek))
 
   usePageDirty(dirty || saving)
 
@@ -171,7 +173,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
   }
 
   function resetSecrets(values = savedKeys) {
-    setSpeechKey(''); setClearSpeechKey(false)
+    setSpeechKey(''); setClearSpeechKey(false); setVolcSecrets({...emptyVolcengineSecrets})
     setKeys(values)
     setClearKeys({ siliconflow: false, deepseek: false })
     setVisibleKeys({ siliconflow: true, deepseek: true })
@@ -197,7 +199,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim(), interview_locations: draft.general.interview_locations || [] },
         environment: { mode: draft.environment.mode, postgres: postgresPayload() },
         ai: {
-          ...(draft.ai.speech ? {speech:{provider:draft.ai.speech.provider,model:'fun-asr',workspace_id:draft.ai.speech.workspace_id,api_key:speechKey.trim(),clear_api_key:clearSpeechKey}}:{}),
+          ...(draft.ai.speech ? {speech:{provider:draft.ai.speech.provider,model:'fun-asr',workspace_id:draft.ai.speech.workspace_id,api_key:speechKey.trim(),clear_api_key:clearSpeechKey,...(draft.ai.speech.volcengine ? {volcengine:{model:'volc.seedasr.auc',tos_bucket:draft.ai.speech.volcengine.tos_bucket,tos_region:draft.ai.speech.volcengine.tos_region,...volcSecrets}} : {})}}:{}),
           enabled: draft.ai.enabled, default_provider: draft.ai.default_provider, external_permissions: draft.ai.external_permissions || { question: true, asr: true, analysis: true },
           providers: Object.fromEntries(providers.map(provider => [provider.id, {
             enabled: draft.ai.providers[provider.id].enabled, base_url: provider.url, chat_model: draft.ai.providers[provider.id].chat_model.trim(),
@@ -284,9 +286,10 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         {section === 'ai' && <TabsContent value="ai" asChild><section className="settings-ai-section">
           <div className="panel settings-card"><div className="settings-card-heading"><div><h2>AI 服务配置</h2></div></div>
             <div className="settings-card-body"><div className="settings-external-permissions"><div className="permission-heading"><h3>AI 外发许可</h3><div><button type="button" className="text-button" disabled={saving} onClick={() => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:true,asr:true,analysis:true}}})}>全选</button><button type="button" className="text-button" disabled={saving} onClick={() => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:false,asr:false,analysis:false}}})}>取消全选</button></div></div><p>许可按功能统一生效，实际发送至当前配置的服务商；取消勾选后，对应功能不能发送资料。</p>{([{key:'question',label:'允许法规问答发送至服务商',detail:'当前问题与已获准使用的公开法规片段。'},{key:'asr',label:'允许录音转写发送至AI',detail:'本次选定的音频，原音仍在本地留存。'},{key:'analysis',label:'允许笔录摘要发送至服务商',detail:'已保存的笔录修订文字，用于摘要与要素提取。'}] as const).map(item => <label key={item.key}><input type="checkbox" disabled={saving} checked={draft.ai.external_permissions?.[item.key] ?? true} onChange={e => setDraft({...draft,ai:{...draft.ai,external_permissions:{question:true,asr:true,analysis:true,...draft.ai.external_permissions,[item.key]:e.target.checked}}})}/><span><strong>{item.label}</strong><small>{item.detail}</small></span></label>)}</div><KnowledgePermissions/><div className={`settings-ai-master ${draft.ai.enabled ? 'enabled' : ''}`}><div><h3>启用 AI 功能<span className={`settings-small-badge ${draft.ai.enabled ? 'enabled' : ''}`}>{draft.ai.enabled ? '已开启' : '已关闭'}</span></h3><p>{draft.ai.enabled ? '法规问答、语音转写和摘要可使用已配置的服务。' : '关闭时保留所有配置，暂停业务 AI 调用。'}</p></div><Switch checked={draft.ai.enabled} disabled={saving} label="启用 AI 功能" onChange={enabled => { setDraft({ ...draft, ai: { ...draft.ai, enabled } }); setNotice(null) }} /></div>
-              <div className="settings-default-provider"><div><h3>笔录语音转写</h3><p>{draft.ai.speech?.provider === 'aliyun' ? '阿里云百炼 · Fun-ASR · 北京地域' : `硅基流动 · ${draft.ai.providers.siliconflow.asr_model}`}</p></div>
-                <label>语音服务<select className="select" disabled={saving} value={draft.ai.speech?.provider||'siliconflow'} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{model:'fun-asr',workspace_id:'',api_key_configured:false,...draft.ai.speech,provider:e.target.value as 'aliyun'|'siliconflow'}}})}><option value="aliyun">阿里云 Fun-ASR</option><option value="siliconflow">硅基流动（备用）</option></select></label>
+              <div className="settings-default-provider"><div><h3>笔录语音转写</h3><p>{draft.ai.speech?.provider === 'volcengine' ? '火山引擎 · 豆包录音文件识别 2.0' : draft.ai.speech?.provider === 'aliyun' ? '阿里云百炼 · Fun-ASR · 北京地域' : `硅基流动 · ${draft.ai.providers.siliconflow.asr_model}`}</p></div>
+                <label>语音服务<select className="select" disabled={saving} value={draft.ai.speech?.provider||'siliconflow'} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{model:'fun-asr',workspace_id:'',api_key_configured:false,volcengine:{...defaultVolcengine},...draft.ai.speech,provider:e.target.value as 'aliyun'|'siliconflow'|'volcengine'}}})}><option value="volcengine">火山引擎 · 豆包录音识别 2.0</option><option value="aliyun">阿里云 Fun-ASR</option><option value="siliconflow">硅基流动</option></select></label>
               </div>
+              {draft.ai.speech?.provider==='volcengine' && <VolcengineSpeechSettings config={draft.ai.speech.volcengine || defaultVolcengine} secrets={volcSecrets} disabled={saving} onSecrets={setVolcSecrets} onConfig={volcengine=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,volcengine}}})}/>}
               {draft.ai.speech?.provider==='aliyun'&&<div className="settings-field-grid">
                 <label className="field">百炼 API Key<input className="input" type="password" autoComplete="new-password" value={speechKey} disabled={saving||clearSpeechKey} placeholder={draft.ai.speech.api_key_configured?'已配置，留空保留':'填写北京地域 API Key'} onChange={e=>setSpeechKey(e.target.value)}/></label>
                 <label className="field">业务空间 ID（可选）<input className="input" value={draft.ai.speech.workspace_id} disabled={saving} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,workspace_id:e.target.value}}})}/></label>

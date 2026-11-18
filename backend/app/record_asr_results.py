@@ -49,7 +49,7 @@ def _times(item):
     return start, end
 
 
-def normalize_funasr(payload, task_id, scope=''):
+def normalize_funasr(payload, task_id, scope='', *, provider='aliyun', model='fun-asr'):
     """Preserve provider fields, including empty speaker/word information."""
     from .records_ai import RecordAIError
     from .documents import plain_text
@@ -57,7 +57,7 @@ def normalize_funasr(payload, task_id, scope=''):
         tracks = payload['transcripts']
         if not isinstance(tracks, list) or not tracks:
             raise ValueError('missing transcripts')
-        run_id = str(uuid5(NAMESPACE_URL, 'fun-asr:' + scope + ':' + task_id))
+        run_id = str(uuid5(NAMESPACE_URL, model + ':' + scope + ':' + task_id))
         parts = []
         for ti, track in enumerate(tracks):
             if not isinstance(track, dict):
@@ -104,11 +104,11 @@ def normalize_funasr(payload, task_id, scope=''):
                               'timestamp_unit': 'ms', 'is_final': True})
         if not parts:
             raise ValueError('result limits')
-        return {'provider': 'aliyun', 'model': 'fun-asr', 'recognition_run_id': run_id,
+        return {'provider': provider, 'model': model, 'recognition_run_id': run_id,
                 'provider_task_id': task_id, 'raw_result': deepcopy(payload),
                 'text': '\n'.join(p['text'] for p in parts), 'segments': parts}
     except (KeyError, TypeError, ValueError):
-        raise RecordAIError(502, 'Fun-ASR分句或时间信息无效，原始结果未应用。') from None
+        raise RecordAIError(502, '语音分句或时间信息无效，原始结果未应用。') from None
 
 
 def map_interval(start, end, intervals):
