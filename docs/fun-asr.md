@@ -48,6 +48,10 @@ npm run build
 
 12 条真实公共录音已完成双引擎转写、核对选择接口及实际普通模板复测。标注辅助选择后有值 9/12、逐字正确 5/12，不代表自动择优准确率。方法、限制和逐条结果见[双引擎核对实测](dual-asr-comparison-20261118.md)。本轮没有自动切换用户当前默认服务。
 
+双引擎设置另有“自动比对”：默认只用本地规则，可选“规则 + 默认对话模型”或“规则 + DeepSeek”。DeepSeek 选项独立使用已配置的 DeepSeek 对话模型和密钥，不修改默认回填模型。模型模式需启用相应服务及笔录文字外发，音频仍只发送两家 ASR，文字模型收到两份候选文字与分句信息。新转写会自动比较并预选草稿；旧版本可在核对窗口点“自动比对并预选候选”。理由会显示，选择可修改，关键冲突或模型失败保留未选状态；确认前不写正文、不确认角色、不放开回填。
+
+同批已冻结的真实转写用于 DeepSeek 自动比对验证，模型未获得参考标注或上一轮人工选择。结果及失败样例见[自动择选实测](asr-auto-selection-20261118.md)。自动预选提高便利性，不能据此认定比某个单引擎更准确。
+
 ```sh
 backend/.venv/bin/python -m pytest -q backend/tests/test_dual_asr.py backend/tests/test_record_capture.py backend/tests/test_record_jobs.py backend/tests/test_qa_drafts.py backend/tests/test_fill_apply.py
 npm test -- src/VolcengineSettings.test.tsx src/components/RecordDualReview.test.tsx src/components/RecordQAReview.test.tsx

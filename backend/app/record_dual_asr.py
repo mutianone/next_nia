@@ -110,7 +110,8 @@ def transcribe(raw, file_format, mime_type, settings, *, request_key='', speaker
             except Exception:
                 # Never persist provider exception strings, keys or signed URLs.
                 errors[name] = {'status': 502, 'message': '识别异常，未取得此服务的结果。'}
-    return combine(results, errors)
+    from .record_asr_judge import recommend
+    return recommend(combine(results, errors), settings)
 
 
 def require_reviewed(session, record_id):

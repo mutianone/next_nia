@@ -1,0 +1,358 @@
+{
+  "decisions": [
+    {
+      "id": "01",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "9edb553493da87ad2d1dc4d79a93451d2b33dd0b02f5fb6754b800d18b9597c4",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "siliconflow",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "5449065161d3f0c5320ff94537b03eac2f1c117c0b82b1966368e08806cdee8c",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": null,
+          "method": "abstain",
+          "reason": "涉及身份、号码或关键事实的不同表述，需要回听。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "ce190c7b74ce8590b5a4fb2ab4b852dc59388d31f341caa3744b5b29561477e6",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": null,
+          "method": "abstain",
+          "reason": "涉及身份、号码或关键事实的不同表述，需要回听。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "1365144068c71ee95eb095788a52fd4f3d45c3209570d7621778d2e84713d6a5",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "siliconflow",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "judge": "deepseek",
+      "seconds": 1.31,
+      "calls": 1,
+      "source_fingerprint": "c2c2c79740ac5437f362b10d348a7df1df15007107d551ce3a5ec0829241d5c4",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "siliconflow",
+          "method": "model",
+          "reason": "A保留独立问答边界和说话人分段，B合并为单段且改写专名；但A中“憨泰科举”“泰中”与B“憨态可掬”“太真”均无法核实，整体倾向A的边界信息更完整。",
+          "review_required": true,
+          "judge_provider": "deepseek",
+          "judge_model": "deepseek-flash"
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "f292906e9e6df0dc804e1b3b09f362cca8dc6552a392a85f4b6d7e4b089c749d",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": null,
+          "method": "abstain",
+          "reason": "否定或肯定表达存在差异，文字模型不能确认原话。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "judge": "deepseek",
+      "seconds": 1.02,
+      "calls": 1,
+      "source_fingerprint": "7927f2e07dec96f20a0b9baaed78e0c571236aa79ad1464c18e8c11107b2a18d",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": null,
+          "method": "abstain",
+          "reason": "两份转写文字高度相似，但说话人归属和边界信息不一致，无法核实哪份正确。",
+          "review_required": true,
+          "judge_provider": "deepseek",
+          "judge_model": "deepseek-flash"
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "2433ac1d726b471555940767f54dec2e67d88251a31080441f6b770e2a79544a",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "volcengine",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        },
+        {
+          "group": 1,
+          "provider": "volcengine",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        },
+        {
+          "group": 2,
+          "provider": "volcengine",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "2a9e75d95271383eb27508c3e3907179bfa8d643016b5bdcf22ac5e2ab57fd98",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "siliconflow",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "judge": "deepseek",
+      "seconds": 1.32,
+      "calls": 1,
+      "source_fingerprint": "be308cad57439f7eb0f83d9d6e89b0e3dbb5d7ad7e906e885fa1d835b0a6d67f",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": null,
+          "method": "abstain",
+          "reason": "模型选择可能遗漏另一份结果中的内容，保留待回听。",
+          "review_required": true,
+          "judge_provider": "deepseek",
+          "judge_model": "deepseek-flash"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "judge": "deepseek",
+      "seconds": 0.0,
+      "calls": 0,
+      "source_fingerprint": "a01e44e82b2554678da008a385bfd24f844c0db9d51846ca5fadd5c2e136323c",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "volcengine",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        },
+        {
+          "group": 1,
+          "provider": "siliconflow",
+          "method": "rules",
+          "reason": "文字及可核对指标相同，暂用 Qwen 候选；没有证据证明它更准确。",
+          "review_required": true
+        },
+        {
+          "group": 2,
+          "provider": "volcengine",
+          "method": "rules",
+          "reason": "文字相同，优先使用粘连、声音疑点和缺失时间较少的分句；角色仍待确认。",
+          "review_required": true
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "judge": "deepseek",
+      "seconds": 1.05,
+      "calls": 1,
+      "source_fingerprint": "8314ec5151fd907507e6d5fea7b070cb0ceca2c012a5e9b09254518909e0c2f3",
+      "decisions": [
+        {
+          "group": 0,
+          "provider": "volcengine",
+          "method": "model",
+          "reason": "B的说话人边界更清晰，将提问与回答分开，且分段更完整；A存在未知说话人和未计时片段，边界信息较弱。",
+          "review_required": true,
+          "judge_provider": "deepseek",
+          "judge_model": "deepseek-flash"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "cases": [
+      {
+        "id": "01",
+        "complete": true,
+        "selected_windows": 1,
+        "windows": 1,
+        "edits": {
+          "siliconflow": 0,
+          "volcengine": 0,
+          "selected": 0
+        }
+      },
+      {
+        "id": "02",
+        "complete": false,
+        "selected_windows": 0,
+        "windows": 1
+      },
+      {
+        "id": "03",
+        "complete": false,
+        "selected_windows": 0,
+        "windows": 1
+      },
+      {
+        "id": "04",
+        "complete": true,
+        "selected_windows": 1,
+        "windows": 1,
+        "edits": {
+          "siliconflow": 2,
+          "volcengine": 2,
+          "selected": 2
+        }
+      },
+      {
+        "id": "05",
+        "complete": true,
+        "selected_windows": 1,
+        "windows": 1,
+        "edits": {
+          "siliconflow": 10,
+          "volcengine": 5,
+          "selected": 10
+        }
+      },
+      {
+        "id": "06",
+        "complete": false,
+        "selected_windows": 0,
+        "windows": 1
+      },
+      {
+        "id": "07",
+        "complete": false,
+        "selected_windows": 0,
+        "windows": 1
+      },
+      {
+        "id": "08",
+        "complete": true,
+        "selected_windows": 3,
+        "windows": 3,
+        "edits": {
+          "siliconflow": 1,
+          "volcengine": 1,
+          "selected": 1
+        }
+      },
+      {
+        "id": "09",
+        "complete": true,
+        "selected_windows": 1,
+        "windows": 1,
+        "edits": {
+          "siliconflow": 4,
+          "volcengine": 4,
+          "selected": 4
+        }
+      },
+      {
+        "id": "10",
+        "complete": false,
+        "selected_windows": 0,
+        "windows": 1
+      },
+      {
+        "id": "11",
+        "complete": true,
+        "selected_windows": 3,
+        "windows": 3,
+        "edits": {
+          "siliconflow": 5,
+          "volcengine": 5,
+          "selected": 5
+        }
+      },
+      {
+        "id": "12",
+        "complete": true,
+        "selected_windows": 1,
+        "windows": 1,
+        "edits": {
+          "siliconflow": 10,
+          "volcengine": 7,
+          "selected": 7
+        }
+      }
+    ],
+    "complete_cases": 7,
+    "windows": 16,
+    "selected_windows": 11,
+    "methods": {
+      "rules": 9,
+      "abstain": 5,
+      "model": 2
+    },
+    "model_calls": 4,
+    "selected_subset_characters": 457,
+    "selected_subset_errors": {
+      "siliconflow": 32,
+      "volcengine": 24,
+      "selected": 29
+    }
+  }
+}

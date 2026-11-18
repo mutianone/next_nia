@@ -34,3 +34,19 @@ it('requires an explicit source for every group and listening confirmation befor
   expect(writes).toEqual([{expected_revision:3,confirmed:true,choices:['siliconflow','siliconflow']}]);
   expect(onPending).toHaveBeenLastCalledWith(false);
 });
+
+it('preselects recommendations but still requires confirmation and permits changing the choice',async()=>{
+  const record={id:'record',revision:2,segments:[],transcription_attempts:[{provider:'dual'}],audio_clips:[]} as unknown as RecordDetail;
+  const group={group:0,status:'text_agrees',errors:{},recommendation:{provider:'siliconflow',method:'rules',reason:'问答边界更完整'},candidates:[
+    {provider:'siliconflow',text:'我看过。',segments:[{text:'我看过。'}]},
+    {provider:'volcengine',text:'我看过。',segments:[{text:'我看过。'}]}]};
+  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>({revision:2,runs:[{id:'run',audio_id:'audio',applied:true,groups:[group]}]})})));
+  render(<RecordDualReview record={record} disabled={false} onApplied={vi.fn()} onPending={vi.fn()}/>);
+  fireEvent.click(screen.getByRole('button',{name:'双引擎核对'}));
+  expect(await screen.findByLabelText('片段 1 采用 Qwen3-ASR（硅基流动）')).toBeChecked();
+  expect(screen.getByText(/自动预选：Qwen/)).toHaveTextContent('问答边界更完整');
+  const save=screen.getByRole('button',{name:'保存所选版本，继续核对角色'});
+  expect(save).toBeDisabled();
+  fireEvent.click(screen.getByLabelText(/我已回听并核对/));expect(save).toBeEnabled();
+  fireEvent.click(screen.getByLabelText('片段 1 采用 火山豆包 2.0'));expect(save).toBeDisabled();
+});

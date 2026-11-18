@@ -574,6 +574,11 @@ def capabilities(request: Request):
             format_note='转写副本上传火山私有 TOS，通过限时链接识别；原音本地保留。返回匿名声音编号与时间，角色须核对。人数仅用于选择分人场景，不保证返回指定人数。')
     if settings.ai.speech.provider == 'dual':
         providers['asr'].update(format_note='同一录音并行发送火山和硅基流动 Qwen3-ASR，两边分别计费。逐段回听选择后再确认角色与回填；文字一致不代表识别正确。暂用于上传录音。')
+        judge = settings.ai.speech.dual_judge
+        providers['asr']['judge'] = judge
+        if judge != 'rules' and settings.ai.external_permissions.analysis:
+            name = 'deepseek' if judge == 'deepseek' else settings.ai.default_provider
+            providers['asr']['format_note'] += f' 转写后将两份候选文字发送至 {name} 的 {getattr(settings.ai.providers, name).chat_model} 比较并自动预选草稿；不自动确认角色或事实。'
     providers["asr"]["speaker_count_available"] = settings.ai.speech.provider in ("aliyun", "volcengine", "dual") or voice_available()
     from .record_template_config import available as available_templates
     from .record_pdf import available as pdf_available

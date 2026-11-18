@@ -157,6 +157,7 @@ class VolcengineUpdate(VolcengineSettings):
 
 class SpeechSettings(StrictModel):
     provider: Literal["siliconflow", "aliyun", "volcengine", "dual"] = "siliconflow"
+    dual_judge: Literal['rules', 'default', 'deepseek'] = 'rules'
     volcengine: VolcengineSettings = Field(default_factory=VolcengineSettings)
     api_key: SecretStr = SecretStr("")
     workspace_id: str = Field(default="", max_length=100, pattern=r"^[A-Za-z0-9-]*$")
@@ -257,6 +258,8 @@ def merge_settings(update: SettingsUpdate, current: Settings) -> Settings:
         data['ai']['speech']=current.ai.speech.model_dump()
     else:
         speech=data['ai']['speech'];speech.pop('clear_api_key',None)
+        if 'dual_judge' not in update.ai.speech.model_fields_set:
+            speech['dual_judge'] = current.ai.speech.dual_judge
         if update.ai.speech.clear_api_key:speech['api_key']=''
         elif not reveal(update.ai.speech.api_key):speech['api_key']=current.ai.speech.api_key
         if 'volcengine' not in update.ai.speech.model_fields_set:

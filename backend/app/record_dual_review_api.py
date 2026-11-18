@@ -15,6 +15,29 @@ class Choice(Write):
     choices: list[Literal['siliconflow', 'volcengine']] = Field(min_length=1, max_length=500)
 
 
+class Judge(Write):
+    confirmed: Literal[True]
+
+
+@r.router.post('/{record_id}/dual-review/{run_id}/recommend')
+def recommend(record_id: str, run_id: str, body: Judge, request: Request):
+    actor(request)
+    from .record_asr_judge import recommend as choose
+    settings = r.settings_copy(request)
+    with Session(request.app.state.engine) as session:
+        record = r.get_record(session, record_id)
+        r.mutable(record, body.expected_revision)
+        run = session.get(ar.RecognitionRun, run_id)
+        if not run or run.record_id != record_id or run.provider != 'dual':
+            raise HTTPException(404, '未找到双引擎识别版本。')
+        output = {'segments': [deepcopy(s.data) for s in ar.sentences(session, run)]}
+    chosen = choose(output, settings)
+    with Session(request.app.state.engine) as session:
+        r.mutable(r.get_record(session, record_id), body.expected_revision)
+    # Suggestions are ephemeral for old versions; neither originals nor body change.
+    return {'revision': body.expected_revision, 'groups': [s['dual_review'] for s in chosen['segments']]}
+
+
 @r.router.get('/{record_id}/dual-review')
 def material(record_id: str, request: Request):
     with Session(request.app.state.engine) as session:
