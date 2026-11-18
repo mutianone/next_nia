@@ -34,6 +34,10 @@ npm run build
 
 官方依据：[任务提交](https://docs.volcengine.com/docs/doubao-voice/task-submission-http-1?lang=zh)、[结果查询](https://docs.volcengine.com/docs/doubao-voice/result-query-http-1?lang=zh)、[分人模式](https://docs.volcengine.com/docs/doubao-voice/speaker-separation?lang=zh)、[TOS 预签名](https://docs.volcengine.com/docs/torch-object-storage/generalpresigned-python-sdk?lang=zh)。
 
+### 配置后的真实对照
+
+随后配置火山及 TOS 凭据，完成同一批 12 条真人录音和实际普通模板测试，详见[火山与 Qwen 对比报告](volcengine-asr-comparison-20261118.md)。火山全文 CER 为 5.41%，整轮分人稳定 6/12；5 条短答文字都在，但全部与问话粘连。实际模板有值 5/12，逐字正确 1/12；3/4 补充样本完整保存 ASR 回答。第 09 条末尾超过原 WAV 30 毫秒，角色保存被拦截，未放宽校验。不能仅凭全文 CER 或长回答分人指标就认定更适合短问短答。`python3 scripts/verify-volcengine-comparison.py` 可离线复核证据。该轮没有修改用户当前的火山配置。
+
 ## 阿里云任务与识别版本
 
 沿用现有录音分段保存及后台任务流程。音频规范化后上传阿里云私有临时存储，提交异步识别任务，启用 diarization_enabled，查询结果后保存每个说话人的句子和句级时间戳。模板回填继续经过现有问答整理、依据校验及人工审核。

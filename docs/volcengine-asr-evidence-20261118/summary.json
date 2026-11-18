@@ -1,0 +1,55 @@
+{
+  "qwen3_asr": {
+    "edits": 55,
+    "characters": 961,
+    "stable": 2,
+    "short_text_present": 5,
+    "short_separate_exact": 5,
+    "saved": 6,
+    "faithful": 5,
+    "blank": 6,
+    "failed": 0,
+    "supplement_complete": 1,
+    "cloud_calls": 6
+  },
+  "volcengine": {
+    "edits": 52,
+    "characters": 961,
+    "stable": 6,
+    "short_text_present": 5,
+    "short_separate_exact": 0,
+    "saved": 5,
+    "faithful": 1,
+    "blank": 6,
+    "failed": 1,
+    "supplement_complete": 3,
+    "cloud_calls": 6
+  },
+  "merged_cases": [
+    "01",
+    "02",
+    "04",
+    "05",
+    "06",
+    "09"
+  ],
+  "asr_elapsed_seconds": 42.33,
+  "short_cases": [
+    "01",
+    "04",
+    "05",
+    "06",
+    "09"
+  ],
+  "supplement_cases": [
+    "03",
+    "07",
+    "10",
+    "12"
+  ],
+  "code_baseline": "894d30c",
+  "template_analysis_model": "Qwen/Qwen3-8B",
+  "timestamp_overruns_ms": {
+    "09": 30
+  }
+}
