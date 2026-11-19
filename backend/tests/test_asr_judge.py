@@ -60,7 +60,7 @@ def test_no_text_transmission_without_mode_and_permission(monkeypatch,mode,permi
 
 @pytest.mark.parametrize('failure',['invalid','truncated','exception','invented','wrong_type'])
 def test_bad_model_result_preserves_asr_and_abstains(monkeypatch,failure):
-    s=settings();s.ai.speech.dual_judge='default';data=different()
+    s=settings();s.ai.speech.dual_judge='default';s.ai.speech.dual_auto_adopt=True;data=different()
     def call(*a,**kw):
         if failure=='wrong_type':return {'choices':[False]}
         if failure=='exception':raise records_ai.RecordAIError(504,'test secret')
@@ -75,7 +75,7 @@ def test_bad_model_result_preserves_asr_and_abstains(monkeypatch,failure):
 
 
 def test_dropping_supplement_is_vetoed(monkeypatch):
-    s=settings();s.ai.speech.dual_judge='default'
+    s=settings();s.ai.speech.dual_judge='default';s.ai.speech.dual_auto_adopt=True
     data=combine({'siliconflow':output(['我喜欢篮球也喜欢跑步。'],'siliconflow'),
                   'volcengine':output(['我喜欢篮球也喜欢跑步。还有其他爱好。'],'volcengine')})
     def call(*a,**kw):
@@ -110,3 +110,81 @@ def test_deepseek_can_be_chosen_without_changing_default_provider(monkeypatch):
     data=recommend(different(),s)
     assert data['segments'][1]['dual_review']['recommendation']['judge_provider']=='deepseek'
     assert s.ai.default_provider=='siliconflow' and 'fake-deepseek-secret' not in str(data)
+
+
+@pytest.mark.parametrize('enabled', [False, True])
+def test_auto_adoption_switch_controls_selection_and_complete_prefill(monkeypatch, enabled):
+    from backend.app.record_dual_prefill import prefill
+    from backend.app.record_dual_status import classified_groups
+    s = settings(); s.ai.speech.dual_judge = 'default'; s.ai.speech.dual_auto_adopt = enabled
+    def call(*a, **kw):
+        group = json.loads(kw['json']['messages'][1]['content'])['groups'][0]
+        choice = next(c['id'] for c in group['candidates'] if '篮球' in c['text'])
+        return response([{'group': group['group'], 'choice': choice, 'reason': '疑似同音错字'}])
+    monkeypatch.setattr(records_ai, 'bounded_post', call)
+    data = recommend(different(), s)
+    groups = [(str(i), part['dual_review']) for i, part in enumerate(data['segments'])]
+    template, fields = prefill({'fields': [{'id': 'q001', 'label': '请介绍你的兴趣。'}]}, groups)
+    classified = classified_groups(template, groups)
+    assert bool(fields) is enabled
+    assert all(not g['needs_review'] for g in classified) is enabled
+    if enabled:
+        assert template['values']['q001'] == '我平时喜欢打篮球，周末也去跑步。'
+        assert all(g['automatic_choice'] == 'volcengine' for g in classified)
+    # Re-evaluation with the switch off cannot reuse prior authorization.
+    s.ai.speech.dual_auto_adopt = False
+    assert not any(p['dual_review'].get('auto_adopt') for p in recommend(data, s)['segments'])
+
+
+@pytest.mark.parametrize('answer', ['我不喜欢篮球，周末也去跑步。', '我平时喜欢打篮球，周末跑步3次。'])
+def test_auto_adoption_never_overrides_critical_conflict(monkeypatch, answer):
+    from backend.app.record_dual_status import classified_groups
+    s = settings(); s.ai.speech.dual_judge = 'default'; s.ai.speech.dual_auto_adopt = True
+    data = combine({'siliconflow': output(['我平时喜欢打篮球，周末也去跑步。'], 'siliconflow'),
+                    'volcengine': output([answer], 'volcengine')})
+    monkeypatch.setattr(records_ai, 'bounded_post', lambda *a, **kw: pytest.fail('critical conflict must not reach model'))
+    groups = [(str(i), p['dual_review']) for i, p in enumerate(recommend(data, s)['segments'])]
+    assert all(g['needs_review'] for g in classified_groups({}, groups))
+
+
+def test_adoption_setting_defaults_and_old_client_preservation():
+    from backend.app.schemas import Settings, SettingsUpdate, merge_settings
+    current = Settings()
+    assert current.ai.speech.dual_auto_adopt is False
+    current.ai.speech.dual_auto_adopt = True
+    update = SettingsUpdate.model_validate({'general': {}, 'environment': {}, 'ai': {'speech': {'provider': 'dual'}}})
+    assert merge_settings(update, current).ai.speech.dual_auto_adopt is True
+    update.ai.speech.dual_auto_adopt = False
+    assert merge_settings(update, current).ai.speech.dual_auto_adopt is False
+
+
+@pytest.mark.parametrize('enabled', [False, True])
+def test_upload_auto_adoption_creates_auditable_version(client, monkeypatch, enabled):
+    from backend.tests.test_records import create, upload
+    from backend.app import records
+    from backend.app.record_asr_results import RecognitionRun
+    from sqlalchemy.orm import Session
+    from sqlalchemy import select
+    s = settings(); s.ai.speech.dual_judge = 'default'; s.ai.speech.dual_auto_adopt = enabled
+    client.app.state.store.current = s
+    def call(*a, **kw):
+        group = json.loads(kw['json']['messages'][1]['content'])['groups'][0]
+        choice = next(c['id'] for c in group['candidates'] if '篮球' in c['text'])
+        return response([{'group': group['group'], 'choice': choice, 'reason': '同音差异'}])
+    monkeypatch.setattr(records_ai, 'bounded_post', call)
+    monkeypatch.setattr(records, 'transcribe_audio', lambda *a, **kw: recommend(different(), s))
+    row = upload(client, create(client), duration=6000).json()
+    root = f"/api/records/{row['id']}"
+    reply = client.post(root+'/audio/'+row['audio_clips'][0]['id']+'/transcribe',
+                        json={'expected_revision': row['revision'], 'confirmed': True, 'speaker_count': 2})
+    assert reply.status_code == 200, reply.text
+    saved = reply.json()
+    assert (saved['dual_review_status']['pending_groups'] == 0) is enabled
+    assert all(p['speaker'] == 'unknown' for p in saved['segments'])
+    with Session(client.app.state.engine) as session:
+        runs = list(session.scalars(select(RecognitionRun).where(RecognitionRun.record_id == row['id'])))
+        assert len(runs) == (2 if enabled else 1)
+        if enabled:
+            selected = next(r for r in runs if r.applied)
+            assert selected.provider == 'dual_reviewed'
+            assert selected.raw_result['selection_method'] == 'automatic_model'

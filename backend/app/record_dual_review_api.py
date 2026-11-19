@@ -149,9 +149,10 @@ def apply_choices(session, record, run, selected_choices, who=None):
             parts.append(part)
     if any(len(p['text']) > r.LIMITS['max_segment_chars'] for p in parts) or len(parts) + len(existing) - len(affected) > r.LIMITS['max_segments'] or sum(len(p['text']) for p in parts) + sum(len(s.text) for s in existing if s not in affected) > r.LIMITS['max_total_text_chars']:
         raise HTTPException(422, '核对结果超过正文上限，未修改。')
+    model_adopted = any(s.data['dual_review'].get('auto_adopt') and s.data['dual_review'].get('recommendation', {}).get('method') == 'model' for s in originals)
     output = {'provider': 'dual_reviewed', 'recognition_run_id': str(uuid4()),
               'text': '\n'.join(p['text'] for p in parts), 'segments': parts,
-              'raw_result': {'source_run_id': run.id, 'choices': selected_choices, 'confirmed_by': who, 'selection_method': 'human' if who else 'automatic_consensus',
+              'raw_result': {'source_run_id': run.id, 'choices': selected_choices, 'confirmed_by': who, 'selection_method': 'human' if who else 'automatic_model' if model_adopted else 'automatic_consensus',
                              'confirmed_at': r.utc_now().isoformat()}}
     reviewed = ar.save_result(session, record_id, run.origin_key, output, run.audio_id)
     index = min((s.position for s in affected), default=len(existing))

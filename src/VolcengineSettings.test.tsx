@@ -53,9 +53,13 @@ it('saves independent Volcengine credentials and preserves them while switching 
   fireEvent.change(screen.getByLabelText('语音服务'), {target:{value:'dual'}});
   fireEvent.change(screen.getByLabelText('双引擎自动比对'), {target:{value:'deepseek'}});
   expect(screen.getByText(/同一录音并行发送火山和硅基流动/)).toBeVisible();
+  expect(screen.getByLabelText('自动采用模型裁决')).not.toBeChecked();
+  fireEvent.click(screen.getByLabelText('自动采用模型裁决'));
+  expect(screen.getByLabelText('自动采用模型裁决')).toBeChecked();
   fireEvent.click(screen.getByRole('button', {name:/保存/}));
   await waitFor(() => expect(writes).toHaveLength(3));
   expect(writes[2].ai.speech.provider).toBe('dual');
   expect(writes[2].ai.speech.dual_judge).toBe('deepseek');
+  expect(writes[2].ai.speech.dual_auto_adopt).toBe(true);
   expect(writes[2].ai.speech.volcengine.api_key).toBe('');
 });

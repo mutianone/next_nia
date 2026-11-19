@@ -1,7 +1,7 @@
 """Select existing ASR candidates for a draft; never rewrite or confirm facts.
 
 Text-only judges cannot verify the sound. Critical differences abstain, and
-recommendations never bypass the human role/fill gate.
+automatic adoption requires an explicit setting; business roles remain unconfirmed.
 """
 from collections import Counter
 from difflib import SequenceMatcher
@@ -45,6 +45,42 @@ def result(provider=None, method='abstain', reason='', **extra):
 
 
 def recommend(output, settings):
+    # Snapshot authorization on new results. Recommending old versions stays ephemeral.
+    for part in output['segments']:
+        part['dual_review'].pop('auto_adopt', None)
+    chosen = _recommend(output, settings)
+    if (settings.ai.speech.dual_auto_adopt and settings.ai.speech.dual_judge != 'rules'
+            and settings.ai.external_permissions.analysis):
+        for part in chosen['segments']:
+            group = part['dual_review']
+            recommendation = group.get('recommendation', {})
+            if recommendation.get('provider') and recommendation.get('method') in ('rules', 'model'):
+                group['auto_adopt'] = True
+        model_providers = {p['dual_review']['recommendation']['provider'] for p in chosen['segments']
+                           if p['dual_review'].get('auto_adopt') and p['dual_review']['recommendation']['method'] == 'model'}
+        if len(model_providers) == 1:
+            preferred = next(iter(model_providers))
+            for part in chosen['segments']:
+                group = part['dual_review']
+                if group.get('auto_adopt') and group['recommendation']['method'] == 'rules':
+                    # Identical text may use the same engine as the model-selected answer,
+                    # keeping anonymous speaker IDs comparable within that engine only.
+                    candidate = next(c for c in group['candidates'] if c['provider'] == preferred)
+                    original = next(c for c in group['candidates'] if c['provider'] == group['recommendation']['provider'])
+                    if tuple(metrics(candidate).values()) <= tuple(metrics(original).values()):
+                        group['recommendation']['provider'] = preferred
+                        group['recommendation']['reason'] = '文字相同且质量指标未下降，沿用同一引擎以保留声音编号关系。'
+    return chosen
+
+
+def approved_choice(group):
+    recommendation = group.get('recommendation', {})
+    if group.get('auto_adopt') and not group.get('errors') and recommendation.get('method') in ('rules', 'model'):
+        return recommendation.get('provider')
+    return None
+
+
+def _recommend(output, settings):
     from .records_ai import provider_config, bounded_post, CHAT_URLS, RecordAIError
     from .ai_protocol import structured_options
     from .record_asr_results import fingerprint

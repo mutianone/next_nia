@@ -38,15 +38,17 @@ def classified_groups(template, groups):
                 answer.append(clause)
         finish()
         coverage[engine] = good - bad
-    from .record_asr_judge import metrics
+    from .record_asr_judge import metrics, approved_choice
     results = []
     for sid, group in groups:
         matching = sorted((c for c in group['candidates'] if sid in coverage[c['provider']]),
                           key=lambda c: tuple(metrics(c).values()))
+        approved = approved_choice(group)
+        model_choice = next((c for c in group['candidates'] if c['provider'] == approved), None)
         corroborated = sum(sid in covered for covered in coverage.values()) >= 2
-        resolved = bool(matching and corroborated and not group.get('errors'))
+        resolved = bool(model_choice or (matching and corroborated and not group.get('errors')))
         results.append({**group, 'needs_review': not resolved,
-                        'automatic_choice': matching[0]['provider'] if resolved else None})
+                        'automatic_choice': model_choice['provider'] if model_choice else matching[0]['provider'] if resolved else None})
     return results
 
 

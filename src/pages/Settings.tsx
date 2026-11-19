@@ -41,7 +41,7 @@ type PostgresSettings = {
 type AppSettings = {
   general: { system_name: string; organization: string; interview_locations?: string[] }
   environment: { mode: 'test' | 'production'; postgres: PostgresSettings }
-  ai: { speech?: {dual_judge?:'rules'|'default'|'deepseek';provider:'siliconflow'|'aliyun'|'volcengine'|'dual';volcengine?:VolcengineConfig;model:'fun-asr';workspace_id:string;api_key_configured:boolean}; external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
+  ai: { speech?: {dual_auto_adopt?:boolean;dual_judge?:'rules'|'default'|'deepseek';provider:'siliconflow'|'aliyun'|'volcengine'|'dual';volcengine?:VolcengineConfig;model:'fun-asr';workspace_id:string;api_key_configured:boolean}; external_permissions?: {question: boolean; asr: boolean; analysis: boolean}; enabled: boolean; default_provider: ProviderId; providers: Record<ProviderId, ProviderSettings> }
 }
 type Runtime = { sample_workspace?: boolean; active_environment: string; database_engine: string; pending_restart: boolean }
 type SettingsResponse = { settings: AppSettings; runtime: Runtime }
@@ -199,7 +199,7 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
         general: { system_name: draft.general.system_name.trim(), organization: draft.general.organization.trim(), interview_locations: draft.general.interview_locations || [] },
         environment: { mode: draft.environment.mode, postgres: postgresPayload() },
         ai: {
-          ...(draft.ai.speech ? {speech:{provider:draft.ai.speech.provider,dual_judge:draft.ai.speech.dual_judge||'rules',model:'fun-asr',workspace_id:draft.ai.speech.workspace_id,api_key:speechKey.trim(),clear_api_key:clearSpeechKey,...(draft.ai.speech.volcengine ? {volcengine:{model:'volc.seedasr.auc',tos_bucket:draft.ai.speech.volcengine.tos_bucket,tos_region:draft.ai.speech.volcengine.tos_region,...volcSecrets}} : {})}}:{}),
+          ...(draft.ai.speech ? {speech:{provider:draft.ai.speech.provider,dual_auto_adopt:!!draft.ai.speech.dual_auto_adopt,dual_judge:draft.ai.speech.dual_judge||'rules',model:'fun-asr',workspace_id:draft.ai.speech.workspace_id,api_key:speechKey.trim(),clear_api_key:clearSpeechKey,...(draft.ai.speech.volcengine ? {volcengine:{model:'volc.seedasr.auc',tos_bucket:draft.ai.speech.volcengine.tos_bucket,tos_region:draft.ai.speech.volcengine.tos_region,...volcSecrets}} : {})}}:{}),
           enabled: draft.ai.enabled, default_provider: draft.ai.default_provider, external_permissions: draft.ai.external_permissions || { question: true, asr: true, analysis: true },
           providers: Object.fromEntries(providers.map(provider => [provider.id, {
             enabled: draft.ai.providers[provider.id].enabled, base_url: provider.url, chat_model: draft.ai.providers[provider.id].chat_model.trim(),
@@ -291,7 +291,8 @@ export function Settings({ onSaved }: { onSaved?: () => void }) {
               </div>
               {(draft.ai.speech?.provider==='volcengine'||draft.ai.speech?.provider==='dual') && <VolcengineSpeechSettings config={draft.ai.speech.volcengine || defaultVolcengine} secrets={volcSecrets} disabled={saving} onSecrets={setVolcSecrets} onConfig={volcengine=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,volcengine}}})}/>}
               {draft.ai.speech?.provider==='dual'&&<label className="field">双引擎自动比对<select aria-label="双引擎自动比对" className="select" disabled={saving} value={draft.ai.speech.dual_judge||'rules'} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,dual_judge:e.target.value as 'rules'|'default'|'deepseek'}}})}><option value="rules">本地规则，不发送文字</option><option value="default">规则 + 默认对话模型</option><option value="deepseek">规则 + DeepSeek</option></select><small>模型选项需允许笔录文字外发，并单独产生文字调用费用。自动预选现有候选草稿，不改写原文；关键分歧保留待核对。</small></label>}
-              {draft.ai.speech?.provider==='dual'&&<p>同一录音并行发送火山和硅基流动的 Qwen3-ASR-1.7B，分别计费。需启用硅基流动并配置其密钥。原文并列核对后再确认角色、回填；不会自动判定哪份一定正确。暂支持上传录音，连续自动回填请选择单引擎。</p>}
+              {draft.ai.speech?.provider==='dual'&&<label className="field"><span><input type="checkbox" aria-label="自动采用模型裁决" checked={!!draft.ai.speech.dual_auto_adopt} disabled={saving||!draft.ai.speech.dual_judge||draft.ai.speech.dual_judge==='rules'} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,dual_auto_adopt:e.target.checked}}})}/> 自动采用模型裁决</span><small>默认关闭。开启后，新转写中通过校验的模型选择自动采用并尝试回填；无法判断、关键事实分歧或校验失败仍需人工确认。需选择文字模型并允许文字外发；已处理版本不因开关变化撤回。</small></label>}
+              {draft.ai.speech?.provider==='dual'&&<p>同一录音并行发送火山和硅基流动的 Qwen3-ASR-1.7B，分别计费。需启用硅基流动并配置其密钥。系统在后台比较并保留两份原文，待确认内容单独提示；自动采用不代表原音已核实。暂支持上传录音，连续自动回填请选择单引擎。</p>}
               {draft.ai.speech?.provider==='aliyun'&&<div className="settings-field-grid">
                 <label className="field">百炼 API Key<input className="input" type="password" autoComplete="new-password" value={speechKey} disabled={saving||clearSpeechKey} placeholder={draft.ai.speech.api_key_configured?'已配置，留空保留':'填写北京地域 API Key'} onChange={e=>setSpeechKey(e.target.value)}/></label>
                 <label className="field">业务空间 ID（可选）<input className="input" value={draft.ai.speech.workspace_id} disabled={saving} onChange={e=>setDraft({...draft,ai:{...draft.ai,speech:{...draft.ai.speech!,workspace_id:e.target.value}}})}/></label>

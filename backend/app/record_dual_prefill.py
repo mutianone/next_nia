@@ -30,17 +30,20 @@ def engine_clauses(groups, engine):
     # ASR may split a single question at a voice boundary, even inside a word.
     # Join adjacent original spans before finding punctuation boundaries, while
     # retaining every source ID and each engine's independent acoustic identity.
+    from .record_asr_judge import approved_choice
     text = ''
     spans = []
     for sid, group in groups:
         candidate = (group.get('local_verification') if engine == 'local' else
-                     next((c for c in group['candidates'] if c['provider'] == engine), None))
+                     next((c for c in group['candidates'] if c['provider'] == (approved_choice(group) if engine == 'selected' else engine)), None))
         if not candidate or group.get('errors'):
             text += '\0'
             continue
         for segment in candidate['segments']:
             value = segment['text']
             voice = (segment.get('recognition_run_id'), segment.get('channel_id'), segment['speaker_id']) if segment.get('speaker_id') is not None else None
+            if engine == 'selected' and voice is not None:
+                voice = (candidate['provider'], *voice)
             spans.append((len(text), len(text) + len(value), sid, voice))
             text += value
     for match in re.finditer(r'[^。！？!?\n\0]+[。！？!?]*|\0', text):
@@ -70,7 +73,8 @@ def answers(groups, engine, aliases):
         if field:
             text = '\n'.join(reply)
             separate = bool(voices and asker is not None and voices[0] is not None
-                            and len(set(voices)) == 1 and voices[0] != asker)
+                            and len(set(voices)) == 1 and voices[0] != asker
+                            and (engine != 'selected' or voices[0][0] == asker[0]))
             found[field].append((text, sources.copy(), separate))
 
     for clause, ids, voice in engine_clauses(groups, engine):
@@ -107,10 +111,11 @@ def prefill(template, groups):
             for label in [field['label'], *field.get('question_aliases', []), *field.get('match_rules', [])]:
                 aliases[surface(label)].add(field['id'])
     engines = [answers(groups, engine, aliases) for engine in ('siliconflow', 'volcengine', 'local')]
+    selected = answers(groups, 'selected', aliases)
     values = dict(template.get('values', {}))
     sources = dict(template.get('sources', {}))
     added = {}
-    for field in set().union(*(engine.keys() for engine in engines)):
+    for field in set(selected).union(*(engine.keys() for engine in engines)):
         if field in template.get('structured_fill_sources', {}) or values.get(field) or field in template.get('locked_fields', []):
             continue
         entries = [engine[field][0] for engine in engines if len(engine.get(field, [])) == 1]
@@ -119,6 +124,8 @@ def prefill(template, groups):
             for b in entries[index + 1:]:
                 if surface(a[0]) and surface(a[0]) == surface(b[0]) and (a[2] or b[2]) and a[1] == b[1]:
                     supported.append(a)
+        if not supported and len(selected.get(field, [])) == 1 and selected[field][0][2]:
+            supported = selected[field]
         if not supported or len({surface(entry[0]) for entry in supported}) != 1:
             continue
         answer = supported[0]
