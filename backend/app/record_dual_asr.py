@@ -38,11 +38,36 @@ def normalized(text):
     return ''.join(c.lower() for c in text if c.isalnum())
 
 
+def local_verification(results):
+    """Corroborate a complete cloud transcript using independent local words."""
+    import re
+    from .record_voice_alignment import aligned_segments
+    first, second = (results.get(name) for name in ENGINES)
+    if not first or not second or normalized(first['text']) == normalized(second['text']):
+        return None
+    evidence = first.get('local_verification')
+    if not evidence:
+        return None
+    local_text = evidence['text']
+    for output in (first, second):
+        # Preserve negation and numeric token boundaries, including decimals.
+        if normalized(local_text) != normalized(output['text']):
+            continue
+        if re.findall(r'[-+−]?\d+(?:[.．]\d+)?', local_text) != re.findall(r'[-+−]?\d+(?:[.．]\d+)?', output['text']):
+            continue
+        parts = aligned_segments(output['text'], evidence['words'], evidence['decisions'], paired_dialogue=True)
+        return {'provider': 'local', 'text': output['text'], 'segments': parts,
+                'verified_provider': output['provider']}
+    return None
+
+
 def combine(results, errors=None):
     errors = errors or {}
     nodes = []
-    for engine in ENGINES:
-        output = results.get(engine)
+    verified = local_verification(results)
+    candidates_by_engine = {**results, **({'local': verified} if verified else {})}
+    for engine in (*ENGINES, 'local'):
+        output = candidates_by_engine.get(engine)
         if not output:
             continue
         for i, part in enumerate(output.get('segments') or [{'text': output['text']} ]):
@@ -68,16 +93,22 @@ def combine(results, errors=None):
     parts = []
     for i, window in enumerate(windows):
         candidates = []
-        for engine in ENGINES:
+        for engine in (*ENGINES, 'local'):
             source = [p for e, _, p in sorted(window['nodes'], key=lambda n: n[1]) if e == engine]
             if source:
-                candidates.append({'provider': engine, 'text': '\n'.join(p['text'] for p in source), 'segments': source})
+                candidates.append({'provider': engine, 'text': '\n'.join(p['text'] for p in source), 'segments': source,
+                                   **({'verified_provider': verified['verified_provider']} if engine == 'local' else {})})
+        local = next((c for c in candidates if c['provider'] == 'local'), None)
+        candidates = [c for c in candidates if c['provider'] != 'local']
+        if not candidates:
+            continue
         agrees = len(candidates) == 2 and normalized(candidates[0]['text']) == normalized(candidates[1]['text'])
         status = 'untimed' if not timed else 'single' if len(candidates) == 1 else 'text_agrees' if agrees else 'conflict'
         parts.append({'speaker': 'unknown', 'speaker_id': None, 'text': candidates[0]['text'],
                       'start_ms': window['start'], 'end_ms': window['end'],
                       'timestamp_source': 'UNKNOWN', 'voice_review': True,
-                      'dual_review': {'group': i, 'status': status, 'candidates': candidates, 'errors': errors}})
+                      'dual_review': {'group': i, 'status': status, 'candidates': candidates, 'errors': errors,
+                                      **({'local_verification': local} if local else {})}})
     return {'provider': 'dual', 'model': MODEL, 'recognition_run_id': str(uuid4()),
             'text': '\n'.join(p['text'] for p in parts), 'segments': parts,
             'raw_result': {'engines': deepcopy(results), 'errors': errors, 'algorithm': 'time-overlap-v1'}}

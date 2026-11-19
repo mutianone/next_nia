@@ -394,3 +394,36 @@ def test_question_only_template_without_pairs_stays_empty_without_cloud_request(
     assert not cloud.calls
     assert not saved['candidates'] and not saved['template_snapshot']['values']
     assert saved['template_snapshot']['quality_checks'][0]['code']=='no_qa_options'
+
+
+def test_unconfirmed_word_template_limits_request_to_metadata():
+    import json
+    from backend.app.records_ai import analysis_payload
+    from backend.app.schemas import Settings
+    from backend.app.record_templates import CASE_TEMPLATES
+    settings = Settings()
+    settings.ai.enabled = True
+    settings.ai.providers.siliconflow.enabled = True
+    from pydantic import SecretStr
+    settings.ai.providers.siliconflow.api_key = SecretStr('test-key')
+    payload = analysis_payload([{'segment_id':'s','speaker':'unknown','recognition_run_id':'r',
+        'text':'你的家庭情况？我有一个孩子。'}], settings, CASE_TEMPLATES[0])
+    fields = json.loads(payload['messages'][1]['content'])['template_fields']
+    assert fields and all(not f['id'].startswith('q') for f in fields)
+    assert payload['max_tokens'] <= 4000
+
+
+def test_word_template_with_unconfirmed_asr_avoids_empty_model_generation(monkeypatch):
+    from pydantic import SecretStr
+    from backend.app import records_ai
+    from backend.app.schemas import Settings
+    from backend.app.record_templates import CASE_TEMPLATES
+    settings = Settings()
+    settings.ai.enabled = True
+    settings.ai.providers.siliconflow.enabled = True
+    settings.ai.providers.siliconflow.api_key = SecretStr('test-key')
+    monkeypatch.setattr(records_ai, 'bounded_post', lambda *a, **k: pytest.fail('No grounded QA to send'))
+    result = records_ai.analyze_segments([{'segment_id':'s','speaker':'unknown','recognition_run_id':'r',
+        'text':'你的家庭情况？我有一个孩子。'}],settings,CASE_TEMPLATES[0])
+    assert result['key_facts'] == []
+    assert result['quality_checks'][0]['code'] == 'no_qa_options'

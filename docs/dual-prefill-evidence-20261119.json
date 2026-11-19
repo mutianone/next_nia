@@ -1,0 +1,5114 @@
+[
+  {
+    "id": "01",
+    "name": "连续三句提问",
+    "expected": {
+      "q005": "不是。"
+    },
+    "sha256": "3399ab8e27df00993407bf621614aff20dd2db19fec4c5cdb1bac972e64f9b8b",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "下面核实一项情况，\n请听清楚：你是否是人大代表或政协委员？\n不是。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "下面核实一项情况，",
+                  "start_ms": 780,
+                  "end_ms": 2580,
+                  "words": [
+                    {
+                      "text": "下",
+                      "begin_time": 780,
+                      "end_time": 960,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "面",
+                      "begin_time": 1080,
+                      "end_time": 1260,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "核",
+                      "begin_time": 1320,
+                      "end_time": 1500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "实",
+                      "begin_time": 1500,
+                      "end_time": 1680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 1860,
+                      "end_time": 1980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "项",
+                      "begin_time": 1980,
+                      "end_time": 2160,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "情",
+                      "begin_time": 2280,
+                      "end_time": 2400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "况，",
+                      "begin_time": 2400,
+                      "end_time": 2580,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 380,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "请听清楚：你是否是人大代表或政协委员？",
+                  "start_ms": 3900,
+                  "end_ms": 8100,
+                  "words": [
+                    {
+                      "text": "请",
+                      "begin_time": 3900,
+                      "end_time": 4080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "听",
+                      "begin_time": 4200,
+                      "end_time": 4380,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "清",
+                      "begin_time": 4440,
+                      "end_time": 4620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "楚：",
+                      "begin_time": 4620,
+                      "end_time": 4800,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "你",
+                      "begin_time": 5340,
+                      "end_time": 5520,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 5580,
+                      "end_time": 5760,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 5760,
+                      "end_time": 5940,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 6000,
+                      "end_time": 6180,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "人",
+                      "begin_time": 6300,
+                      "end_time": 6480,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "大",
+                      "begin_time": 6480,
+                      "end_time": 6660,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "代",
+                      "begin_time": 6660,
+                      "end_time": 6840,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "表",
+                      "begin_time": 6840,
+                      "end_time": 7020,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "或",
+                      "begin_time": 7080,
+                      "end_time": 7260,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "政",
+                      "begin_time": 7320,
+                      "end_time": 7500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "协",
+                      "begin_time": 7500,
+                      "end_time": 7680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "委",
+                      "begin_time": 7740,
+                      "end_time": 7920,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "员？",
+                      "begin_time": 7920,
+                      "end_time": 8100,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3500,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "不是。",
+                  "start_ms": 9240,
+                  "end_ms": 9600,
+                  "words": [
+                    {
+                      "text": "不",
+                      "begin_time": 9240,
+                      "end_time": 9420,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是。",
+                      "begin_time": 9420,
+                      "end_time": 9600,
+                      "voice_review": true
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 9020,
+                  "voice_review": true,
+                  "local_alternatives": [
+                    {
+                      "text": "啊",
+                      "start_ms": 10600,
+                      "end_ms": 10780
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "下面核实一项情况，请听清楚，你是否是人大代表或政协委员？不是。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "下面核实一项情况，请听清楚，你是否是人大代表或政协委员？不是。",
+                  "start_ms": 940,
+                  "end_ms": 9980,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1220,
+                      "start_time": 940,
+                      "text": "下",
+                      "begin_time": 940
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1380,
+                      "start_time": 1220,
+                      "text": "面",
+                      "begin_time": 1220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1660,
+                      "start_time": 1420,
+                      "text": "核",
+                      "begin_time": 1420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1820,
+                      "start_time": 1660,
+                      "text": "实",
+                      "begin_time": 1660
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2140,
+                      "start_time": 1900,
+                      "text": "一",
+                      "begin_time": 1900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2340,
+                      "start_time": 2140,
+                      "text": "项",
+                      "begin_time": 2140
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2540,
+                      "start_time": 2340,
+                      "text": "情",
+                      "begin_time": 2340
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2780,
+                      "start_time": 2540,
+                      "text": "况",
+                      "begin_time": 2540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4260,
+                      "start_time": 3900,
+                      "text": "请",
+                      "begin_time": 3900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4540,
+                      "start_time": 4260,
+                      "text": "听",
+                      "begin_time": 4260
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4740,
+                      "start_time": 4540,
+                      "text": "清",
+                      "begin_time": 4540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4940,
+                      "start_time": 4740,
+                      "text": "楚",
+                      "begin_time": 4740
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5660,
+                      "start_time": 5340,
+                      "text": "你",
+                      "begin_time": 5340
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5900,
+                      "start_time": 5660,
+                      "text": "是",
+                      "begin_time": 5660
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6060,
+                      "start_time": 5900,
+                      "text": "否",
+                      "begin_time": 5900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6340,
+                      "start_time": 6060,
+                      "text": "是",
+                      "begin_time": 6060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6540,
+                      "start_time": 6340,
+                      "text": "人",
+                      "begin_time": 6340
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6780,
+                      "start_time": 6540,
+                      "text": "大",
+                      "begin_time": 6540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6980,
+                      "start_time": 6780,
+                      "text": "代",
+                      "begin_time": 6780
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7140,
+                      "start_time": 6980,
+                      "text": "表",
+                      "begin_time": 6980
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7380,
+                      "start_time": 7140,
+                      "text": "或",
+                      "begin_time": 7140
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7620,
+                      "start_time": 7420,
+                      "text": "政",
+                      "begin_time": 7420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7780,
+                      "start_time": 7620,
+                      "text": "协",
+                      "begin_time": 7620
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8020,
+                      "start_time": 7820,
+                      "text": "委",
+                      "begin_time": 7820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8260,
+                      "start_time": 8020,
+                      "text": "员",
+                      "begin_time": 8020
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9580,
+                      "start_time": 9180,
+                      "text": "不",
+                      "begin_time": 9180
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9980,
+                      "start_time": 9580,
+                      "text": "是",
+                      "begin_time": 9580
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "cc48d4fa-8587-576a-9943-b537a153f1a7",
+                  "raw_result_ref": "cc48d4fa-8587-576a-9943-b537a153f1a7",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "02",
+    "name": "短答接话",
+    "expected": {
+      "q005": "不是。"
+    },
+    "sha256": "63065f3e0cc25ddd2dedaf2a44754e99e3c6aa09209018160ebeb971dae74ab2",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你是否是人大代表或政协委员？\n不是。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你是否是人大代表或政协委员？",
+                  "start_ms": 600,
+                  "end_ms": 3540,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 600,
+                      "end_time": 780,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 1020,
+                      "end_time": 1200,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 1200,
+                      "end_time": 1380,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 1380,
+                      "end_time": 1560,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "人",
+                      "begin_time": 1800,
+                      "end_time": 1980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "大",
+                      "begin_time": 2040,
+                      "end_time": 2220,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "代",
+                      "begin_time": 2220,
+                      "end_time": 2400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "表",
+                      "begin_time": 2400,
+                      "end_time": 2580,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "或",
+                      "begin_time": 2580,
+                      "end_time": 2760,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "政",
+                      "begin_time": 2820,
+                      "end_time": 2940,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "协",
+                      "begin_time": 2940,
+                      "end_time": 3120,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "委",
+                      "begin_time": 3180,
+                      "end_time": 3360,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "员？",
+                      "begin_time": 3360,
+                      "end_time": 3540,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 200,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "不是。",
+                  "start_ms": 4320,
+                  "end_ms": 4680,
+                  "words": [
+                    {
+                      "text": "不",
+                      "begin_time": 4320,
+                      "end_time": 4500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是。",
+                      "begin_time": 4500,
+                      "end_time": 4680,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3920,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你是否是人大代表或政协委员？不是。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你是否是人大代表或政协委员？不是。",
+                  "start_ms": 850,
+                  "end_ms": 4930,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1090,
+                      "start_time": 850,
+                      "text": "你",
+                      "begin_time": 850
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1330,
+                      "start_time": 1090,
+                      "text": "是",
+                      "begin_time": 1090
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1490,
+                      "start_time": 1330,
+                      "text": "否",
+                      "begin_time": 1330
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1850,
+                      "start_time": 1490,
+                      "text": "是",
+                      "begin_time": 1490
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2090,
+                      "start_time": 1850,
+                      "text": "人",
+                      "begin_time": 1850
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2370,
+                      "start_time": 2090,
+                      "text": "大",
+                      "begin_time": 2090
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2530,
+                      "start_time": 2370,
+                      "text": "代",
+                      "begin_time": 2370
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2650,
+                      "start_time": 2530,
+                      "text": "表",
+                      "begin_time": 2530
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2890,
+                      "start_time": 2650,
+                      "text": "或",
+                      "begin_time": 2650
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3090,
+                      "start_time": 2890,
+                      "text": "政",
+                      "begin_time": 2890
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3250,
+                      "start_time": 3090,
+                      "text": "协",
+                      "begin_time": 3090
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3490,
+                      "start_time": 3290,
+                      "text": "委",
+                      "begin_time": 3290
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3690,
+                      "start_time": 3490,
+                      "text": "员",
+                      "begin_time": 3490
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4610,
+                      "start_time": 4250,
+                      "text": "不",
+                      "begin_time": 4250
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4930,
+                      "start_time": 4610,
+                      "text": "是",
+                      "begin_time": 4610
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "0af1dfc8-64cb-5c99-bf34-80bbcaf1c8c8",
+                  "raw_result_ref": "0af1dfc8-64cb-5c99-bf34-80bbcaf1c8c8",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "03",
+    "name": "同人补充回答",
+    "expected": {
+      "q004": "我和父母住在一起。还有信息，我有一个妹妹。"
+    },
+    "sha256": "c569f2c855e49d7d98c16676eb2c92132d92a0324a33ef65e2c2ad36bd517e43",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "untimed",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你的家庭情况？\n我和父母住在一起，\n还有\n谢西，\n我有一个妹妹。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你的家庭情况？",
+                  "start_ms": 420,
+                  "end_ms": 1620,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 420,
+                      "end_time": 600,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的",
+                      "begin_time": 720,
+                      "end_time": 900,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "家",
+                      "begin_time": 900,
+                      "end_time": 1080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "庭",
+                      "begin_time": 1080,
+                      "end_time": 1260,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "情",
+                      "begin_time": 1320,
+                      "end_time": 1440,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "况？",
+                      "begin_time": 1440,
+                      "end_time": 1620,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 20,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "我和父母住在一起，",
+                  "start_ms": 4080,
+                  "end_ms": 5580,
+                  "words": [
+                    {
+                      "text": "我",
+                      "begin_time": 4080,
+                      "end_time": 4260,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "和",
+                      "begin_time": 4320,
+                      "end_time": 4500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "父",
+                      "begin_time": 4500,
+                      "end_time": 4680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "母",
+                      "begin_time": 4680,
+                      "end_time": 4860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "住",
+                      "begin_time": 4920,
+                      "end_time": 5100,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "在",
+                      "begin_time": 5100,
+                      "end_time": 5280,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 5280,
+                      "end_time": 5400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "起，",
+                      "begin_time": 5400,
+                      "end_time": 5580,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3680,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "还有",
+                  "start_ms": 6660,
+                  "end_ms": 7080,
+                  "words": [
+                    {
+                      "text": "还",
+                      "begin_time": 6660,
+                      "end_time": 6840,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 6900,
+                      "end_time": 7080,
+                      "voice_review": true
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 6500,
+                  "voice_review": true
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": null,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "谢西，",
+                  "start_ms": null,
+                  "end_ms": null,
+                  "words": [],
+                  "timestamp_source": "UNKNOWN",
+                  "listen_start_ms": 6680,
+                  "voice_review": true
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "我有一个妹妹。",
+                  "start_ms": 7920,
+                  "end_ms": 8880,
+                  "words": [
+                    {
+                      "text": "我",
+                      "begin_time": 7920,
+                      "end_time": 8100,
+                      "voice_review": true
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 8100,
+                      "end_time": 8220,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 8220,
+                      "end_time": 8340,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 8340,
+                      "end_time": 8460,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "妹",
+                      "begin_time": 8460,
+                      "end_time": 8640,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "妹。",
+                      "begin_time": 8700,
+                      "end_time": 8880,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 7520,
+                  "voice_review": true
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你的家庭情况。\n我和父母住在一起。\n还有信息，我有一个妹妹。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你的家庭情况。",
+                  "start_ms": 620,
+                  "end_ms": 1860,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 820,
+                      "start_time": 620,
+                      "text": "你",
+                      "begin_time": 620
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 980,
+                      "start_time": 820,
+                      "text": "的",
+                      "begin_time": 820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1220,
+                      "start_time": 980,
+                      "text": "家",
+                      "begin_time": 980
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1380,
+                      "start_time": 1220,
+                      "text": "庭",
+                      "begin_time": 1220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1580,
+                      "start_time": 1380,
+                      "text": "情",
+                      "begin_time": 1380
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1860,
+                      "start_time": 1580,
+                      "text": "况",
+                      "begin_time": 1580
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "c17ba549-6750-5e97-9aee-f58513e78275",
+                  "raw_result_ref": "c17ba549-6750-5e97-9aee-f58513e78275",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "text": "我和父母住在一起。",
+                  "start_ms": 4020,
+                  "end_ms": 5780,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 4380,
+                      "start_time": 4020,
+                      "text": "我",
+                      "begin_time": 4020
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4580,
+                      "start_time": 4380,
+                      "text": "和",
+                      "begin_time": 4380
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4780,
+                      "start_time": 4580,
+                      "text": "父",
+                      "begin_time": 4580
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4940,
+                      "start_time": 4780,
+                      "text": "母",
+                      "begin_time": 4780
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5220,
+                      "start_time": 5060,
+                      "text": "住",
+                      "begin_time": 5060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5420,
+                      "start_time": 5220,
+                      "text": "在",
+                      "begin_time": 5220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5580,
+                      "start_time": 5420,
+                      "text": "一",
+                      "begin_time": 5420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5780,
+                      "start_time": 5580,
+                      "text": "起",
+                      "begin_time": 5580
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "c17ba549-6750-5e97-9aee-f58513e78275",
+                  "raw_result_ref": "c17ba549-6750-5e97-9aee-f58513e78275",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "text": "还有信息，我有一个妹妹。",
+                  "start_ms": 6700,
+                  "end_ms": 8980,
+                  "sentence_id": 2,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 6980,
+                      "start_time": 6700,
+                      "text": "还",
+                      "begin_time": 6700
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7140,
+                      "start_time": 6980,
+                      "text": "有",
+                      "begin_time": 6980
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7420,
+                      "start_time": 7300,
+                      "text": "信",
+                      "begin_time": 7300
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7580,
+                      "start_time": 7540,
+                      "text": "息",
+                      "begin_time": 7540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8180,
+                      "start_time": 7900,
+                      "text": "我",
+                      "begin_time": 7900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8340,
+                      "start_time": 8180,
+                      "text": "有",
+                      "begin_time": 8180
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8460,
+                      "start_time": 8340,
+                      "text": "一",
+                      "begin_time": 8340
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8580,
+                      "start_time": 8460,
+                      "text": "个",
+                      "begin_time": 8460
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8780,
+                      "start_time": 8580,
+                      "text": "妹",
+                      "begin_time": 8580
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8980,
+                      "start_time": 8860,
+                      "text": "妹",
+                      "begin_time": 8860
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    2
+                  ],
+                  "recognition_run_id": "c17ba549-6750-5e97-9aee-f58513e78275",
+                  "raw_result_ref": "c17ba549-6750-5e97-9aee-f58513e78275",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {},
+          "local_verification": {
+            "provider": "local",
+            "text": "你的家庭情况。\n\n我和父母住在一起。\n\n还有信息，我有一个妹妹。",
+            "segments": [
+              {
+                "speaker": "unknown",
+                "speaker_id": 1,
+                "channel_id": 0,
+                "word_boundaries": true,
+                "text": "你的家庭情况。\n",
+                "start_ms": 420,
+                "end_ms": 1620,
+                "words": [
+                  {
+                    "text": "你",
+                    "begin_time": 420,
+                    "end_time": 600,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "的",
+                    "begin_time": 720,
+                    "end_time": 900,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "家",
+                    "begin_time": 900,
+                    "end_time": 1080,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "庭",
+                    "begin_time": 1080,
+                    "end_time": 1260,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "情",
+                    "begin_time": 1320,
+                    "end_time": 1440,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "况。\n",
+                    "begin_time": 1440,
+                    "end_time": 1620,
+                    "voice_review": false
+                  }
+                ],
+                "timestamp_source": "LOCAL_ESTIMATE",
+                "listen_start_ms": 20,
+                "voice_review": false
+              },
+              {
+                "speaker": "unknown",
+                "speaker_id": 2,
+                "channel_id": 0,
+                "word_boundaries": true,
+                "text": "我和父母住在一起。\n",
+                "start_ms": 4080,
+                "end_ms": 5580,
+                "words": [
+                  {
+                    "text": "我",
+                    "begin_time": 4080,
+                    "end_time": 4260,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "和",
+                    "begin_time": 4320,
+                    "end_time": 4500,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "父",
+                    "begin_time": 4500,
+                    "end_time": 4680,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "母",
+                    "begin_time": 4680,
+                    "end_time": 4860,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "住",
+                    "begin_time": 4920,
+                    "end_time": 5100,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "在",
+                    "begin_time": 5100,
+                    "end_time": 5280,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "一",
+                    "begin_time": 5280,
+                    "end_time": 5400,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "起。\n",
+                    "begin_time": 5400,
+                    "end_time": 5580,
+                    "voice_review": false
+                  }
+                ],
+                "timestamp_source": "LOCAL_ESTIMATE",
+                "listen_start_ms": 3680,
+                "voice_review": false
+              },
+              {
+                "speaker": "unknown",
+                "speaker_id": 2,
+                "channel_id": 0,
+                "word_boundaries": true,
+                "text": "还有信息，我有一个妹妹。",
+                "start_ms": 6660,
+                "end_ms": 8880,
+                "words": [
+                  {
+                    "text": "还",
+                    "begin_time": 6660,
+                    "end_time": 6840,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "有",
+                    "begin_time": 6900,
+                    "end_time": 7080,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "信",
+                    "begin_time": 7140,
+                    "end_time": 7320,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "息，",
+                    "begin_time": 7320,
+                    "end_time": 7500,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "我",
+                    "begin_time": 7920,
+                    "end_time": 8100,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "有",
+                    "begin_time": 8100,
+                    "end_time": 8220,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "一",
+                    "begin_time": 8220,
+                    "end_time": 8340,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "个",
+                    "begin_time": 8340,
+                    "end_time": 8460,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "妹",
+                    "begin_time": 8460,
+                    "end_time": 8640,
+                    "voice_review": false
+                  },
+                  {
+                    "text": "妹。",
+                    "begin_time": 8700,
+                    "end_time": 8880,
+                    "voice_review": false
+                  }
+                ],
+                "timestamp_source": "LOCAL_ESTIMATE",
+                "listen_start_ms": 6260,
+                "voice_review": false
+              }
+            ],
+            "verified_provider": "volcengine"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "id": "04",
+    "name": "两轮问答",
+    "expected": {
+      "q005": "不是。",
+      "q004": "我已经结婚了，有一个孩子。"
+    },
+    "sha256": "1a77a55b35fb2634dc1f4bfeb108a6cdce2c0bda1a9b09af5737557a1be06c30",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你是否是人大代表或政协委员？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你是否是人大代表或政协委员？",
+                  "start_ms": 840,
+                  "end_ms": 3540,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 840,
+                      "end_time": 1020,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 1140,
+                      "end_time": 1320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 1320,
+                      "end_time": 1500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 1560,
+                      "end_time": 1740,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "人",
+                      "begin_time": 1740,
+                      "end_time": 1860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "大",
+                      "begin_time": 1860,
+                      "end_time": 2040,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "代",
+                      "begin_time": 2100,
+                      "end_time": 2280,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "表",
+                      "begin_time": 2280,
+                      "end_time": 2460,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "或",
+                      "begin_time": 2520,
+                      "end_time": 2700,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "政",
+                      "begin_time": 2760,
+                      "end_time": 2940,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "协",
+                      "begin_time": 2940,
+                      "end_time": 3120,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "委",
+                      "begin_time": 3180,
+                      "end_time": 3360,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "员？",
+                      "begin_time": 3360,
+                      "end_time": 3540,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 440,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你是否是人大代表或政协委员？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你是否是人大代表或政协委员？",
+                  "start_ms": 1020,
+                  "end_ms": 3700,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1260,
+                      "start_time": 1020,
+                      "text": "你",
+                      "begin_time": 1020
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1460,
+                      "start_time": 1260,
+                      "text": "是",
+                      "begin_time": 1260
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1580,
+                      "start_time": 1460,
+                      "text": "否",
+                      "begin_time": 1460
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1820,
+                      "start_time": 1580,
+                      "text": "是",
+                      "begin_time": 1580
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1980,
+                      "start_time": 1820,
+                      "text": "人",
+                      "begin_time": 1820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2220,
+                      "start_time": 1980,
+                      "text": "大",
+                      "begin_time": 1980
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2380,
+                      "start_time": 2220,
+                      "text": "代",
+                      "begin_time": 2220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2580,
+                      "start_time": 2380,
+                      "text": "表",
+                      "begin_time": 2380
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2820,
+                      "start_time": 2580,
+                      "text": "或",
+                      "begin_time": 2580
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3060,
+                      "start_time": 2820,
+                      "text": "政",
+                      "begin_time": 2820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3220,
+                      "start_time": 3060,
+                      "text": "协",
+                      "begin_time": 3060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3460,
+                      "start_time": 3260,
+                      "text": "委",
+                      "begin_time": 3260
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3700,
+                      "start_time": 3460,
+                      "text": "员",
+                      "begin_time": 3460
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "raw_result_ref": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "1",
+        {
+          "group": 1,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "不是。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "不是。",
+                  "start_ms": 4740,
+                  "end_ms": 5100,
+                  "words": [
+                    {
+                      "text": "不",
+                      "begin_time": 4740,
+                      "end_time": 4920,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是。",
+                      "begin_time": 4920,
+                      "end_time": 5100,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 4340,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "不是。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "不是。",
+                  "start_ms": 4700,
+                  "end_ms": 5420,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 5060,
+                      "start_time": 4700,
+                      "text": "不",
+                      "begin_time": 4700
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5420,
+                      "start_time": 5060,
+                      "text": "是",
+                      "begin_time": 5060
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "raw_result_ref": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "2",
+        {
+          "group": 2,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你的家庭情况？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你的家庭情况？",
+                  "start_ms": 6900,
+                  "end_ms": 8040,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 6900,
+                      "end_time": 7080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的",
+                      "begin_time": 7200,
+                      "end_time": 7380,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "家",
+                      "begin_time": 7380,
+                      "end_time": 7500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "庭",
+                      "begin_time": 7500,
+                      "end_time": 7680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "情",
+                      "begin_time": 7740,
+                      "end_time": 7860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "况？",
+                      "begin_time": 7860,
+                      "end_time": 8040,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 6500,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你的家庭情况？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你的家庭情况？",
+                  "start_ms": 6900,
+                  "end_ms": 8300,
+                  "sentence_id": 2,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 7220,
+                      "start_time": 6900,
+                      "text": "你",
+                      "begin_time": 6900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7420,
+                      "start_time": 7220,
+                      "text": "的",
+                      "begin_time": 7220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7660,
+                      "start_time": 7420,
+                      "text": "家",
+                      "begin_time": 7420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7820,
+                      "start_time": 7660,
+                      "text": "庭",
+                      "begin_time": 7660
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8020,
+                      "start_time": 7820,
+                      "text": "情",
+                      "begin_time": 7820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8300,
+                      "start_time": 8020,
+                      "text": "况",
+                      "begin_time": 8020
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    2
+                  ],
+                  "recognition_run_id": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "raw_result_ref": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "3",
+        {
+          "group": 3,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "我已经结婚了，有一个孩子。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "我已经结婚了，有一个孩子。",
+                  "start_ms": 10260,
+                  "end_ms": 12420,
+                  "words": [
+                    {
+                      "text": "我",
+                      "begin_time": 10260,
+                      "end_time": 10440,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "已",
+                      "begin_time": 10500,
+                      "end_time": 10620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "经",
+                      "begin_time": 10620,
+                      "end_time": 10800,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "结",
+                      "begin_time": 10800,
+                      "end_time": 10980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "婚",
+                      "begin_time": 10980,
+                      "end_time": 11160,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "了，",
+                      "begin_time": 11220,
+                      "end_time": 11400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 11520,
+                      "end_time": 11700,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 11700,
+                      "end_time": 11820,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 11820,
+                      "end_time": 12000,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "孩",
+                      "begin_time": 12000,
+                      "end_time": 12180,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "子。",
+                      "begin_time": 12240,
+                      "end_time": 12420,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 9860,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "我已经结婚了，有一个孩子。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "我已经结婚了，有一个孩子。",
+                  "start_ms": 10300,
+                  "end_ms": 12580,
+                  "sentence_id": 3,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 10620,
+                      "start_time": 10300,
+                      "text": "我",
+                      "begin_time": 10300
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10740,
+                      "start_time": 10620,
+                      "text": "已",
+                      "begin_time": 10620
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10900,
+                      "start_time": 10740,
+                      "text": "经",
+                      "begin_time": 10740
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 11100,
+                      "start_time": 10900,
+                      "text": "结",
+                      "begin_time": 10900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 11300,
+                      "start_time": 11100,
+                      "text": "婚",
+                      "begin_time": 11100
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 11540,
+                      "start_time": 11300,
+                      "text": "了",
+                      "begin_time": 11300
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 11780,
+                      "start_time": 11540,
+                      "text": "有",
+                      "begin_time": 11540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 11900,
+                      "start_time": 11780,
+                      "text": "一",
+                      "begin_time": 11780
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12060,
+                      "start_time": 11900,
+                      "text": "个",
+                      "begin_time": 11900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12340,
+                      "start_time": 12060,
+                      "text": "孩",
+                      "begin_time": 12060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12580,
+                      "start_time": 12340,
+                      "text": "子",
+                      "begin_time": 12340
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    3
+                  ],
+                  "recognition_run_id": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "raw_result_ref": "5a532a41-1a98-59e3-926c-c6ec3a74c43b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "05",
+    "name": "带限定的回答",
+    "expected": {
+      "q004": "我有两个孩子，但是他们现在不和我一起住。"
+    },
+    "sha256": "7648c29a28ac7991557845f8c1fe1b5aed424295f6c38448e335ef5bf2cdfd2a",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你的家庭情况？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你的家庭情况？",
+                  "start_ms": 960,
+                  "end_ms": 2220,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 960,
+                      "end_time": 1140,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的",
+                      "begin_time": 1260,
+                      "end_time": 1440,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "家",
+                      "begin_time": 1500,
+                      "end_time": 1620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "庭",
+                      "begin_time": 1620,
+                      "end_time": 1800,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "情",
+                      "begin_time": 1860,
+                      "end_time": 2040,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "况？",
+                      "begin_time": 2040,
+                      "end_time": 2220,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 560,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你的家庭情况。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你的家庭情况。",
+                  "start_ms": 1070,
+                  "end_ms": 2470,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1350,
+                      "start_time": 1070,
+                      "text": "你",
+                      "begin_time": 1070
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1550,
+                      "start_time": 1350,
+                      "text": "的",
+                      "begin_time": 1350
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1790,
+                      "start_time": 1550,
+                      "text": "家",
+                      "begin_time": 1550
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1910,
+                      "start_time": 1790,
+                      "text": "庭",
+                      "begin_time": 1790
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2190,
+                      "start_time": 1910,
+                      "text": "情",
+                      "begin_time": 1910
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2470,
+                      "start_time": 2190,
+                      "text": "况",
+                      "begin_time": 2190
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "92c96ccd-0fb1-517f-b80f-a4221636b10b",
+                  "raw_result_ref": "92c96ccd-0fb1-517f-b80f-a4221636b10b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "1",
+        {
+          "group": 1,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "我有两个孩子，但是他们现在不和我一起住。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "我有两个孩子，但是他们现在不和我一起住。",
+                  "start_ms": 4260,
+                  "end_ms": 7620,
+                  "words": [
+                    {
+                      "text": "我",
+                      "begin_time": 4260,
+                      "end_time": 4440,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 4440,
+                      "end_time": 4620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "两",
+                      "begin_time": 4620,
+                      "end_time": 4800,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 4800,
+                      "end_time": 4980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "孩",
+                      "begin_time": 4980,
+                      "end_time": 5100,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "子，",
+                      "begin_time": 5100,
+                      "end_time": 5280,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "但",
+                      "begin_time": 5580,
+                      "end_time": 5760,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 5760,
+                      "end_time": 5940,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "他",
+                      "begin_time": 5940,
+                      "end_time": 6120,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "们",
+                      "begin_time": 6120,
+                      "end_time": 6300,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "现",
+                      "begin_time": 6300,
+                      "end_time": 6420,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "在",
+                      "begin_time": 6420,
+                      "end_time": 6600,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "不",
+                      "begin_time": 6660,
+                      "end_time": 6780,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "和",
+                      "begin_time": 6780,
+                      "end_time": 6960,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "我",
+                      "begin_time": 6960,
+                      "end_time": 7080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 7080,
+                      "end_time": 7200,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "起",
+                      "begin_time": 7200,
+                      "end_time": 7380,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "住。",
+                      "begin_time": 7440,
+                      "end_time": 7620,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3860,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "我有两个孩子，但是他们现在不和我一起住。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "我有两个孩子，但是他们现在不和我一起住。",
+                  "start_ms": 4150,
+                  "end_ms": 7870,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 4510,
+                      "start_time": 4150,
+                      "text": "我",
+                      "begin_time": 4150
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4750,
+                      "start_time": 4510,
+                      "text": "有",
+                      "begin_time": 4510
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4870,
+                      "start_time": 4750,
+                      "text": "两",
+                      "begin_time": 4750
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5030,
+                      "start_time": 4870,
+                      "text": "个",
+                      "begin_time": 4870
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5270,
+                      "start_time": 5030,
+                      "text": "孩",
+                      "begin_time": 5030
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5510,
+                      "start_time": 5270,
+                      "text": "子",
+                      "begin_time": 5270
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5910,
+                      "start_time": 5630,
+                      "text": "但",
+                      "begin_time": 5630
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6070,
+                      "start_time": 5910,
+                      "text": "是",
+                      "begin_time": 5910
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6190,
+                      "start_time": 6070,
+                      "text": "他",
+                      "begin_time": 6070
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6390,
+                      "start_time": 6190,
+                      "text": "们",
+                      "begin_time": 6190
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6550,
+                      "start_time": 6390,
+                      "text": "现",
+                      "begin_time": 6390
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6670,
+                      "start_time": 6550,
+                      "text": "在",
+                      "begin_time": 6550
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 6870,
+                      "start_time": 6670,
+                      "text": "不",
+                      "begin_time": 6670
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7070,
+                      "start_time": 6870,
+                      "text": "和",
+                      "begin_time": 6870
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7230,
+                      "start_time": 7070,
+                      "text": "我",
+                      "begin_time": 7070
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7350,
+                      "start_time": 7230,
+                      "text": "一",
+                      "begin_time": 7230
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7510,
+                      "start_time": 7350,
+                      "text": "起",
+                      "begin_time": 7350
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7870,
+                      "start_time": 7510,
+                      "text": "住",
+                      "begin_time": 7510
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "92c96ccd-0fb1-517f-b80f-a4221636b10b",
+                  "raw_result_ref": "92c96ccd-0fb1-517f-b80f-a4221636b10b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "06",
+    "name": "回答后更正",
+    "expected": {
+      "q004": "我有两个哥哥。不对，我说错了，是一个哥哥和一个姐姐。"
+    },
+    "sha256": "1981b8634a2a330e3b7508fa89b6883ee0c47adbf069fde5c002ed39670e766c",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你的家庭情况？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你的家庭情况？",
+                  "start_ms": 900,
+                  "end_ms": 2100,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 900,
+                      "end_time": 1080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的",
+                      "begin_time": 1140,
+                      "end_time": 1320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "家",
+                      "begin_time": 1320,
+                      "end_time": 1500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "庭",
+                      "begin_time": 1500,
+                      "end_time": 1680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "情",
+                      "begin_time": 1740,
+                      "end_time": 1920,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "况？",
+                      "begin_time": 1920,
+                      "end_time": 2100,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 500,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你的家庭情况。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你的家庭情况。",
+                  "start_ms": 1020,
+                  "end_ms": 2340,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1220,
+                      "start_time": 1020,
+                      "text": "你",
+                      "begin_time": 1020
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1420,
+                      "start_time": 1220,
+                      "text": "的",
+                      "begin_time": 1220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1660,
+                      "start_time": 1420,
+                      "text": "家",
+                      "begin_time": 1420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1820,
+                      "start_time": 1660,
+                      "text": "庭",
+                      "begin_time": 1660
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2060,
+                      "start_time": 1820,
+                      "text": "情",
+                      "begin_time": 1820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2340,
+                      "start_time": 2060,
+                      "text": "况",
+                      "begin_time": 2060
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "ed0c07fa-85f7-50ca-a6f6-401e1779ef1b",
+                  "raw_result_ref": "ed0c07fa-85f7-50ca-a6f6-401e1779ef1b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "1",
+        {
+          "group": 1,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "我有两个哥哥。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "我有两个哥哥。",
+                  "start_ms": 4280,
+                  "end_ms": 5420,
+                  "words": [
+                    {
+                      "text": "我",
+                      "begin_time": 4280,
+                      "end_time": 4460,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 4460,
+                      "end_time": 4640,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "两",
+                      "begin_time": 4640,
+                      "end_time": 4820,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 4820,
+                      "end_time": 5000,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "哥",
+                      "begin_time": 5000,
+                      "end_time": 5180,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "哥。",
+                      "begin_time": 5240,
+                      "end_time": 5420,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3880,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "我有两个哥哥。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "我有两个哥哥。",
+                  "start_ms": 4180,
+                  "end_ms": 5540,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 4540,
+                      "start_time": 4180,
+                      "text": "我",
+                      "begin_time": 4180
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4740,
+                      "start_time": 4540,
+                      "text": "有",
+                      "begin_time": 4540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4900,
+                      "start_time": 4740,
+                      "text": "两",
+                      "begin_time": 4740
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5100,
+                      "start_time": 4900,
+                      "text": "个",
+                      "begin_time": 4900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5300,
+                      "start_time": 5100,
+                      "text": "哥",
+                      "begin_time": 5100
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5540,
+                      "start_time": 5380,
+                      "text": "哥",
+                      "begin_time": 5380
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "ed0c07fa-85f7-50ca-a6f6-401e1779ef1b",
+                  "raw_result_ref": "ed0c07fa-85f7-50ca-a6f6-401e1779ef1b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "2",
+        {
+          "group": 2,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "不对，我说错了，是一个哥哥和一个姐姐。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "不对，我说错了，是一个哥哥和一个姐姐。",
+                  "start_ms": 6540,
+                  "end_ms": 10260,
+                  "words": [
+                    {
+                      "text": "不",
+                      "begin_time": 6540,
+                      "end_time": 6720,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "对，",
+                      "begin_time": 6720,
+                      "end_time": 6900,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "我",
+                      "begin_time": 7320,
+                      "end_time": 7500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "说",
+                      "begin_time": 7500,
+                      "end_time": 7680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "错",
+                      "begin_time": 7740,
+                      "end_time": 7920,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "了，",
+                      "begin_time": 7980,
+                      "end_time": 8160,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 8400,
+                      "end_time": 8580,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 8640,
+                      "end_time": 8760,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 8760,
+                      "end_time": 8880,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "哥",
+                      "begin_time": 8880,
+                      "end_time": 9060,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "哥",
+                      "begin_time": 9180,
+                      "end_time": 9360,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "和",
+                      "begin_time": 9360,
+                      "end_time": 9540,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 9540,
+                      "end_time": 9660,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 9660,
+                      "end_time": 9780,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "姐",
+                      "begin_time": 9780,
+                      "end_time": 9960,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "姐。",
+                      "begin_time": 10080,
+                      "end_time": 10260,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 6140,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "不对，我说错了，是一个哥哥和一个姐姐。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "不对，我说错了，是一个哥哥和一个姐姐。",
+                  "start_ms": 6500,
+                  "end_ms": 10340,
+                  "sentence_id": 2,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 6820,
+                      "start_time": 6500,
+                      "text": "不",
+                      "begin_time": 6500
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7140,
+                      "start_time": 6820,
+                      "text": "对",
+                      "begin_time": 6820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7580,
+                      "start_time": 7300,
+                      "text": "我",
+                      "begin_time": 7300
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7820,
+                      "start_time": 7580,
+                      "text": "说",
+                      "begin_time": 7580
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8060,
+                      "start_time": 7820,
+                      "text": "错",
+                      "begin_time": 7820
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8300,
+                      "start_time": 8060,
+                      "text": "了",
+                      "begin_time": 8060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8700,
+                      "start_time": 8420,
+                      "text": "是",
+                      "begin_time": 8420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8860,
+                      "start_time": 8700,
+                      "text": "一",
+                      "begin_time": 8700
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9020,
+                      "start_time": 8860,
+                      "text": "个",
+                      "begin_time": 8860
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9220,
+                      "start_time": 9020,
+                      "text": "哥",
+                      "begin_time": 9020
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9420,
+                      "start_time": 9300,
+                      "text": "哥",
+                      "begin_time": 9300
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9660,
+                      "start_time": 9420,
+                      "text": "和",
+                      "begin_time": 9420
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9780,
+                      "start_time": 9660,
+                      "text": "一",
+                      "begin_time": 9660
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9900,
+                      "start_time": 9780,
+                      "text": "个",
+                      "begin_time": 9780
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10140,
+                      "start_time": 9900,
+                      "text": "姐",
+                      "begin_time": 9900
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10340,
+                      "start_time": 10220,
+                      "text": "姐",
+                      "begin_time": 10220
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    2
+                  ],
+                  "recognition_run_id": "ed0c07fa-85f7-50ca-a6f6-401e1779ef1b",
+                  "raw_result_ref": "ed0c07fa-85f7-50ca-a6f6-401e1779ef1b",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "07",
+    "name": "长停顿补答",
+    "expected": {
+      "q022": "有。还有信息，我的证件放在家里。"
+    },
+    "sha256": "b31498abe43979d809326e33f1905f8cebbac5b8adf8cb90d4822d84b08436ef",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "untimed",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你是否还有其他需要补充的？\n有，\n还有信息，我的证件放在家里。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你是否还有其他需要补充的？",
+                  "start_ms": 780,
+                  "end_ms": 3240,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 780,
+                      "end_time": 960,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 1260,
+                      "end_time": 1440,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 1440,
+                      "end_time": 1620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "还",
+                      "begin_time": 1680,
+                      "end_time": 1860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 1860,
+                      "end_time": 2040,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "其",
+                      "begin_time": 2040,
+                      "end_time": 2220,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "他",
+                      "begin_time": 2220,
+                      "end_time": 2400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "需",
+                      "begin_time": 2460,
+                      "end_time": 2580,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "要",
+                      "begin_time": 2580,
+                      "end_time": 2700,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "补",
+                      "begin_time": 2700,
+                      "end_time": 2880,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "充",
+                      "begin_time": 2880,
+                      "end_time": 3060,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的？",
+                      "begin_time": 3060,
+                      "end_time": 3240,
+                      "voice_review": true
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 2660,
+                  "voice_review": true
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": null,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "有，",
+                  "start_ms": null,
+                  "end_ms": null,
+                  "words": [],
+                  "timestamp_source": "UNKNOWN",
+                  "listen_start_ms": 2840,
+                  "voice_review": true
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "还有信息，我的证件放在家里。",
+                  "start_ms": 7560,
+                  "end_ms": 10500,
+                  "words": [
+                    {
+                      "text": "还",
+                      "begin_time": 7560,
+                      "end_time": 7740,
+                      "voice_review": true
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 7800,
+                      "end_time": 7980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "信",
+                      "begin_time": 8040,
+                      "end_time": 8220,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "息，",
+                      "begin_time": 8280,
+                      "end_time": 8460,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "我",
+                      "begin_time": 8940,
+                      "end_time": 9120,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的",
+                      "begin_time": 9120,
+                      "end_time": 9300,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "证",
+                      "begin_time": 9300,
+                      "end_time": 9480,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "件",
+                      "begin_time": 9540,
+                      "end_time": 9720,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "放",
+                      "begin_time": 9840,
+                      "end_time": 10020,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "在",
+                      "begin_time": 10020,
+                      "end_time": 10140,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "家",
+                      "begin_time": 10140,
+                      "end_time": 10320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "里。",
+                      "begin_time": 10320,
+                      "end_time": 10500,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 7160,
+                  "voice_review": true
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你是否还有其他需要补充的？\n有，还有信息，我的证件放在家里。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你是否还有其他需要补充的？",
+                  "start_ms": 990,
+                  "end_ms": 3470,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1310,
+                      "start_time": 990,
+                      "text": "你",
+                      "begin_time": 990
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1590,
+                      "start_time": 1310,
+                      "text": "是",
+                      "begin_time": 1310
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1750,
+                      "start_time": 1590,
+                      "text": "否",
+                      "begin_time": 1590
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1950,
+                      "start_time": 1750,
+                      "text": "还",
+                      "begin_time": 1750
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2150,
+                      "start_time": 1950,
+                      "text": "有",
+                      "begin_time": 1950
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2350,
+                      "start_time": 2150,
+                      "text": "其",
+                      "begin_time": 2150
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2470,
+                      "start_time": 2350,
+                      "text": "他",
+                      "begin_time": 2350
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2630,
+                      "start_time": 2470,
+                      "text": "需",
+                      "begin_time": 2470
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2790,
+                      "start_time": 2630,
+                      "text": "要",
+                      "begin_time": 2630
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2990,
+                      "start_time": 2790,
+                      "text": "补",
+                      "begin_time": 2790
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3150,
+                      "start_time": 2990,
+                      "text": "充",
+                      "begin_time": 2990
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3470,
+                      "start_time": 3150,
+                      "text": "的",
+                      "begin_time": 3150
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "330e2519-4d85-5a13-9e9b-e7bbf2c4b2b5",
+                  "raw_result_ref": "330e2519-4d85-5a13-9e9b-e7bbf2c4b2b5",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "text": "有，还有信息，我的证件放在家里。",
+                  "start_ms": 4390,
+                  "end_ms": 10710,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 4510,
+                      "start_time": 4390,
+                      "text": "有",
+                      "begin_time": 4390
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7870,
+                      "start_time": 7590,
+                      "text": "还",
+                      "begin_time": 7590
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8110,
+                      "start_time": 7870,
+                      "text": "有",
+                      "begin_time": 7870
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8390,
+                      "start_time": 8110,
+                      "text": "信",
+                      "begin_time": 8110
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8630,
+                      "start_time": 8390,
+                      "text": "息",
+                      "begin_time": 8390
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9270,
+                      "start_time": 8990,
+                      "text": "我",
+                      "begin_time": 8990
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9430,
+                      "start_time": 9270,
+                      "text": "的",
+                      "begin_time": 9270
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9670,
+                      "start_time": 9430,
+                      "text": "证",
+                      "begin_time": 9430
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9830,
+                      "start_time": 9670,
+                      "text": "件",
+                      "begin_time": 9670
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10070,
+                      "start_time": 9870,
+                      "text": "放",
+                      "begin_time": 9870
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10230,
+                      "start_time": 10070,
+                      "text": "在",
+                      "begin_time": 10070
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10430,
+                      "start_time": 10230,
+                      "text": "家",
+                      "begin_time": 10230
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 10710,
+                      "start_time": 10430,
+                      "text": "里",
+                      "begin_time": 10430
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "330e2519-4d85-5a13-9e9b-e7bbf2c4b2b5",
+                  "raw_result_ref": "330e2519-4d85-5a13-9e9b-e7bbf2c4b2b5",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "08",
+    "name": "提示语接主问题",
+    "expected": {
+      "q005": "不是，我没有担任这些职务。"
+    },
+    "sha256": "62fcf50da39fe7ff6b1562be54b678cbff3e1bf9a522bb1b966135f7eb0b31dc",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "请如实回答：\n你是否是人大代表或政协委员？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "请如实回答：",
+                  "start_ms": 300,
+                  "end_ms": 1500,
+                  "words": [
+                    {
+                      "text": "请",
+                      "begin_time": 300,
+                      "end_time": 480,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "如",
+                      "begin_time": 660,
+                      "end_time": 840,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "实",
+                      "begin_time": 900,
+                      "end_time": 1080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "回",
+                      "begin_time": 1140,
+                      "end_time": 1320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "答：",
+                      "begin_time": 1320,
+                      "end_time": 1500,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 0,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你是否是人大代表或政协委员？",
+                  "start_ms": 2700,
+                  "end_ms": 5520,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 2700,
+                      "end_time": 2880,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 3000,
+                      "end_time": 3180,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 3240,
+                      "end_time": 3420,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 3480,
+                      "end_time": 3660,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "人",
+                      "begin_time": 3660,
+                      "end_time": 3780,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "大",
+                      "begin_time": 3780,
+                      "end_time": 3960,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "代",
+                      "begin_time": 3960,
+                      "end_time": 4140,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "表",
+                      "begin_time": 4140,
+                      "end_time": 4320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "或",
+                      "begin_time": 4380,
+                      "end_time": 4560,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "政",
+                      "begin_time": 4680,
+                      "end_time": 4860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "协",
+                      "begin_time": 4920,
+                      "end_time": 5100,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "委",
+                      "begin_time": 5160,
+                      "end_time": 5340,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "员？",
+                      "begin_time": 5340,
+                      "end_time": 5520,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 2300,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "请如实回答，你是否是人大代表或政协委员？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "请如实回答，你是否是人大代表或政协委员？",
+                  "start_ms": 530,
+                  "end_ms": 5690,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 770,
+                      "start_time": 530,
+                      "text": "请",
+                      "begin_time": 530
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1010,
+                      "start_time": 770,
+                      "text": "如",
+                      "begin_time": 770
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1210,
+                      "start_time": 1010,
+                      "text": "实",
+                      "begin_time": 1010
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1450,
+                      "start_time": 1210,
+                      "text": "回",
+                      "begin_time": 1210
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1690,
+                      "start_time": 1450,
+                      "text": "答",
+                      "begin_time": 1450
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3130,
+                      "start_time": 2730,
+                      "text": "你",
+                      "begin_time": 2730
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3370,
+                      "start_time": 3130,
+                      "text": "是",
+                      "begin_time": 3130
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3530,
+                      "start_time": 3370,
+                      "text": "否",
+                      "begin_time": 3370
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3730,
+                      "start_time": 3530,
+                      "text": "是",
+                      "begin_time": 3530
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3890,
+                      "start_time": 3730,
+                      "text": "人",
+                      "begin_time": 3730
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4130,
+                      "start_time": 3890,
+                      "text": "大",
+                      "begin_time": 3890
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4290,
+                      "start_time": 4130,
+                      "text": "代",
+                      "begin_time": 4130
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4450,
+                      "start_time": 4290,
+                      "text": "表",
+                      "begin_time": 4290
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4730,
+                      "start_time": 4450,
+                      "text": "或",
+                      "begin_time": 4450
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5010,
+                      "start_time": 4770,
+                      "text": "政",
+                      "begin_time": 4770
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5210,
+                      "start_time": 5010,
+                      "text": "协",
+                      "begin_time": 5010
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5490,
+                      "start_time": 5290,
+                      "text": "委",
+                      "begin_time": 5290
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5690,
+                      "start_time": 5490,
+                      "text": "员",
+                      "begin_time": 5490
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "52542cbf-224c-536a-a4e9-62e5ae660457",
+                  "raw_result_ref": "52542cbf-224c-536a-a4e9-62e5ae660457",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "1",
+        {
+          "group": 1,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "不是，我没有担任这些职务。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "不是，我没有担任这些职务。",
+                  "start_ms": 6480,
+                  "end_ms": 8820,
+                  "words": [
+                    {
+                      "text": "不",
+                      "begin_time": 6480,
+                      "end_time": 6660,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是，",
+                      "begin_time": 6660,
+                      "end_time": 6840,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "我",
+                      "begin_time": 7320,
+                      "end_time": 7500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "没",
+                      "begin_time": 7500,
+                      "end_time": 7620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 7620,
+                      "end_time": 7800,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "担",
+                      "begin_time": 7800,
+                      "end_time": 7980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "任",
+                      "begin_time": 7980,
+                      "end_time": 8160,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "这",
+                      "begin_time": 8160,
+                      "end_time": 8280,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "些",
+                      "begin_time": 8280,
+                      "end_time": 8400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "职",
+                      "begin_time": 8400,
+                      "end_time": 8580,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "务。",
+                      "begin_time": 8640,
+                      "end_time": 8820,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 6080,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "不是，我没有担任这些职务。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "不是，我没有担任这些职务。",
+                  "start_ms": 6490,
+                  "end_ms": 8930,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 6770,
+                      "start_time": 6490,
+                      "text": "不",
+                      "begin_time": 6490
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7050,
+                      "start_time": 6770,
+                      "text": "是",
+                      "begin_time": 6770
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7570,
+                      "start_time": 7330,
+                      "text": "我",
+                      "begin_time": 7330
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7730,
+                      "start_time": 7570,
+                      "text": "没",
+                      "begin_time": 7570
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7890,
+                      "start_time": 7730,
+                      "text": "有",
+                      "begin_time": 7730
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8050,
+                      "start_time": 7890,
+                      "text": "担",
+                      "begin_time": 7890
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8210,
+                      "start_time": 8050,
+                      "text": "任",
+                      "begin_time": 8050
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8370,
+                      "start_time": 8210,
+                      "text": "这",
+                      "begin_time": 8210
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8530,
+                      "start_time": 8370,
+                      "text": "些",
+                      "begin_time": 8370
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8730,
+                      "start_time": 8530,
+                      "text": "职",
+                      "begin_time": 8530
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8930,
+                      "start_time": 8730,
+                      "text": "务",
+                      "begin_time": 8730
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "52542cbf-224c-536a-a4e9-62e5ae660457",
+                  "raw_result_ref": "52542cbf-224c-536a-a4e9-62e5ae660457",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "09",
+    "name": "补充事项明确否定",
+    "expected": {
+      "q022": "没有了。"
+    },
+    "sha256": "ca8aa2eb45384c89703d2d55a06daeed6da770ea92d7c0a2e770ac1df392d068",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你是否还有其他需要补充的？\n没有了。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你是否还有其他需要补充的？",
+                  "start_ms": 900,
+                  "end_ms": 3180,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 900,
+                      "end_time": 1080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 1200,
+                      "end_time": 1380,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 1380,
+                      "end_time": 1560,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "还",
+                      "begin_time": 1620,
+                      "end_time": 1740,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 1740,
+                      "end_time": 1920,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "其",
+                      "begin_time": 1920,
+                      "end_time": 2040,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "他",
+                      "begin_time": 2040,
+                      "end_time": 2220,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "需",
+                      "begin_time": 2280,
+                      "end_time": 2400,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "要",
+                      "begin_time": 2400,
+                      "end_time": 2580,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "补",
+                      "begin_time": 2580,
+                      "end_time": 2760,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "充",
+                      "begin_time": 2760,
+                      "end_time": 2940,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的？",
+                      "begin_time": 3000,
+                      "end_time": 3180,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 500,
+                  "voice_review": false
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "没有了。",
+                  "start_ms": 3720,
+                  "end_ms": 4200,
+                  "words": [
+                    {
+                      "text": "没",
+                      "begin_time": 3720,
+                      "end_time": 3900,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 3900,
+                      "end_time": 4020,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "了。",
+                      "begin_time": 4020,
+                      "end_time": 4200,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3320,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你是否还有其他需要补充的？没有了。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你是否还有其他需要补充的？没有了。",
+                  "start_ms": 1060,
+                  "end_ms": 4380,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1300,
+                      "start_time": 1060,
+                      "text": "你",
+                      "begin_time": 1060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1540,
+                      "start_time": 1300,
+                      "text": "是",
+                      "begin_time": 1300
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1700,
+                      "start_time": 1540,
+                      "text": "否",
+                      "begin_time": 1540
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1860,
+                      "start_time": 1700,
+                      "text": "还",
+                      "begin_time": 1700
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2060,
+                      "start_time": 1860,
+                      "text": "有",
+                      "begin_time": 1860
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2220,
+                      "start_time": 2060,
+                      "text": "其",
+                      "begin_time": 2060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2300,
+                      "start_time": 2220,
+                      "text": "他",
+                      "begin_time": 2220
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2500,
+                      "start_time": 2340,
+                      "text": "需",
+                      "begin_time": 2340
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2660,
+                      "start_time": 2500,
+                      "text": "要",
+                      "begin_time": 2500
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2860,
+                      "start_time": 2660,
+                      "text": "补",
+                      "begin_time": 2660
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3060,
+                      "start_time": 2860,
+                      "text": "充",
+                      "begin_time": 2860
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3340,
+                      "start_time": 3060,
+                      "text": "的",
+                      "begin_time": 3060
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 3980,
+                      "start_time": 3780,
+                      "text": "没",
+                      "begin_time": 3780
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4140,
+                      "start_time": 3980,
+                      "text": "有",
+                      "begin_time": 3980
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4380,
+                      "start_time": 4140,
+                      "text": "了",
+                      "begin_time": 4140
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "17a73a1c-ba54-5b53-a40e-ba74d0c888ba",
+                  "raw_result_ref": "17a73a1c-ba54-5b53-a40e-ba74d0c888ba",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  },
+  {
+    "id": "10",
+    "name": "补答后进入下一问",
+    "expected": {
+      "q004": "我和妻子住在一起。还有信息，我们有一个女儿。",
+      "q022": "没有其他补充。"
+    },
+    "sha256": "28339308847675edda0a045fb8228f63791579b19d73dcaa53472dd516d66d2b",
+    "groups": [
+      [
+        "0",
+        {
+          "group": 0,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你的家庭情况？",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你的家庭情况？",
+                  "start_ms": 1140,
+                  "end_ms": 2280,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 1140,
+                      "end_time": 1320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的",
+                      "begin_time": 1380,
+                      "end_time": 1560,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "家",
+                      "begin_time": 1560,
+                      "end_time": 1680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "庭",
+                      "begin_time": 1680,
+                      "end_time": 1860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "情",
+                      "begin_time": 1980,
+                      "end_time": 2100,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "况？",
+                      "begin_time": 2100,
+                      "end_time": 2280,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 740,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你的家庭情况。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你的家庭情况。",
+                  "start_ms": 1280,
+                  "end_ms": 2560,
+                  "sentence_id": 0,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 1520,
+                      "start_time": 1280,
+                      "text": "你",
+                      "begin_time": 1280
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1680,
+                      "start_time": 1520,
+                      "text": "的",
+                      "begin_time": 1520
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 1880,
+                      "start_time": 1680,
+                      "text": "家",
+                      "begin_time": 1680
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2000,
+                      "start_time": 1880,
+                      "text": "庭",
+                      "begin_time": 1880
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2280,
+                      "start_time": 2000,
+                      "text": "情",
+                      "begin_time": 2000
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 2560,
+                      "start_time": 2280,
+                      "text": "况",
+                      "begin_time": 2280
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    0
+                  ],
+                  "recognition_run_id": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "raw_result_ref": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "1",
+        {
+          "group": 1,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "我和妻子住在一起，",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "我和妻子住在一起，",
+                  "start_ms": 4140,
+                  "end_ms": 5640,
+                  "words": [
+                    {
+                      "text": "我",
+                      "begin_time": 4140,
+                      "end_time": 4320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "和",
+                      "begin_time": 4320,
+                      "end_time": 4500,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "妻",
+                      "begin_time": 4500,
+                      "end_time": 4680,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "子",
+                      "begin_time": 4680,
+                      "end_time": 4860,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "住",
+                      "begin_time": 4920,
+                      "end_time": 5100,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "在",
+                      "begin_time": 5100,
+                      "end_time": 5280,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 5280,
+                      "end_time": 5460,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "起，",
+                      "begin_time": 5460,
+                      "end_time": 5640,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 3740,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "我和妻子住在一起。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "我和妻子住在一起。",
+                  "start_ms": 4040,
+                  "end_ms": 5760,
+                  "sentence_id": 1,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 4440,
+                      "start_time": 4040,
+                      "text": "我",
+                      "begin_time": 4040
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4640,
+                      "start_time": 4440,
+                      "text": "和",
+                      "begin_time": 4440
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 4880,
+                      "start_time": 4640,
+                      "text": "妻",
+                      "begin_time": 4640
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5040,
+                      "start_time": 4880,
+                      "text": "子",
+                      "begin_time": 4880
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5240,
+                      "start_time": 5040,
+                      "text": "住",
+                      "begin_time": 5040
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5400,
+                      "start_time": 5240,
+                      "text": "在",
+                      "begin_time": 5240
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5560,
+                      "start_time": 5400,
+                      "text": "一",
+                      "begin_time": 5400
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 5760,
+                      "start_time": 5560,
+                      "text": "起",
+                      "begin_time": 5560
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    1
+                  ],
+                  "recognition_run_id": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "raw_result_ref": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "2",
+        {
+          "group": 2,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "还有信息，我们有一个女儿。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "还有信息，我们有一个女儿。",
+                  "start_ms": 7140,
+                  "end_ms": 9300,
+                  "words": [
+                    {
+                      "text": "还",
+                      "begin_time": 7140,
+                      "end_time": 7320,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 7380,
+                      "end_time": 7560,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "信",
+                      "begin_time": 7620,
+                      "end_time": 7800,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "息，",
+                      "begin_time": 7800,
+                      "end_time": 7980,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "我",
+                      "begin_time": 8220,
+                      "end_time": 8340,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "们",
+                      "begin_time": 8340,
+                      "end_time": 8460,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 8460,
+                      "end_time": 8640,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "一",
+                      "begin_time": 8640,
+                      "end_time": 8760,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "个",
+                      "begin_time": 8760,
+                      "end_time": 8880,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "女",
+                      "begin_time": 8880,
+                      "end_time": 9060,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "儿。",
+                      "begin_time": 9120,
+                      "end_time": 9300,
+                      "voice_review": true
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 8720,
+                  "voice_review": true
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "还有信息，我们有一个女儿。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "还有信息，我们有一个女儿。",
+                  "start_ms": 7120,
+                  "end_ms": 9440,
+                  "sentence_id": 2,
+                  "speaker_id": "2",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 7440,
+                      "start_time": 7120,
+                      "text": "还",
+                      "begin_time": 7120
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7640,
+                      "start_time": 7440,
+                      "text": "有",
+                      "begin_time": 7440
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 7920,
+                      "start_time": 7760,
+                      "text": "信",
+                      "begin_time": 7760
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8040,
+                      "start_time": 7920,
+                      "text": "息",
+                      "begin_time": 7920
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8400,
+                      "start_time": 8240,
+                      "text": "我",
+                      "begin_time": 8240
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8560,
+                      "start_time": 8400,
+                      "text": "们",
+                      "begin_time": 8400
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8720,
+                      "start_time": 8560,
+                      "text": "有",
+                      "begin_time": 8560
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8840,
+                      "start_time": 8720,
+                      "text": "一",
+                      "begin_time": 8720
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 8960,
+                      "start_time": 8840,
+                      "text": "个",
+                      "begin_time": 8840
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9200,
+                      "start_time": 8960,
+                      "text": "女",
+                      "begin_time": 8960
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 9440,
+                      "start_time": 9200,
+                      "text": "儿",
+                      "begin_time": 9200
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    2
+                  ],
+                  "recognition_run_id": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "raw_result_ref": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ],
+      [
+        "3",
+        {
+          "group": 3,
+          "status": "text_agrees",
+          "candidates": [
+            {
+              "provider": "siliconflow",
+              "text": "你是否还有其他需要补充的？\n没有其他补充。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 1,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "你是否还有其他需要补充的？",
+                  "start_ms": 11580,
+                  "end_ms": 13860,
+                  "words": [
+                    {
+                      "text": "你",
+                      "begin_time": 11580,
+                      "end_time": 11760,
+                      "voice_review": true
+                    },
+                    {
+                      "text": "是",
+                      "begin_time": 11820,
+                      "end_time": 12000,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "否",
+                      "begin_time": 12000,
+                      "end_time": 12180,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "还",
+                      "begin_time": 12240,
+                      "end_time": 12360,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 12360,
+                      "end_time": 12540,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "其",
+                      "begin_time": 12540,
+                      "end_time": 12720,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "他",
+                      "begin_time": 12720,
+                      "end_time": 12900,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "需",
+                      "begin_time": 12960,
+                      "end_time": 13080,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "要",
+                      "begin_time": 13080,
+                      "end_time": 13260,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "补",
+                      "begin_time": 13260,
+                      "end_time": 13440,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "充",
+                      "begin_time": 13440,
+                      "end_time": 13620,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "的？",
+                      "begin_time": 13680,
+                      "end_time": 13860,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 11180,
+                  "voice_review": true,
+                  "local_alternatives": [
+                    {
+                      "text": "嗯",
+                      "start_ms": 9960,
+                      "end_ms": 10140
+                    }
+                  ]
+                },
+                {
+                  "speaker": "unknown",
+                  "speaker_id": 2,
+                  "channel_id": 0,
+                  "word_boundaries": true,
+                  "text": "没有其他补充。",
+                  "start_ms": 15000,
+                  "end_ms": 16080,
+                  "words": [
+                    {
+                      "text": "没",
+                      "begin_time": 15000,
+                      "end_time": 15120,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "有",
+                      "begin_time": 15120,
+                      "end_time": 15300,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "其",
+                      "begin_time": 15300,
+                      "end_time": 15420,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "他",
+                      "begin_time": 15420,
+                      "end_time": 15600,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "补",
+                      "begin_time": 15660,
+                      "end_time": 15840,
+                      "voice_review": false
+                    },
+                    {
+                      "text": "充。",
+                      "begin_time": 15900,
+                      "end_time": 16080,
+                      "voice_review": false
+                    }
+                  ],
+                  "timestamp_source": "LOCAL_ESTIMATE",
+                  "listen_start_ms": 14600,
+                  "voice_review": false
+                }
+              ]
+            },
+            {
+              "provider": "volcengine",
+              "text": "你是否还有其他需要补充的？没有其他补充。",
+              "segments": [
+                {
+                  "speaker": "unknown",
+                  "text": "你是否还有其他需要补充的？没有其他补充。",
+                  "start_ms": 11560,
+                  "end_ms": 16240,
+                  "sentence_id": 3,
+                  "speaker_id": "1",
+                  "channel_id": null,
+                  "words": [
+                    {
+                      "confidence": 0,
+                      "end_time": 11920,
+                      "start_time": 11560,
+                      "text": "你",
+                      "begin_time": 11560
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12120,
+                      "start_time": 11920,
+                      "text": "是",
+                      "begin_time": 11920
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12320,
+                      "start_time": 12120,
+                      "text": "否",
+                      "begin_time": 12120
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12480,
+                      "start_time": 12320,
+                      "text": "还",
+                      "begin_time": 12320
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12680,
+                      "start_time": 12480,
+                      "text": "有",
+                      "begin_time": 12480
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12840,
+                      "start_time": 12680,
+                      "text": "其",
+                      "begin_time": 12680
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 12960,
+                      "start_time": 12840,
+                      "text": "他",
+                      "begin_time": 12840
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 13160,
+                      "start_time": 12960,
+                      "text": "需",
+                      "begin_time": 12960
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 13320,
+                      "start_time": 13160,
+                      "text": "要",
+                      "begin_time": 13160
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 13560,
+                      "start_time": 13320,
+                      "text": "补",
+                      "begin_time": 13320
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 13720,
+                      "start_time": 13560,
+                      "text": "充",
+                      "begin_time": 13560
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 14120,
+                      "start_time": 13720,
+                      "text": "的",
+                      "begin_time": 13720
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 15200,
+                      "start_time": 14920,
+                      "text": "没",
+                      "begin_time": 14920
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 15400,
+                      "start_time": 15200,
+                      "text": "有",
+                      "begin_time": 15200
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 15600,
+                      "start_time": 15400,
+                      "text": "其",
+                      "begin_time": 15400
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 15720,
+                      "start_time": 15600,
+                      "text": "他",
+                      "begin_time": 15600
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 16000,
+                      "start_time": 15760,
+                      "text": "补",
+                      "begin_time": 15760
+                    },
+                    {
+                      "confidence": 0,
+                      "end_time": 16240,
+                      "start_time": 16000,
+                      "text": "充",
+                      "begin_time": 16000
+                    }
+                  ],
+                  "provider_position": [
+                    "result",
+                    "utterances",
+                    3
+                  ],
+                  "recognition_run_id": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "raw_result_ref": "df74ec34-b17c-593b-aec8-8a09722c3411",
+                  "timestamp_source": "PROVIDER",
+                  "timestamp_unit": "ms",
+                  "is_final": true,
+                  "word_boundaries": true,
+                  "voice_review": false
+                }
+              ]
+            }
+          ],
+          "errors": {}
+        }
+      ]
+    ]
+  }
+]

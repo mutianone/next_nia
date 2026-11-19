@@ -140,3 +140,24 @@ def test_pair_recovers_unpunctuated_reply_onset_with_acoustic_support(late_switc
         assert [s['speaker_id'] for s in parts] == [1, 1]
     contiguous = [(ch, i*150, i*150+130) for i, ch in enumerate(text)]
     assert len(aligned_segments(text, contiguous, [(1,False)]*len(text), paired_dialogue=True)) == 1
+
+
+def test_paused_clustering_does_not_use_isolated_filler_as_a_second_voice():
+    np = pytest.importorskip('numpy')
+    from types import SimpleNamespace
+    from backend.app.record_voice_audio import paused_voice_decisions, RATE
+    class Extractor:
+        def __init__(self):
+            self.vectors = iter(([1,0,0], [0,1,0], [0,0,1], [0,1,0]))
+        def create_stream(self):
+            return SimpleNamespace(accept_waveform=lambda *args:None, input_finished=lambda:None)
+        def is_ready(self, stream):
+            return True
+        def compute(self, stream):
+            return next(self.vectors)
+    words = [('问',0,180),('话',180,350),('回',1000,1180),('答',1180,1350),
+             ('嗯',2000,2160),('补',3000,3180),('充',3180,3350)]
+    result = paused_voice_decisions(Extractor(), np.ones(RATE*4)*.05, words)
+    assert result[0][0] != result[2][0]
+    assert result[2][0] == result[5][0]
+    assert result[4] == (None, True)

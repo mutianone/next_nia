@@ -201,6 +201,11 @@ def grounded_template_facts(output: AnalysisOutput, segments: list[dict]) -> Non
             retained.append(fact)
     output.key_facts = retained
 
+def unconfirmed_asr_only(segments):
+    return bool(segments) and all(s.get('recognition_run_id') and s.get('speaker', 'unknown') == 'unknown'
+                                  for s in segments)
+
+
 def analysis_payload(segments: list[dict], settings: Settings, template: dict | None = None) -> dict:
     provider, model, key = provider_config(settings, "analysis")
     payload = {
@@ -252,9 +257,15 @@ def analysis_payload(segments: list[dict], settings: Settings, template: dict | 
             '非q基本信息字段返回label、value字符串、segment_ids；从source_units提取明确事实，未知留空。'
             '户籍不从国籍或现住址推断。最多128字段、20条issues。'
         )
+        if unconfirmed_asr_only(segments) and not template.get('grouped_generation'):
+            options = []
+        requested_fields = template['fields']
+        if not options and not template.get('grouped_generation'):
+            requested_fields = [f for f in requested_fields if not f['id'].startswith('q')]
+            payload['max_tokens'] = min(payload['max_tokens'], 4000)
         payload['messages'][1]['content'] = json.dumps({
             'template_fields': [{'id':f['id'],'question_or_label':f['label'],
-                                 **({'question_aliases':f['question_aliases']} if f.get('question_aliases') else {})} for f in template['fields']],
+                                 **({'question_aliases':f['question_aliases']} if f.get('question_aliases') else {})} for f in requested_fields],
             'qa_options': options, 'source_ids':[s['segment_id'] for s in segments],
             'source_units': [{'id':u['id'],'segment_id':u['segment_id'],'text':u['text']} for u in units]
                             if any(not f['id'].startswith('q') for f in template['fields']) else []}, ensure_ascii=False)
@@ -269,8 +280,9 @@ def analyze_segments(segments: list[dict], settings: Settings, template: dict | 
     from .record_selection import paired_options
     no_options = bool(template and template.get('fields')
                       and not template.get('grouped_generation')
-                      and all(f['id'].startswith('q') for f in template['fields'])
-                      and not paired_options(segments))
+                      and (all(f['id'].startswith('q') for f in template['fields'])
+                           or unconfirmed_asr_only(segments))
+                      and (unconfirmed_asr_only(segments) or not paired_options(segments)))
     if no_options:
         result = {}
         output = AnalysisOutput(summary='没有可回填的完整问答。', key_facts=[], issues=[])

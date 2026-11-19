@@ -8,7 +8,7 @@ import type { RecordDetail } from '../record-types';
 type Engine = 'siliconflow'|'volcengine';
 type Candidate = {provider:Engine;text:string;segments:{text:string;start_ms?:number|null;end_ms?:number|null;speaker_id?:string|number|null}[]};
 type Recommendation = {provider:Engine|null;method:string;reason:string;judge_model?:string};
-type Group = {recommendation?:Recommendation;group:number;status:string;candidates:Candidate[];errors:Partial<Record<Engine,{message:string}>>};
+type Group = {local_verification?:{text:string;verified_provider:Engine};recommendation?:Recommendation;group:number;status:string;candidates:Candidate[];errors:Partial<Record<Engine,{message:string}>>};
 type Run = {id:string;audio_id:string;applied:boolean;groups:Group[]};
 type Material = {revision:number;runs:Run[]};
 const names:Record<Engine,string> = {siliconflow:'Qwen3-ASR（硅基流动）',volcengine:'火山豆包 2.0'};
@@ -61,6 +61,7 @@ export function RecordDualReview({record,disabled,onApplied,onPending}:{record:R
       {clip&&playing!==null&&<audio controls autoPlay key={`${selected}-${playing}`} src={clip.playback_url} onLoadedMetadata={e=>{e.currentTarget.currentTime=playing/1000;}}/>}
       {run?.groups.map(g=><article key={g.group} className="qa-review-turn">
         <header><strong>片段 {g.group+1} · {statuses[g.status]??g.status}</strong>{clip&&<button type="button" className="text-button" onClick={()=>{const times=g.candidates.flatMap(c=>c.segments.map(s=>s.start_ms)).filter((t):t is number=>typeof t==='number');setPlaying(times.length?Math.min(...times):0);}}>回听片段 {g.group+1}</button>}</header>
+        {g.local_verification&&<p role="status">本机独立转写的全文与{names[g.local_verification.verified_provider]}一致，已用于交叉核验。可在模板预览查看预填结果。</p>}
         {g.recommendation&&<p role="status">{g.recommendation.provider?`自动预选：${names[g.recommendation.provider]}`:'暂不自动选择'} · {g.recommendation.method==='model'?'文字模型建议（未听音）：':''}{g.recommendation.reason}{g.recommendation.judge_model&&`（${g.recommendation.judge_model}）`}</p>}
         {Object.entries(g.errors).map(([engine,err])=><p role="status" key={engine}>{names[engine as Engine]}未返回结果：{err?.message}。当前结果不构成双引擎一致。</p>)}
         {g.candidates.map(c=><div key={c.provider}><label><input type="radio" name={`dual-${g.group}`} disabled={busy} checked={choices[g.group]===c.provider} onChange={()=>{setChoices(p=>({...p,[g.group]:c.provider}));setConfirmed(false);}}/>片段 {g.group+1} 采用 {names[c.provider]}</label>

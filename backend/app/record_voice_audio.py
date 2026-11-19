@@ -155,10 +155,69 @@ def cluster_anchors(matrix, count):
     return groups
 
 
+def paused_voice_decisions(extractor, audio, words):
+    """Balance two-speaker clustering by speech phrases instead of pause bins."""
+    import numpy as np
+    phrases = []
+    for index, (_, start, end) in enumerate(words):
+        if not 0 <= start < end <= len(audio) * 1000 / RATE + 1:
+            return None
+        if phrases and start - words[phrases[-1][-1]][2] < 500:
+            phrases[-1].append(index)
+        else:
+            phrases.append([index])
+    # Keep inference bounded and retain word-level decisions for long phrases.
+    if len(phrases) > MAX_ANCHORS or any(words[p[-1]][2] - words[p[0]][1] > 6000 for p in phrases):
+        return None
+    vectors, usable = [], []
+    for indices in phrases:
+        start, end = words[indices[0]][1], words[indices[-1]][2]
+        clip = audio[max(0, (start - 80) * 16):min(len(audio), (end + 120) * 16)]
+        if len(clip) < RATE // 4 or np.sqrt(np.mean(clip * clip)) < .0005:
+            vectors.append(None)
+            continue
+        stream = extractor.create_stream()
+        stream.accept_waveform(RATE, clip)
+        stream.input_finished()
+        if not extractor.is_ready(stream):
+            vectors.append(None)
+            continue
+        vector = np.asarray(extractor.compute(stream), dtype='float32')
+        norm = np.linalg.norm(vector)
+        if not np.isfinite(norm) or norm == 0:
+            vectors.append(None)
+            continue
+        vectors.append(vector / norm)
+        # An isolated filler or decoder artifact must not occupy a voice cluster.
+        if len(indices) >= 2 and end - start >= 300:
+            usable.append(len(vectors) - 1)
+    if len(usable) < 2:
+        return None
+    matrix = np.stack([vectors[i] for i in usable])
+    groups = cluster_anchors(matrix, 2)
+    centers = np.stack([matrix[g].mean(axis=0) for g in groups])
+    centers /= np.maximum(np.linalg.norm(centers, axis=1, keepdims=True), 1e-8)
+    decisions = [(None, True)] * len(words)
+    for indices, vector in zip(phrases, vectors):
+        if vector is None:
+            continue
+        scores = centers @ vector
+        label = int(scores.argmax())
+        other = max((value for i, value in enumerate(scores) if i != label), default=-1.)
+        uncertain = scores[label] < .45 or scores[label] - other < .08
+        for index in indices:
+            decisions[index] = (None if uncertain else label + 1, bool(uncertain))
+    return decisions
+
+
 def voice_decisions(extractor, audio, words, count, *, anchor_on_words=False):
     import numpy as np
     if not words:
         return []
+    if count == 2:
+        paused = paused_voice_decisions(extractor, audio, words)
+        if paused is not None:
+            return paused
     bins = (len(audio)+HOP-1)//HOP
     if anchor_on_words:
         # Fit the two reference voices on timed speech. Background during a
@@ -257,11 +316,13 @@ def annotate(raw, fmt, output, count):
                     words, windows = pair_tokens(recognizer, audio)
                 else:
                     words = local_tokens(recognizer,audio)
-                labels = voice_decisions(extractor, audio, words, count, anchor_on_words=bool(windows))
+                labels = voice_decisions(extractor, audio, words, count, anchor_on_words=count == 2)
                 segments = aligned_segments(output['text'],words,labels,windows=windows,paired_dialogue=count == 2)
                 if not segments:
                     segments = [{'speaker':'unknown','text':output['text'],'voice_review':True}]
                 output.setdefault('raw_result', {'text':output['text']})
+                output['local_verification'] = {'text': ''.join(w[0] for w in words),
+                    'words': words, 'decisions': labels}
                 output['segments'] = segments
             return output
     except (OSError, RuntimeError, ValueError, ImportError, subprocess.SubprocessError) as error:

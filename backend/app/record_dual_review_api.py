@@ -141,17 +141,33 @@ def apply(record_id: str, run_id: str, body: Choice, request: Request):
         for position, s in enumerate(ordered):
             s.position = position
         if record.template_snapshot.get('dual_prefill'):
-            # Both originals contained each provisional answer. Rebind its evidence
-            # to the human-selected projection, including one-to-many replacements.
+            # Recheck values against the selected version before rebinding evidence.
             replacements = {}
             for old, choice in zip(originals, body.choices):
                 group = old.data['dual_review']['group']
                 replacements[old.id] = [s.id for s, part in zip(added, parts) if part['dual_source']['group'] == group]
             template = record.template_snapshot
             sources = dict(template.get('sources', {}))
-            for field in template['dual_prefill']:
+            from .record_dual_prefill import surface
+            pending = dict(template['dual_prefill'])
+            values = dict(template.get('values', {}))
+            original_sources = {s.id: s for s in originals}
+            choices = {s.id: choice for s, choice in zip(originals, body.choices)}
+            for field, value in list(pending.items()):
+                if not old_ids.intersection(sources.get(field, [])):
+                    continue
+                selected_text = ''.join(
+                    c['text'] for sid in sources.get(field, []) if sid in original_sources
+                    for c in original_sources[sid].data['dual_review']['candidates']
+                    if c['provider'] == choices[sid])
+                if surface(value) not in surface(selected_text):
+                    pending.pop(field)
+                    if field not in template.get('locked_fields', []) and values.get(field) == value:
+                        values.pop(field, None)
+                        sources.pop(field, None)
+                    continue
                 sources[field] = [new for sid in sources.get(field, []) for new in replacements.get(sid, [sid])]
-            record.template_snapshot = {**template, 'sources': sources}
+            record.template_snapshot = {**template, 'sources': sources, 'values': values, 'dual_prefill': pending}
         r.version(session, record, 'dual_asr_reviewed')
         r.audit(session, 'dual_asr_reviewed', record_id=record_id, source_run_id=run.id, actor_id=who)
         return r.detail(session, record)
