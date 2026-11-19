@@ -114,11 +114,48 @@ def test_synthesized_dialogues_through_transcribe_and_saved_template(client, mon
     from backend.app.record_dual_prefill import surface
     actual = {k:v for k,v in saved['template_snapshot']['values'].items() if k.startswith('q')}
     assert {k:surface(v) for k,v in actual.items()} == {k:surface(v) for k,v in case['expected'].items()}
-    if case['id'] == '03':
-        run = client.get(url+'/dual-review').json()['runs'][0]
-        reviewed = client.post(url+'/dual-review/'+run['id'], json={
-            'expected_revision':saved['revision'], 'confirmed':True,
-            'choices':['siliconflow']*len(run['groups'])})
-        assert reviewed.status_code == 200, reviewed.text
-        # Selecting the conflicting cloud version invalidates the prior consensus.
-        assert not reviewed.json()['template_snapshot']['values'].get('q004')
+    assert saved['dual_review_status'] == {'pending_groups': 0, 'ready_runs': 0}
+    assert client.get(url+'/dual-review').json()['runs'] == []
+    runs = client.get(url+'/recognition-runs').json()['items']
+    assert len(runs) == 2
+    assert next(r for r in runs if r['applied'])['provider'] == 'dual_reviewed'
+    assert all(s['speaker'] == 'unknown' for s in saved['segments'])
+    assert client.post(url+'/qa-drafts/rebuild', json={'expected_revision': saved['revision']}).status_code == 200
+
+
+def test_status_keeps_unmatched_material_and_unknown_roles_visible():
+    from backend.app.record_dual_status import classified_groups
+    groups = source(QUESTION)
+    filled, _ = prefill(TEMPLATE, groups)
+    assert all(not g['needs_review'] for g in classified_groups(filled, groups))
+    extra = deepcopy(groups)
+    for c in extra[-1][1]['candidates']:
+        c['segments'][-1]['text'] += '另外一件事情尚未核实。'
+    assert any(g['needs_review'] for g in classified_groups(filled, extra))
+    assert all(g['needs_review'] for g in classified_groups(TEMPLATE, groups))
+
+
+def test_legacy_completed_run_can_resolve_without_cloud_or_repeated_versions(client, monkeypatch):
+    from backend.app import record_dual_status
+    original = record_dual_status.classified_groups
+    monkeypatch.setattr(record_dual_status, 'classified_groups', lambda template, groups: [
+        {**g, 'needs_review':True, 'automatic_choice':None} for _,g in groups])
+    case = FROZEN[1]
+    client.app.state.store.current = settings()
+    row = upload(client, create(client, template_id='bride', scenario='marriage'), duration=60000).json()
+    parts = [{'speaker':'unknown','text':g['candidates'][0]['text'],'dual_review':g} for _,g in case['groups']]
+    monkeypatch.setattr(records, 'transcribe_audio', lambda *a, **kw: {
+        'provider':'dual','model':'fixture','text':'\n'.join(p['text'] for p in parts),'segments':parts,'raw_result':{}})
+    url = '/api/records/'+row['id']
+    result = client.post(url+'/audio/'+row['audio_clips'][0]['id']+'/transcribe',
+        json={'expected_revision':row['revision'],'confirmed':True,'speaker_count':2})
+    assert result.status_code == 200
+    monkeypatch.setattr(record_dual_status, 'classified_groups', original)
+    row = client.get(url).json()
+    assert row['dual_review_status'] == {'pending_groups':0,'ready_runs':1}
+    response = client.post(url+'/dual-review/auto-resolve',json={'expected_revision':row['revision']})
+    assert response.status_code == 200, response.text
+    row = response.json()
+    assert row['dual_review_status'] == {'pending_groups':0,'ready_runs':0}
+    again = client.post(url+'/dual-review/auto-resolve',json={'expected_revision':row['revision']})
+    assert again.status_code == 200 and again.json()['revision'] == row['revision']

@@ -1,4 +1,3 @@
-import { RecordDualReview } from './RecordDualReview';
 import { useRef, useState } from 'react';
 import { api } from '../api';
 import { Dialog } from './Dialog';
@@ -61,7 +60,7 @@ export function RecordQAReview({record,disabled,onApplied,onPending}:{record:Rec
     }catch(e){setError(recordError(e));}finally{setBusy(false);}
   };
   const clip=record.audio_clips.find(c=>c.id===playing?.id);
-  return <><RecordDualReview record={record} disabled={disabled} onPending={onPending} onApplied={onApplied}/><RecordQADrafts record={record} disabled={disabled||record.segments.some(s=>s.dual_review)} onPending={onPending} onApplied={onApplied}/><button type="button" className="btn btn-primary" disabled={disabled||!record.segments.length||record.segments.some(s=>s.dual_review)} onClick={()=>void prepare()}>整理问答</button>
+  return <><RecordQADrafts record={record} disabled={disabled||record.segments.some(s=>s.dual_review)} onPending={onPending} onApplied={onApplied}/><button type="button" className="btn btn-primary" disabled={disabled||!record.segments.length||record.segments.some(s=>s.dual_review)} onClick={()=>void prepare()}>整理问答</button>
     {open&&<Dialog title="问答分句与角色核对" onClose={close} className="qa-review-dialog">
       {busy&&!proposal&&<p role="status">正在整理问答…</p>}
       {error&&<p role="alert">{error}</p>}

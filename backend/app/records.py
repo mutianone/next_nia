@@ -492,12 +492,13 @@ def render_text(row, segments):
 def detail(session, row):
     from .record_jobs import latest
     from .record_candidates import candidate_data
+    from .record_dual_status import summary as dual_summary
     segments = ordered_segments(session, row.id)
     digest = segment_hash(segments)
     analyses = [analysis_json(item, digest) for item in session.scalars(select(RecordAnalysis).where(RecordAnalysis.record_id == row.id).order_by(RecordAnalysis.created_at.desc(), RecordAnalysis.id))]
     attempts = session.scalars(select(TranscriptionAttempt).where(TranscriptionAttempt.record_id == row.id).order_by(TranscriptionAttempt.created_at.desc(), TranscriptionAttempt.id)).all()
     versions = session.scalars(select(RecordVersion).where(RecordVersion.record_id == row.id).order_by(RecordVersion.revision)).all()
-    return {**record_json(session, row), **candidate_data(session, row), "generation_job": latest(session, row.id), "person_snapshot": row.person_snapshot, "template_snapshot": row.template_snapshot, "segments": [segment_json(item) for item in segments],
+    return {**record_json(session, row), **candidate_data(session, row), "dual_review_status": dual_summary(session, row), "generation_job": latest(session, row.id), "person_snapshot": row.person_snapshot, "template_snapshot": row.template_snapshot, "segments": [segment_json(item) for item in segments],
             "audio_clips": [clip_json(item) for item in session.scalars(select(AudioClip).where(AudioClip.record_id == row.id).order_by(AudioClip.created_at, AudioClip.id))],
             "transcription_attempts": [{**{key: getattr(item, key) for key in ("id", "audio_id", "status", "text", "error", "provider", "model", "input_revision")}, "created_at": timestamp(item.created_at), "finished_at": timestamp(item.finished_at) if item.finished_at else None} for item in attempts],
             "analyses": analyses, "analysis": next((item for item in analyses if item["status"] == "succeeded"), None),
@@ -1046,6 +1047,11 @@ def transcribe(record_id: str, audio_id: str, body: TranscribeRequest, request: 
                 row.template_snapshot, prefilled = prefill(row.template_snapshot, groups)
                 if prefilled:
                     audit(session, 'dual_template_prefilled', record_id=row.id, field_ids=prefilled)
+                from .record_dual_status import classified_groups
+                classified = classified_groups(row.template_snapshot, groups)
+                if classified and not any(g['needs_review'] for g in classified):
+                    from .record_dual_review_api import apply_choices
+                    recognition = apply_choices(session, row, recognition, [g['automatic_choice'] for g in classified])
             session.flush()
             version(session, row, "transcribed")
         session.flush()
